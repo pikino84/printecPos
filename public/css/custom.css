@@ -1,0 +1,10 @@
+/*Start fix menu nav*/
+.header-navbar {
+    height: 77px;
+}
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+}
+/*End menu nav*/
+
