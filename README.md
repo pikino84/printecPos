@@ -65,11 +65,18 @@ Proyecto base para comenzar un sistema con Laravel 10.
     Puedes modificar el archivo database/migrations/2025_03_25_000000_create_users_table.php para agregar los campos que necesites en la tabla de usuarios.
     Despues de modificar el archivo, ejecuta el siguiente comando para crear la tabla de usuarios:
 
+    > Puedes editar `database/migrations/2025_03_25_000000_create_users_table.php` para personalizar la tabla de usuarios.
+
    ```bash
    php artisan db:seed --class=UserSeeder
    ```
 
-   > Puedes editar `database/migrations/2025_03_25_000000_create_users_table.php` para personalizar la tabla de usuarios.
+    Crea roles y permisos despues los puedes editar desde el admin panel
+
+    ```bash
+    php artisan db:seed --class=RolePermissionSeeder
+    ```
+
 
 8. **Permisos para carpetas necesarias**
    ```bash
@@ -90,10 +97,14 @@ Proyecto base para comenzar un sistema con Laravel 10.
     ...
     }
     ```
-10. **Corre los sieguientes comando y listo**
+10. **Corre los sieguientes comandos por separado**
+
     ```npm run dev```
+
     Y
+
     ```php artisan serve```
+
     En terminales diferentes
 
 
