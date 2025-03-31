@@ -7,6 +7,96 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+
+---
+
+# Laravel 10
+
+Proyecto base para comenzar un sistema con Laravel 10.
+
+## ⚙️ Requisitos
+
+- PHP 8.1+
+- Composer
+- Node.js y NPM
+- MySQL o similar
+
+## 🚀 Instalación
+
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://tu-repo.git
+   cd nombre-del-proyecto
+   ```
+
+2. **Instalar dependencias**
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Configurar archivo `.env`**
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Crear la base de datos**
+
+   Crea una base de datos en tu gestor favorito (ej: `laravel_vue_crud`) y actualiza las variables de entorno en `.env`:
+
+   ```env
+   DB_DATABASE=laravel_vue_crud
+   DB_USERNAME=tu_usuario
+   DB_PASSWORD=tu_contraseña
+   ```
+
+5. **Generar clave de la app**
+   ```bash
+   php artisan key:generate
+   ```
+
+6. **Ejecutar migraciones**
+   ```bash
+   php artisan migrate
+   ```
+
+7. *(Opcional)* **Sembrar usuarios**
+
+    Puedes modificar el archivo database/migrations/2025_03_25_000000_create_users_table.php para agregar los campos que necesites en la tabla de usuarios.
+    Despues de modificar el archivo, ejecuta el siguiente comando para crear la tabla de usuarios:
+
+   ```bash
+   php artisan db:seed --class=UserSeeder
+   ```
+
+   > Puedes editar `database/migrations/2025_03_25_000000_create_users_table.php` para personalizar la tabla de usuarios.
+
+8. **Permisos para carpetas necesarias**
+   ```bash
+   chmod -R 775 storage
+   chmod -R 775 bootstrap/cache
+   ```
+9. **Abre el archivo package.json.**
+
+    Agrega o edita la propiedad "type" para que sea "module":
+
+    ```{
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    ...
+    }
+    ```
+10. **Corre los sieguientes comando y listo**
+    ```npm run dev```
+    Y
+    ```php artisan serve```
+    En terminales diferentes
+
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
