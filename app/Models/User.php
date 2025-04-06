@@ -11,6 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use App\Notifications\CustomResetPassword;
 
 
 class User extends Authenticatable
@@ -58,6 +59,11 @@ class User extends Authenticatable
             ->logOnly(['name', 'email'])
             ->logOnlyDirty()
             ->useLogName('usuario');
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomResetPassword($token));
     }
     
 
