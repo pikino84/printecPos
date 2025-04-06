@@ -5,28 +5,32 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
+
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
         // Crear permisos
-        $permManageUsers = Permission::firstOrCreate(['name' => 'manage users', 'guard_name' => 'web']);
-        $permEditProfile = Permission::firstOrCreate(['name' => 'edit profile', 'guard_name' => 'web']);
+        $permissions = [
+            'manage users',
+            'edit profile',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        }
 
         // Crear roles
-        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        $userRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+        $roles = [
+            'super admin' => ['manage users', 'edit profile'], // Permisos para super admin
+            'admin' => ['manage users'],                      // Permisos para admin
+            'user' => ['edit profile'],                       // Permisos para user
+        ];
 
-        // Asignar permisos a roles
-        $adminRole->syncPermissions([$permManageUsers]);
-        $userRole->syncPermissions([$permEditProfile]);
-
-        // Asignar rol al usuario 1
-        $user = User::find(1);
-        if ($user) {
-            $user->assignRole($adminRole);
+        foreach ($roles as $roleName => $rolePermissions) {
+            $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+            $role->syncPermissions($rolePermissions);
         }
     }
 }

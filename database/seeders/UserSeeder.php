@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -14,10 +13,6 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Crear roles
-        $superAdminRole = Role::firstOrCreate(['name' => 'super admin']);
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-
         // Crear usuario Super Admin
         $superAdmin = User::firstOrCreate(
             ['email' => 'jfcruz@outlook.com'],
@@ -26,7 +21,10 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('P4$$wOrd-2025SA'),
             ]
         );
-        $superAdmin->assignRole($superAdminRole);
+        $superAdminRole = Role::where('name', 'super admin')->first();
+        if ($superAdminRole) {
+            $superAdmin->assignRole($superAdminRole);
+        }
 
         // Crear usuario Admin
         $admin = User::firstOrCreate(
@@ -36,6 +34,9 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('P4$$wOrd-2025A'),
             ]
         );
-        $admin->assignRole($adminRole);
+        $adminRole = Role::where('name', 'admin')->first();
+        if ($adminRole) {
+            $admin->assignRole($adminRole);
+        }
     }
 }
