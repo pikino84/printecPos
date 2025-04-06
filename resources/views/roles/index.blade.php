@@ -7,6 +7,13 @@
     <div class="row">
         <div class="col-md-12">
             <h5>Roles</h5>
+            @if (session('success'))                
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    swal("¡Éxito!", "{{ session('success') }}", "success");
+                });
+            </script>
+            @endif
             <a href="{{ route('roles.create') }}" class="btn btn-primary float-right mb-3">Nuevo Rol</a>
         </div>
     </div>
@@ -36,11 +43,27 @@
                             </td>
                             <td>
                                 <a href="{{ route('roles.edit', $role) }}" class="btn btn-sm btn-warning">Editar</a>
-                                <form action="{{ route('roles.destroy', $role) }}" method="POST" style="display:inline;">
+                                <form action="{{ route('roles.destroy', $role) }}" method="POST" style="display:inline;" id="delete-form-{{ $role->id }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este rol?')">Eliminar</button>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $role->id }})">Eliminar</button>
                                 </form>
+                                
+                                <script>
+                                    function confirmDelete(roleId) {
+                                        swal({
+                                            title: "¿Estás seguro?",
+                                            text: "Esta acción no se puede deshacer.",
+                                            icon: "warning",
+                                            buttons: ["Cancelar", "Eliminar"],
+                                            dangerMode: true,
+                                        }).then((willDelete) => {
+                                            if (willDelete) {
+                                                document.getElementById(`delete-form-${roleId}`).submit();
+                                            }
+                                        });
+                                    }
+                                </script>
                             </td>
                         </tr>
                     @empty

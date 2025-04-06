@@ -19,7 +19,7 @@
                 @foreach($permissions as $permission)
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->name }}"
-                            {{ $role->hasPermissionTo($permission->name) ? 'checked' : '' }}>
+                            {{ $role->permissions->contains('name', $permission->name) ? 'checked' : '' }}>
                         <label class="form-check-label">{{ $permission->name }}</label>
                     </div>
                 @endforeach

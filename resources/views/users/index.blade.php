@@ -8,10 +8,17 @@
         <div class="col-md-12">
             <h5>Usuarios</h5>
             @if (session('success'))                
-                <div class="alert alert-success background-success alert-dismissible">
-                    <strong>{{ session('success') }}</strong> 
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    swal("¡Éxito!", "{{ session('success') }}", "success");
+                });
+            </script>
+            @elseif (session('error'))
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    swal("¡Error!", "{{ session('error') }}", "error");
+                });
+            </script>
             @endif
             <a href="{{ route('users.create') }}" class="btn btn-primary float-right mb-3">Nuevo Usuario</a>
         </div>
@@ -42,11 +49,27 @@
                             </td>
                             <td>
                                 <a href="{{ route('users.edit', $user) }}" class="btn btn-sm btn-warning">Editar</a>
-                                <form action="{{ route('users.destroy', $user) }}" method="POST" style="display:inline;">
+                                <form action="{{ route('users.destroy', $user) }}" method="POST" style="display:inline;" id="delete-form-{{ $user->id }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este usuario?')">Eliminar</button>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $user->id }})">Eliminar</button>
                                 </form>
+                                
+                                <script>
+                                    function confirmDelete(userId) {
+                                        swal({
+                                            title: "¿Estás seguro?",
+                                            text: "Esta acción no se puede deshacer.",
+                                            icon: "warning",
+                                            buttons: ["Cancelar", "Eliminar"],
+                                            dangerMode: true,
+                                        }).then((willDelete) => {
+                                            if (willDelete) {
+                                                document.getElementById(`delete-form-${userId}`).submit();
+                                            }
+                                        });
+                                    }
+                                </script>
                             </td>
                         </tr>
                     @empty

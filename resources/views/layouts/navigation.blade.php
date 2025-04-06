@@ -13,15 +13,15 @@
                             <a href="{{ route('users.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Usuarios</span>
                             </a>
+                        </li>                        
+                        <li class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}">
+                            <a href="{{ route('permissions.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Permisos</span>
+                            </a>
                         </li>
                         <li class="{{ request()->routeIs('roles.*') ? 'active' : '' }}">
                             <a href="{{ route('roles.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Roles</span>
-                            </a>
-                        </li>
-                        <li class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}">
-                            <a href="{{ route('permissions.index') }}" class="waves-effect waves-dark">
-                                <span class="pcoded-mtext">Permisos</span>
                             </a>
                         </li>
                         <li class="{{ request()->routeIs('activity.logs.*') ? 'active' : '' }}">

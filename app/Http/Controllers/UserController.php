@@ -14,7 +14,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = \App\Models\User::with('roles')->get();
+        $users = User::with('roles')->get();
         return view('users.index', compact('users'));
     }
 
@@ -48,7 +48,7 @@ class UserController extends Controller
 
         $user->assignRole($request->role); // Asignar el rol al usuario
 
-        return redirect()->route('users.index')->with('success', 'UseUsuario creado.<');
+        return redirect()->route('users.index')->with('success', 'Usuario creado');
     }
 
     /**
@@ -64,8 +64,8 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        $user = \App\Models\User::findOrFail($id);
-        $roles = \Spatie\Permission\Models\Role::all();
+        $user = User::findOrFail($id);
+        $roles = Role::all();
 
         return view('users.edit', compact('user', 'roles'));
     }
@@ -103,6 +103,10 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
+        $user = User::findOrFail($id);
+        if ($user->hasRole('super admin')) {
+            return redirect()->route('users.index')->with('error', 'No se puede eliminar a un Super Admin.');
+        }
         $user->delete();
         return redirect()->route('users.index')->with('success', 'Usuario eliminado.');
     }

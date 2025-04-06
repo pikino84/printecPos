@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 
 class RoleController extends Controller
@@ -13,32 +14,34 @@ class RoleController extends Controller
      */
     public function index()
     {
-        $roles = \Spatie\Permission\Models\Role::with('permissions')->get();
+        $roles = Role::with('permissions')->get();
         return view('roles.index', compact('roles'));
     }
 
 
     public function create()
     {
-        $permissions = \Spatie\Permission\Models\Permission::all();
+        $permissions = Permission::all();
         return view('roles.create', compact('permissions'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|unique:roles,name,' . ($role->id ?? 'NULL'),
-            'permissions' => 'array|required',
+            'name' => 'required|unique:roles,name',
+            'permissions' => 'required|array',
         ]);
 
-        Role::create(['name' => $request->name]);
+        $role = Role::create(['name' => $request->name]);
+
+        $role->syncPermissions($request->permissions); // ← esta línea asigna los permisos
 
         return redirect()->route('roles.index')->with('success', 'Rol creado con éxito.');
     }
 
     public function edit(Role $role)
     {        
-        $permissions = \Spatie\Permission\Models\Permission::all();
+        $permissions = Permission::all();
         return view('roles.edit', compact('role', 'permissions'));
     }
 
@@ -46,14 +49,17 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $request->validate([
-            'name' => 'required|unique:roles,name,' . ($role->id ?? 'NULL'),
-            'permissions' => 'array|required',
+            'name' => 'required|unique:roles,name,' . $role->id,
+            'permissions' => 'required|array',
         ]);
 
         $role->update(['name' => $request->name]);
 
+        $role->syncPermissions($request->permissions); // ← Actualiza los permisos
+
         return redirect()->route('roles.index')->with('success', 'Rol actualizado.');
     }
+
 
     public function destroy(Role $role)
     {

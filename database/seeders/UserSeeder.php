@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
 
         // Crear usuario Super Admin
         $superAdmin = User::firstOrCreate(
-            ['email' => 'jcruz@outlook.com'],
+            ['email' => 'jfcruz@outlook.com'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('P4$$wOrd-2025SA'),
