@@ -21,5 +21,10 @@
                 {{ __('Restablecer contraseña') }}
             </x-primary-button>
         </div>
+        <div class="flex items-center justify-end mt-4">
+            <a href="{{ route('home') }}" class="underline text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">
+                {{ __('Regresar') }}
+            </a>
+        </div>
     </form>
 </x-guest-layout>
