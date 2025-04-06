@@ -81,7 +81,7 @@
         <!-- Custom js -->
         <script src="{{ asset('js/pcoded.min.js') }}"></script>
         <script src="{{ asset('js/vertical/vertical-layout.min.js') }}"></script>
-        <script type="text/javascript" src="{{ asset('pages/dashboard/custom-dashboard.min.js') }}"></script>
+        <!--script type="text/javascript" src="{{ asset('pages/dashboard/custom-dashboard.min.js') }}"></script-->
         <script type="text/javascript" src="{{ asset('js/script.min.js') }}"></script>
     </body>
 </html>

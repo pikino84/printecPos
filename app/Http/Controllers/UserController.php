@@ -32,21 +32,21 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
+    {        
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|string|exists:roles,name',
         ]);
-
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        $user->syncRoles($request->roles); // si usas Spatie
+        $user->assignRole($request->role); // Asignar el rol al usuario
 
         return redirect()->route('users.index')->with('success', 'UseUsuario creado.<');
     }
@@ -78,9 +78,11 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'email' => "required|email|unique:users,email,{$user->id}",
-            'roles' => 'required|array',
+            'email' => "required|email|unique:users,email,{$id}",
+            'role' => 'required|string|exists:roles,name',
         ]);
+
+        $user = User::findOrFail($id);
 
         $user->update([
             'name' => $request->name,
@@ -91,7 +93,7 @@ class UserController extends Controller
             $user->update(['password' => Hash::make($request->password)]);
         }
 
-        $user->syncRoles($request->roles);
+        $user->syncRoles($request->role);
 
         return redirect()->route('users.index')->with('success', 'Usuario actualizado.');
     }

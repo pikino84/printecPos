@@ -25,14 +25,15 @@
             </div>
 
             <div class="form-group">
-                <label>Roles</label>
-                <select name="roles[]" class="form-control" multiple required>
+                <label>Roles</label>                
+                <select name="role" class="form-control" required>
                     @foreach ($roles as $role)
                         <option value="{{ $role->name }}" {{ $user->roles->contains('name', $role->name) ? 'selected' : '' }}>
                             {{ $role->name }}
                         </option>
                     @endforeach
                 </select>
+                
             </div>
 
             <button type="submit" class="btn btn-primary">Actualizar</button>

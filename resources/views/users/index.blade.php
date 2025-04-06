@@ -7,6 +7,12 @@
     <div class="row">
         <div class="col-md-12">
             <h5>Usuarios</h5>
+            @if (session('success'))                
+                <div class="alert alert-success background-success alert-dismissible">
+                    <strong>{{ session('success') }}</strong> 
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
             <a href="{{ route('users.create') }}" class="btn btn-primary float-right mb-3">Nuevo Usuario</a>
         </div>
     </div>

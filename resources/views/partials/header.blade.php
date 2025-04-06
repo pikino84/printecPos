@@ -3,7 +3,7 @@
     <div class="navbar-wrapper">
         <div class="navbar-logo">
             <a href="index.html">
-                <img class="img-fluid" src="{{ asset('images/logo.png') }}" alt="Theme-Logo" />
+                <img class="img-fluid" src="{{ asset('images/logo_printec_white.png') }}" alt="Theme-Logo" />
             </a>
             <a class="mobile-menu" id="mobile-collapse" href="#!">
                 <i class="feather icon-menu icon-toggle-right"></i>
@@ -34,7 +34,7 @@
                 </li>
             </ul>
             <ul class="nav-right">
-                <li class="header-notification">
+                <!--li class="header-notification">
                     <div class="dropdown-primary dropdown">
                         <div class="dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="feather icon-bell"></i>
@@ -48,7 +48,7 @@
                             <li>
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
-                                        <img class="img-radius" src="../files/assets/images/avatar-4.jpg" alt="Generic placeholder image">
+                                        <img class="img-radius" src="{{ asset('images/avatar-4.jpg') }}" alt="Generic placeholder image">
                                     </div>
                                     <div class="flex-grow-1">
                                         <h5 class="notification-user">John Doe</h5>
@@ -60,7 +60,7 @@
                             <li>
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
-                                        <img class="img-radius" src="../files/assets/images/avatar-3.jpg" alt="Generic placeholder image">
+                                        <img class="img-radius" src="{{ asset('images/avatar-3.jpg') }}" alt="Generic placeholder image">
                                     </div>
                                     <div class="flex-grow-1">
                                         <h5 class="notification-user">Joseph William</h5>
@@ -72,7 +72,7 @@
                             <li>
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
-                                        <img class="img-radius" src="../files/assets/images/avatar-4.jpg" alt="Generic placeholder image">
+                                        <img class="img-radius" src="{{ asset('images/avatar-4.jpg') }}" alt="Generic placeholder image">
                                     </div>
                                     <div class="flex-grow-1">
                                         <h5 class="notification-user">Sara Soudein</h5>
@@ -83,17 +83,16 @@
                             </li>
                         </ul>
                     </div>
-                </li>
-                <li class="header-notification">
+                </li-->
+                <!--li class="header-notification">
                     <div class="dropdown-primary dropdown">
                         <div class="displayChatbox dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="feather icon-message-square"></i>
                             <span class="badge bg-c-green">3</span>
                         </div>
                     </div>
-                </li>
+                </li-->
                 <li class="user-profile header-notification">
-
                     <div class="dropdown-primary dropdown">
                         <div class="dropdown-toggle" data-bs-toggle="dropdown">
                             <img src="{{ asset('images/avatar-blank.jpg') }}" class="img-radius" alt="User-Profile-Image">
@@ -162,7 +161,7 @@
                 <div class="main-friend-list">
                     <div class="media userlist-box waves-effect waves-light" data-id="1" data-status="online" data-username="Josephin Doe">
                         <a class="media-left" href="#!">
-                                    <img class="media-object img-radius img-radius" src="../files/assets/images/avatar-3.jpg" alt="Generic placeholder image ">
+                                    <img class="media-object img-radius img-radius" src="{{ asset('images/avatar-3.jpg') }}" alt="Generic placeholder image ">
                                     <div class="live-status bg-success"></div>
                                 </a>
                         <div class="media-body">
@@ -171,7 +170,7 @@
                     </div>
                     <div class="media userlist-box waves-effect waves-light" data-id="2" data-status="online" data-username="Lary Doe">
                         <a class="media-left" href="#!">
-                                    <img class="media-object img-radius" src="../files/assets/images/avatar-2.jpg" alt="Generic placeholder image">
+                                    <img class="media-object img-radius" src="{{ asset('images/avatar-2.jpg') }}" alt="Generic placeholder image">
                                     <div class="live-status bg-success"></div>
                                 </a>
                         <div class="media-body">
@@ -180,7 +179,7 @@
                     </div>
                     <div class="media userlist-box waves-effect waves-light" data-id="3" data-status="online" data-username="Alice">
                         <a class="media-left" href="#!">
-                                    <img class="media-object img-radius" src="../files/assets/images/avatar-4.jpg" alt="Generic placeholder image">
+                                    <img class="media-object img-radius" src="{{ asset('images/avatar-4.jpg') }}" alt="Generic placeholder image">
                                     <div class="live-status bg-success"></div>
                                 </a>
                         <div class="media-body">
@@ -189,7 +188,7 @@
                     </div>
                     <div class="media userlist-box waves-effect waves-light" data-id="4" data-status="offline" data-username="Alia">
                         <a class="media-left" href="#!">
-                                    <img class="media-object img-radius" src="../files/assets/images/avatar-3.jpg" alt="Generic placeholder image">
+                                    <img class="media-object img-radius" src="{{ asset('images/avatar-3.jpg') }}" alt="Generic placeholder image">
                                     <div class="live-status bg-default"></div>
                                 </a>
                         <div class="media-body">
@@ -198,7 +197,7 @@
                     </div>
                     <div class="media userlist-box waves-effect waves-light" data-id="5" data-status="offline" data-username="Suzen">
                         <a class="media-left" href="#!">
-                                    <img class="media-object img-radius" src="../files/assets/images/avatar-2.jpg" alt="Generic placeholder image">
+                                    <img class="media-object img-radius" src="{{ asset('images/avatar-2.jpg') }}" alt="Generic placeholder image">
                                     <div class="live-status bg-default"></div>
                                 </a>
                         <div class="media-body">
@@ -223,7 +222,7 @@
         <div class="d-flex chat-messages">
             <a class="media-left photo-table" href="#!">
                 <div class="flex-shrink-0">
-                    <img class="media-object img-radius img-radius m-t-5" src="../files/assets/images/avatar-2.jpg" alt="Generic placeholder image">
+                    <img class="media-object img-radius img-radius m-t-5" src="{{ asset('images/avatar-2.jpg') }}" alt="Generic placeholder image">
                 </div>
             </a>
             <div class="flex-grow-1 chat-menu-content">
@@ -244,7 +243,7 @@
         <div class="d-flex chat-messages">
             <a class="media-left photo-table" href="#!">
                 <div class="flex-shrink-0">
-                    <img class="media-object img-radius img-radius m-t-5" src="../files/assets/images/avatar-2.jpg" alt="Generic placeholder image">
+                    <img class="media-object img-radius img-radius m-t-5" src="{{ asset('images/avatar-2.jpg') }}" alt="Generic placeholder image">
                 </div>
             </a>
             <div class="media-body chat-menu-content">
