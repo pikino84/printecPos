@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ActivityLogController;
 
 
 
@@ -35,10 +36,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
-    });
-
-    Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->middleware(['auth', 'role:admin'])->name('activity.logs.index');
-    
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity.logs.index');
+    });    
 });
 
 require __DIR__.'/auth.php';
