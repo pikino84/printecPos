@@ -17,3 +17,11 @@ yarn-error.log
 /.idea
 /.vscode
 deploy.sh
+public/.htaccess
+composer-setup.php
+composer.phar
+env.sh
+error_log
+nodejs/
+phpinfo.php
+
