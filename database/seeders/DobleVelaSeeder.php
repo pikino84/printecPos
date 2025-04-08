@@ -150,7 +150,7 @@ class DobleVelaSeeder extends Seeder
                 } else {
                     throw new \Exception();
                 }
-            } catch (\Exception) {
+            } catch (\Exception $e) {
                 copy(storage_path("app/public/" . $placeholder), storage_path("app/public/" . $vpath));
                 $variant->image_path = $vpath;
             }

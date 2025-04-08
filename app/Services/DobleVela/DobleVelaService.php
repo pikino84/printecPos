@@ -3,6 +3,7 @@
 namespace App\Services\DobleVela;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class DobleVelaService
 {
@@ -16,6 +17,8 @@ class DobleVelaService
     public function consultarYGuardar()
     {
         $response = $this->client->getExistenciaAll();
+        //log
+        Log::info('Respuesta de Doble Vela', ['response' => $response]);
 
         // Convertir a JSON si es un objeto o XML
         $json = json_encode($response, JSON_PRETTY_PRINT);
