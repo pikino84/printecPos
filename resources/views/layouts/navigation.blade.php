@@ -1,4 +1,4 @@
-<nav class="pcoded-navbar">
+<nav class="pcoded-navbar sidebar-fixed">
     <div class="nav-list">
         <div class="pcoded-inner-navbar main-menu">
             <div class="pcoded-navigation-label">Navigation</div>
@@ -28,33 +28,21 @@
                             <a href="{{ route('activity.logs.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Historial de Actividad</span>
                             </a>
-                        </li>
-                        <li class="">
-                            <a href="index.html" class="waves-effect waves-dark">
-                                <span class="pcoded-mtext">Default</span>
-                            </a>
-                        </li>
-                        <li class="">
-                            <a href="dashboard-crm.html" class="waves-effect waves-dark">
-                                <span class="pcoded-mtext">CRM</span>
-                            </a>
-                        </li>
-                        <li class="">
-                            <a href="dashboard-analytics.html" class="waves-effect waves-dark">
-                                <span class="pcoded-mtext">Analytics</span>
-                                <span class="pcoded-badge label label-info ">NEW</span>
-                            </a>
-                        </li>
+                        </li>                        
                     </ul>
                 </li>
                 <li class="pcoded-hasmenu">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
-                        <span class="pcoded-mtext">Page layouts</span>
-                        <span class="pcoded-badge label label-warning">NEW</span>
+                        <span class="pcoded-mtext">Productos</span>
                     </a>
                     <ul class="pcoded-submenu">
-                        <li class=" pcoded-hasmenu">
+                        <li class="{{ request()->routeIs('catalogo.*') ? 'active' : '' }}">
+                            <a href="{{ route('catalogo.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Catalogo</span>
+                            </a>
+                        </li>
+                        <!--li class=" pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Vertical</span>
                             </a>
@@ -107,15 +95,10 @@
                                     </a>
                                 </li>
                             </ul>
-                        </li>
-                        <li class="">
-                            <a href="menu-bottom.html" class="waves-effect waves-dark">
-                                <span class="pcoded-mtext">Bottom Menu</span>
-                            </a>
-                        </li>
+                        </li-->
                     </ul>
                 </li>
-                <li class="">
+                <!--li class="">
                     <a href="navbar-light.html" class="waves-effect waves-dark">
                         <span class="pcoded-micon">
                             <i class="feather icon-menu"></i>
@@ -148,9 +131,9 @@
                             </a>
                         </li>
                     </ul>
-                </li>
+                </li-->
             </ul>
-            <div class="pcoded-navigation-label">UI Element</div>
+            <!--div class="pcoded-navigation-label">UI Element</div>
             <ul class="pcoded-item pcoded-left-item">
                 <li class="pcoded-hasmenu">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
@@ -982,7 +965,7 @@
                         <span class="pcoded-mtext">Sample Page</span>
                     </a>
                 </li>
-            </ul>
+            </ul-->
             
         </div>
     </div>

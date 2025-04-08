@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\ProductCatalogController;
 
 
 
@@ -37,7 +38,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity.logs.index');
-    });    
+    });
+    
+    Route::get('/catalogo', [ProductCatalogController::class, 'index'])->name('catalogo.index');
+    Route::get('/catalogo/fetch', [ProductCatalogController::class, 'fetch'])->name('catalogo.fetch');
 });
 
 require __DIR__.'/auth.php';
