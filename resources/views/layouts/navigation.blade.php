@@ -37,6 +37,24 @@
                         <span class="pcoded-mtext">Productos</span>
                     </a>
                     <ul class="pcoded-submenu">
+                        <li class="nav-item">
+                            <a href="{{ url('/printec-categories') }}" class="nav-link">
+                                <i class="nav-icon fas fa-tags"></i>
+                                <p>Categorías Internas</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('/category-mappings') }}" class="nav-link">
+                                <i class="nav-icon fas fa-tags"></i>
+                                <p>Asignar Categorías</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url('/warehouses') }}" class="nav-link">
+                                <i class="nav-icon fas fa-tags"></i>
+                                <p>Almacenes</p>
+                            </a>
+                        </li>
                         <li class="{{ request()->routeIs('catalogo.*') ? 'active' : '' }}">
                             <a href="{{ route('catalogo.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Catalogo</span>

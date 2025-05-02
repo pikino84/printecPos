@@ -7,6 +7,10 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ProductCatalogController;
+use App\Http\Controllers\CategoryMappingController;
+use App\Http\Controllers\ProviderCategoryMappingController;
+use App\Http\Controllers\PrintecCategoryController;
+use App\Http\Controllers\ProductWarehouseController;
 
 
 
@@ -41,7 +45,24 @@ Route::middleware('auth')->group(function () {
     });
     
     Route::get('/catalogo', [ProductCatalogController::class, 'index'])->name('catalogo.index');
-    Route::get('/catalogo/fetch', [ProductCatalogController::class, 'fetch'])->name('catalogo.fetch');
+    //Route::get('/catalogo/fetch', [ProductCatalogController::class, 'fetch'])->name('catalogo.fetch');
+
+    // Rutas para la gestión de categorías de Printec
+    Route::get('/printec-categories', [PrintecCategoryController::class, 'index']);
+    Route::post('/printec-categories', [PrintecCategoryController::class, 'store']);
+    Route::delete('/printec-categories/{id}', [PrintecCategoryController::class, 'destroy']);
+    Route::put('/printec-categories/{id}', [PrintecCategoryController::class, 'update']);
+
+
+    // Rutas para asociar categorías de proveedores a categorías de Printec
+    Route::get('/category-mappings', [CategoryMappingController::class, 'index']);
+    Route::post('/category-mappings/{category}', [CategoryMappingController::class, 'update']);
+
+    // Rutas para poner nicknames a los almacenes
+    Route::get('/warehouses', [ProductWarehouseController::class, 'index']);
+    Route::put('/warehouses/{id}', [ProductWarehouseController::class, 'update'])->name('warehouses.update');
+
+
 });
 
 require __DIR__.'/auth.php';

@@ -1,55 +1,59 @@
-document.addEventListener("DOMContentLoaded", function () {
-    let page = 2;
-    let loading = false;
-    let hasMore = true;
+let page = 1;
+let loading = false;
 
-    const grid = document.getElementById("productGrid");
-    const loader = document.getElementById("loader");
-    const categoryFilter = document.getElementById("categoryFilter");
-    const searchInput = document.getElementById("searchInput");
+function loadMoreProducts() {
+    if (loading) return;
 
-    function fetchProducts() {
-        if (loading || !hasMore) return;
+    loading = true;
+    $('#loader').show();
 
-        loading = true;
-        loader.style.display = "block";
+    const category = $('#categoryFilter').val();
+    const search = $('#searchInput').val();
 
-        const category = categoryFilter.value;
-        const search = searchInput.value;
-
-        fetch(`/catalogo/fetch?page=${page}&category=${category}&search=${search}`)
-            .then(res => res.json())
-            .then(data => {
-                grid.insertAdjacentHTML("beforeend", data.html);
-                hasMore = data.hasMore;
-                page++;
-            })
-            .finally(() => {
-                loading = false;
-                loader.style.display = "none";
-            });
-    }
-
-    // Scroll infinito
-    window.addEventListener("scroll", () => {
-        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-            fetchProducts();
+    page++;
+    $.get(`?page=${page}&category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`, function (data) {
+        if (data.trim().length > 0) {
+            $('#productGrid').append(data);
+        } else {
+            // Detiene el scroll si ya no hay más productos, pero NO muestra mensaje
+            $(window).off('scroll');
         }
+        $('#loader').hide();
+        loading = false;
     });
+}
 
-    // Filtros
-    [categoryFilter, searchInput].forEach(input => {
-        input.addEventListener("input", () => {
-            page = 1;
-            hasMore = true;
-            grid.innerHTML = "";
-            fetch(`/catalogo/fetch?page=1&category=${categoryFilter.value}&search=${searchInput.value}`)
-                .then(res => res.json())
-                .then(data => {
-                    grid.innerHTML = data.html;
-                    hasMore = data.hasMore;
-                    page = 2;
-                });
-        });
+$(window).scroll(function () {
+    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 400) {
+        loadMoreProducts();
+    }
+});
+
+$('#categoryFilter, #searchInput').on('change keyup', function () {
+    page = 1;
+    const category = $('#categoryFilter').val();
+    const search = $('#searchInput').val();
+
+    $.get(`?page=1&category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`, function (data) {
+        if ($.trim(data).length === 0) {
+            $('#productGrid').html(`
+                <div class="col-12 text-center mt-4">
+                    <div class="alert alert-warning">
+                        No se encontraron productos con los filtros aplicados.<br>
+                        Intenta quitar alguno o buscar otra cosa.
+                    </div>
+                </div>
+            `);
+            $(window).off('scroll');
+        } else {
+            $('#productGrid').html(data);
+
+            // Reactivar scroll
+            $(window).off('scroll').on('scroll', function () {
+                if ($(window).scrollTop() + $(window).height() >= $(document).height() - 400) {
+                    loadMoreProducts();
+                }
+            });
+        }
     });
 });

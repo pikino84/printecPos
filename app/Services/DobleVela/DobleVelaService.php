@@ -14,23 +14,30 @@ class DobleVelaService
         $this->client = $client;
     }
 
-    public function consultarYGuardar()
+    public function syncProducts()    
     {
         $response = $this->client->getExistenciaAll();
         //log
-        Log::info('Respuesta de Doble Vela', ['response' => $response]);
+        Log::info('Respuesta de Doble Vela OK');
 
         // Convertir a JSON si es un objeto o XML
-        $json = json_encode($response, JSON_PRETTY_PRINT);
+        $json = $response->GetExistenciaAllResult;        
+        $data = json_decode($json, true);
+        
 
-        // Guardar en storage/app/doblevela/products.json
-        Storage::disk('local')->put('doblevela/products.json', $json);
+        if ($data['intCodigo'] == 100) {
+                        
+            Log::error("Horario aproximado 11am a 7pm Cancun. " . $data['strMensaje']);
+            
+            return null;
+        }else {
+            // Guardar el JSON en un archivo
+            log::info('Guardando archivo JSON', ['path' => 'doblevela/products.json']);
+            $result = $data['Resultado'];
+            $json = json_encode($result, JSON_PRETTY_PRINT);
+            Storage::disk('local')->put('doblevela/products.json', $json);
+        }
 
         return $json;
-    }
-
-    public function obtenerDesdeArchivo()
-    {
-        return json_decode(Storage::disk('local')->get('doblevela/products.json'), true);
     }
 }

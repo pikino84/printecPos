@@ -84,5 +84,7 @@
         <!--script type="text/javascript" src="{{ asset('pages/dashboard/custom-dashboard.min.js') }}"></script-->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert/dist/sweetalert.min.js"></script>
         <script type="text/javascript" src="{{ asset('js/script.min.js') }}"></script>
+        @yield('scripts')
+
     </body>
 </html>

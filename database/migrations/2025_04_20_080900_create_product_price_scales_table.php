@@ -6,15 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        Schema::create('providers', function (Blueprint $table) {
+        Schema::create('product_price_scales', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->decimal('price', 10, 2); // Precio neto
+            $table->integer('scale');
             $table->timestamps();
         });
     }
 
     public function down(): void {
-        Schema::dropIfExists('providers');
+        Schema::dropIfExists('product_price_scales');
     }
 };

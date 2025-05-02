@@ -36,4 +36,10 @@ return [
         'wsdl' => env('DOBLEVELA_WSDL'),
     ],
 
+    'innovation' => [
+        'wsdl' => env('INNOVATION_API_BASE_URL'),
+        'username' => env('INNOVATION_API_USER'),
+        'password' => env('INNOVATION_API_PASSWORD'),
+    ],
+
 ];

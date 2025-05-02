@@ -10,18 +10,14 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('sku')->unique();
+            $table->string('slug')->unique();
             $table->string('color')->nullable();
             $table->string('color_code')->nullable();
-            $table->integer('stock_total')->default(0);
-            $table->integer('reserved')->default(0);
-            $table->decimal('price', 10, 2)->nullable();
-            $table->string('status')->nullable();
-            $table->string('arrival_qty_1')->nullable();
-            $table->string('arrival_date_1')->nullable();
-            $table->string('arrival_qty_2')->nullable();
-            $table->string('arrival_date_2')->nullable();
-            $table->string('image_path')->nullable();
+            $table->string('color_name')->nullable();
+            $table->string('code')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
