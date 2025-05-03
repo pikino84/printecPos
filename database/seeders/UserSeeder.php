@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
         $superAdmin = User::firstOrCreate(
             ['email' => 'jfcruz@outlook.com'],
             [
-                'name' => 'Super Admin',
+                'name' => 'Francisco Ayapantecalth',
                 'password' => Hash::make('P4$$wOrd-2025SA'),
             ]
         );
@@ -30,7 +30,7 @@ class UserSeeder extends Seeder
         $superAdmin2 = User::firstOrCreate(
             ['email' => 'ebutron@printec.mx"'],
             [
-                'name' => 'Super Admin',
+                'name' => 'Eduardo Butrón',
                 'password' => Hash::make('L4l0#$@@$#'),
             ]
         );
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
         $superAdmin3 = User::firstOrCreate(
             ['email' => 'ingrid@printec.mx'],
             [
-                'name' => 'Super Admin',
+                'name' => 'Ingrid Martinez',
                 'password' => Hash::make('L4l0#$@@$#'),
             ]
         );
