@@ -28,7 +28,7 @@ class UserSeeder extends Seeder
 
         // Crear super admin ebutron@printec.mx
         $superAdmin2 = User::firstOrCreate(
-            ['email' => 'ebutron@printec.mx"'],
+            ['email' => 'ebutron@printec.mx'],
             [
                 'name' => 'Eduardo Butrón',
                 'password' => Hash::make('L4l0#$@@$#'),
