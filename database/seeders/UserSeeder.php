@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Crear usuario Super Admin
+        // Crear usuario Francisco
         $superAdmin = User::firstOrCreate(
             ['email' => 'jfcruz@outlook.com'],
             [
@@ -26,7 +26,31 @@ class UserSeeder extends Seeder
             $superAdmin->assignRole($superAdminRole);
         }
 
-        // Crear usuario Admin
+        // Crear super admin ebutron@printec.mx
+        $superAdmin2 = User::firstOrCreate(
+            ['email' => 'ebutron@printec.mx"'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('L4l0#$@@$#'),
+            ]
+        );
+        $superAdminRole2 = Role::where('name', 'super admin')->first();
+        if ($superAdminRole2) {
+            $superAdmin2->assignRole($superAdminRole2);
+        }
+        // Crear usuario super admin ingrid@printec.mx
+        $superAdmin3 = User::firstOrCreate(
+            ['email' => 'ingrid@printec.mx'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('L4l0#$@@$#'),
+            ]
+        );
+        $superAdminRole3 = Role::where('name', 'super admin')->first();
+        if ($superAdminRole3) {
+            $superAdmin3->assignRole($superAdminRole3);
+        }
+        // Crear usuario admin
         $admin = User::firstOrCreate(
             ['email' => 'pikino84@gmail.com'],
             [
