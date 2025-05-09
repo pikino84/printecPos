@@ -138,6 +138,14 @@ class InnovationSeeder extends Seeder
                 if (!file_exists($imgFullPath)) {
                     try {
                         $imgContent = file_get_contents($imageUrl);
+                        if ($imgContent === false) {
+                            //$imageContent =  printecPos\storage\app\public\placeholder.jpg
+                            // Si no se puede obtener la imagen, puedes usar una imagen de marcador de posición
+                            $imgContent = file_get_contents(storage_path('app/public/placeholder.jpg'));
+                            if ($imgContent === false) {
+                                throw new \Exception("Error al obtener la imagen de marcador de posición");
+                            }                            
+                        }
                         file_put_contents($imgFullPath, $imgContent);
                     } catch (\Exception $e) {
                         Log::error("Error imagen color: {$imageUrl}", ['error' => $e->getMessage()]);
