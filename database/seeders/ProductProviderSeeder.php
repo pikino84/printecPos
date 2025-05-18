@@ -12,6 +12,7 @@ class ProductProviderSeeder extends Seeder
         $providers = [
             ['slug' => 'innovation', 'name' => 'Innovation'],
             ['slug' => 'doble-vela', 'name' => 'Doble Vela'],
+            ['slug' => '4promotional', 'name' => '4Promotional']
         ];
 
         foreach ($providers as $provider) {
