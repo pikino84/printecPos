@@ -7,7 +7,7 @@
             <h4>Catálogo de Productos</h4>
         </div>
         <div class="col-md-6 text-right">
-            <select id="categoryFilter" class="form-control" style="width: auto; display: inline-block;">
+            <select id="categoryFilter" class="form-control" style="width: 180px; display: inline-block;">
                 <option value="">Todas las categorías</option>
                 @foreach($categories as $category)
                     <option value="{{ $category->slug }}">{{ $category->name }}</option>

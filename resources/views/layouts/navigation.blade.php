@@ -3,7 +3,7 @@
         <div class="pcoded-inner-navbar main-menu">
             <div class="pcoded-navigation-label">Navigation</div>
             <ul class="pcoded-item pcoded-left-item">
-                <li class="pcoded-hasmenu active pcoded-trigger">
+                <li class="pcoded-hasmenu {{ menuActive(['users.*', 'permissions.*', 'roles.*', 'activity.logs.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                         <span class="pcoded-mtext">Dashboard</span>
@@ -31,28 +31,25 @@
                         </li>                        
                     </ul>
                 </li>
-                <li class="pcoded-hasmenu">
+                <li class="pcoded-hasmenu {{ menuActive(['printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
                         <span class="pcoded-mtext">Productos</span>
                     </a>
                     <ul class="pcoded-submenu">
-                        <li class="nav-item">
+                        <li class="nav-item {{ request()->is('printec-categories*') ? 'active' : '' }}">
                             <a href="{{ url('/printec-categories') }}" class="nav-link">
-                                <i class="nav-icon fas fa-tags"></i>
-                                <p>Categorías Internas</p>
+                                <span class="pcoded-mtext">Categorías Internas</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item {{ request()->is('category-mappings*') ? 'active' : '' }}">
                             <a href="{{ url('/category-mappings') }}" class="nav-link">
-                                <i class="nav-icon fas fa-tags"></i>
-                                <p>Asignar Categorías</p>
+                                <span class="pcoded-mtext">Asignar Categorías</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="{{ url('/warehouses') }}" class="nav-link">
-                                <i class="nav-icon fas fa-tags"></i>
-                                <p>Almacenes</p>
+                        <li class="nav-item {{ request()->is('warehouses*') ? 'active' : '' }}">
+                            <a href="{{ url('/warehouses') }}" class="nav-link">                                
+                                <span class="pcoded-mtext">Almacenes</span>
                             </a>
                         </li>
                         <li class="{{ request()->routeIs('catalogo.*') ? 'active' : '' }}">

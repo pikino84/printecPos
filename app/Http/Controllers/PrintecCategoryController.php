@@ -10,7 +10,7 @@ class PrintecCategoryController extends Controller
 {
     public function index()
     {
-        $categories = PrintecCategory::all();
+        $categories = PrintecCategory::all()->sortBy('name');
         return view('printec-categories.index', compact('categories'));
     }
 

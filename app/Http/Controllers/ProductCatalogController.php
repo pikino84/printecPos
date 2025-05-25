@@ -28,6 +28,7 @@ class ProductCatalogController extends Controller
 
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                ->orWhere('model_code', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhereHas('variants', function ($q2) use ($search) {
                       $q2->where('code', 'like', "%{$search}%");
