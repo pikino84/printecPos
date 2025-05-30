@@ -14,6 +14,9 @@
                 <p class="card-text mb-0"><small>Categorías: {{ $categoryNames }}</small></p>
 
                 <p class="card-text"><small>Modelo: {{ $product->model_code }}</small></p>
+                <a href="{{ route('catalogo.show', $product->id) }}" class="btn btn-outline-primary btn-sm">
+                    Ver detalle
+                </a>
             </div>
         </div>
     </div>

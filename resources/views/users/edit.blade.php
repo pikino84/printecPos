@@ -20,17 +20,33 @@
             </div>
 
             <div class="form-group">
-                <label>Nueva Contraseña (opcional)</label>
+                <label>Nueva Contraseña (opcional 8 caracteres mínimo )</label>
                 <input type="password" name="password" class="form-control">
             </div>
+
+            {{-- Solo Printec puede editar el asociado --}}
+            @if (auth()->user()->asociado_id === null)
+                <div class="form-group">
+                    <label>Asociado</label>
+                    <select name="asociado_id" class="form-control">
+                        <option value="">Ninguno</option>
+                        @foreach ($asociados as $asociado)
+                            <option value="{{ $asociado->id }}" {{ $user->asociado_id == $asociado->id ? 'selected' : '' }}>
+                                {{ $asociado->nombre_comercial }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
 
             <div class="form-group">
                 <label>Roles</label>                
                 <select name="role" class="form-control" required>
                     @foreach ($roles as $role)
-                        <option value="{{ $role->name }}" {{ $user->roles->contains('name', $role->name) ? 'selected' : '' }}>
-                            {{ $role->name }}
-                        </option>
+                        <option value="{{ $role }}" {{ $user->roles->pluck('name')->contains($role) ? 'selected' : '' }}>
+                        {{ $role }}
+                    </option>
+
                     @endforeach
                 </select>
                 

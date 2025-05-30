@@ -11,13 +11,11 @@ return new class extends Migration {
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('sku')->unique();
             $table->string('slug')->unique();
-            $table->string('color')->nullable();
-            $table->string('color_code')->nullable();
+            $table->string('code_name')->nullable();
             $table->string('color_name')->nullable();
-            $table->string('code')->nullable();
             $table->string('image')->nullable();
             $table->timestamps();
-            $table->softDeletes();
+            
         });
     }
 

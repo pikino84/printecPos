@@ -66,5 +66,9 @@ class User extends Authenticatable
         $this->notify(new CustomResetPassword($token));
     }
     
+    /*public function asociados()
+    {
+        return $this->hasMany(Asociado::class);
+    }*/
 
 }

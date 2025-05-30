@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductProvider;
 use App\Models\ProductVariant;
-use App\Models\ProductImage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -96,11 +95,6 @@ class FourPromotionalSeeder extends Seeder
 
             $productUpdateOrCreate->save();
 
-            ProductImage::firstOrCreate([
-                'product_id' => $productUpdateOrCreate->id,
-                'url' => $imagePath,
-                'is_main' => true,
-            ]);
 
             //Product variant Image
             $main_image = null;
@@ -135,10 +129,8 @@ class FourPromotionalSeeder extends Seeder
             ], [    
                 'product_id' => $productUpdateOrCreate->id,
                 'slug' => Str::slug($sku),
-                'color' => $product['color'],
-                'color_code' => Str::slug($product['color']),
-                'color_name' => $product['color'],
-                'code' => $sku,
+                'color_name' => $product['color'],                            
+                'code_name' => $sku,
                 'image' => $imagePath
             ]);
 
@@ -192,11 +184,7 @@ class FourPromotionalSeeder extends Seeder
                 }
 
             }
-            ProductImage::firstOrCreate([
-                'product_id' => $productUpdateOrCreate->id,
-                'url' => $imagePath,
-                'is_main' => false,
-            ]);
+            
         }
     }
 }

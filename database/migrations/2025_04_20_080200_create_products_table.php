@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('model_code')->nullable();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->text('keywords')->nullable();
             $table->string('short_description', 500)->nullable();
             $table->string('material')->nullable();
             $table->string('packing_type')->nullable();

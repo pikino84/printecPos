@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductProvider;
 use App\Models\ProductVariant;
-use App\Models\ProductImage;
 use Illuminate\Support\Facades\Log;
 
 class DobleVelaSeeder extends Seeder
@@ -81,33 +80,41 @@ class DobleVelaSeeder extends Seeder
             $product->main_image = $mainLocalPath;
             $product->save();
 
-
-
-            ProductImage::firstOrCreate([
-                'product_id' => $product->id,
-                'url' => $mainLocalPath,
-                'is_main' => true,
-            ]);
-
             foreach ($items as $data) {
-                $productVariant = ProductVariant::firstOrNew([
-                    'sku' => $data['CLAVE'],
-                ]);
-
                 $parts = explode('-', $data['COLOR']);
                 $color_name = mb_strtolower(trim(end($parts)), 'UTF-8');
 
+                $color_slug = Str::slug($data['COLOR']);
+                $color_image = explode("-", $data['COLOR']);
+                $color_image = trim( end($color_image) );
+                $color_image = str_replace(' ', '', mb_strtolower($color_image, 'UTF-8'));
+                $modelo = str_replace(' ', '', $data['MODELO']);
+                $variantImageName = "{$modelo}_{$color_image}_lrg.jpg";
+                $variantImageUrl = "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName);
+                $variantLocalPath = "products/doblevela/{$variantImageName}";
+                $variantStoragePath = storage_path("app/public/{$variantLocalPath}");
 
+                $this->downloadImage($variantImageUrl, $variantStoragePath);
+                
 
-
+                // Generar nombre base de imagen
+                $variantImageName = "{$model}_{$color_name}_lrg.jpg";
+                $variantImageUrl = "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName);
+                
+                
+                $productVariant = ProductVariant::firstOrNew([
+                    'sku' => $data['CLAVE'],
+                ]);
                 $productVariant->fill([
                     'product_id' => $product->id,
                     'slug' => Str::slug($data['CLAVE']),
-                    'code' => $data['CLAVE'],
+                    'code_name' => $data['CLAVE'],
                     'color_name' => $color_name,
+                    'image' => $variantLocalPath,
                 ]);
 
                 $productVariant->save();
+
 
                 $warehouses = [
                     7 => intval($first['Disponible Almacen 7'] ?? 0),
@@ -141,22 +148,7 @@ class DobleVelaSeeder extends Seeder
                 
                 
 
-                $color_slug = Str::slug($data['COLOR']);
-                $color_image = explode("-", $data['COLOR']);
-                $color_image = trim( end($color_image) );
-                $color_image = str_replace(' ', '', mb_strtolower($color_image, 'UTF-8'));
-                $modelo = str_replace(' ', '', $data['MODELO']);
-                $variantImageName = "{$modelo}_{$color_image}_lrg.jpg";
-                $variantImageUrl = "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName);
-                $variantLocalPath = "products/doblevela/{$variantImageName}";
-                $variantStoragePath = storage_path("app/public/{$variantLocalPath}");
-
-                $this->downloadImage($variantImageUrl, $variantStoragePath);
-                ProductImage::firstOrCreate([
-                    'product_id' => $product->id,
-                    'url' => $variantLocalPath,
-                    'is_main' => false,
-                ]);
+                
             }
         }
     }

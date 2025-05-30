@@ -28,6 +28,12 @@
                             <a href="{{ route('activity.logs.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Historial de Actividad</span>
                             </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('asociados.index') }}" class="nav-link {{ request()->routeIs('asociados.*') ? 'active' : '' }}">
+                                <i class="feather icon-users"></i>
+                                <span class="menu-title">Asociados</span>
+                            </a>
                         </li>                        
                     </ul>
                 </li>

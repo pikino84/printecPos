@@ -12,7 +12,6 @@ use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\ProductWarehouse;
 use App\Models\ProductStock;
-use App\Models\ProductImage;
 use App\Models\ProductImpressionTechnique;
 use App\Models\ProductPriceScale;
 
@@ -88,12 +87,6 @@ class InnovationSeeder extends Seeder
 
                 $product->main_image = $localPath;
                 $product->save();
-
-                ProductImage::firstOrCreate([
-                    'product_id' => $product->id,
-                    'url' => $localPath,
-                    'is_main' => true
-                ]);
             }
 
             // Imágenes adicionales
@@ -111,11 +104,6 @@ class InnovationSeeder extends Seeder
                     }
                 }
 
-                ProductImage::firstOrCreate([
-                    'product_id' => $product->id,
-                    'url' => $imgPath,
-                    'is_main' => false
-                ]);
             }
 
             // Técnicas de impresión
@@ -152,9 +140,8 @@ class InnovationSeeder extends Seeder
                     ],
                     [
                         'image' => $imgLocalPath,
-                        'code' => $color['clave'],
+                        'code_name' => $color['clave'],
                         'color_name' => $color['color'],
-                        'color_code' => $color['codigo_color'],
                     ]
                 );
 

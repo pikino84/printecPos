@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/catalogo', [ProductCatalogController::class, 'index'])->name('catalogo.index');
     //Route::get('/catalogo/fetch', [ProductCatalogController::class, 'fetch'])->name('catalogo.fetch');
+    Route::get('/catalogo/{id}', [ProductCatalogController::class, 'show'])->name('catalogo.show');
 
     // Rutas para la gestión de categorías de Printec
     Route::get('/printec-categories', [PrintecCategoryController::class, 'index']);
@@ -61,6 +62,11 @@ Route::middleware('auth')->group(function () {
     // Rutas para poner nicknames a los almacenes
     Route::get('/warehouses', [ProductWarehouseController::class, 'index']);
     Route::put('/warehouses/{id}', [ProductWarehouseController::class, 'update'])->name('warehouses.update');
+
+    Route::resource('asociados', \App\Http\Controllers\AsociadoController::class);
+
+    
+
 
 
 });

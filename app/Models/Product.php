@@ -14,6 +14,7 @@ class Product extends Model
         'name',
         'short_name',
         'description',
+        'keywords',
         'material',
         'packing_type',
         'impression_type',
@@ -48,12 +49,6 @@ class Product extends Model
             'product_category_id', // Product.product_category_id (asegúrate de que esto exista o ajústalo)
             'printec_category_id' // ProductCategory.printec_category_id (ajusta si es diferente)
         );
-    }
-
-
-    public function images()
-    {
-        return $this->hasMany(\App\Models\ProductImage::class);
     }
 
     public function productCategory()

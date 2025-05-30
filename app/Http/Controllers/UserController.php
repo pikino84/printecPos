@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Asociado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -14,9 +15,19 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('roles')->get();
+        if (auth()->user()->asociado_id) {
+            // Si es afiliado, solo ve sus usuarios
+            $users = User::with('roles')
+                ->where('asociado_id', auth()->user()->asociado_id)
+                ->get();
+        } else {
+            // Si es usuario de Printec, ve todos
+            $users = User::with('roles')->get();
+        }
+
         return view('users.index', compact('users'));
     }
+
 
 
     /**
@@ -24,15 +35,24 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::all();
-        return view('users.create', compact('roles'));
+        $roles = Role::pluck('name', 'name');
+        
+
+        $asociados = null;
+        if (auth()->user()->asociado_id === null) {
+            $asociados = Asociado::all();
+        }
+
+        return view('users.create', compact('roles', 'asociados'));
     }
+
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {        
+        //dd($request->all());
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -40,10 +60,14 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
         ]);
         
+        $asociadoId = auth()->user()->asociado_id ?? $request->asociado_id;
+        //dd($asociadoId);
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'asociado_id' => $asociadoId, // hereda el asociado si aplica
+            'must_change_password' => true, // obliga a cambiar clave si lo deseas
         ]);
 
         $user->assignRole($request->role); // Asignar el rol al usuario
@@ -65,10 +89,12 @@ class UserController extends Controller
     public function edit(string $id)
     {
         $user = User::findOrFail($id);
-        $roles = Role::all();
+        $roles = Role::pluck('name', 'name')->toArray(); // si quieres solo nombre
+        $asociados = auth()->user()->asociado_id === null ? Asociado::all() : [];
 
-        return view('users.edit', compact('user', 'roles'));
+        return view('users.edit', compact('user', 'roles', 'asociados'));
     }
+
 
 
     /**
@@ -89,10 +115,16 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
-        if ($request->password) {
-            $user->update(['password' => Hash::make($request->password)]);
+        // Solo usuarios Printec pueden cambiar el asociado
+        if (auth()->user()->asociado_id === null) {
+            $user->asociado_id = $request->asociado_id;
         }
 
+        if ($request->password) {
+            $user->update(['password' => Hash::make($request->password)]);
+            $user->must_change_password = false;
+        }
+        $user->save();
         $user->syncRoles($request->role);
 
         return redirect()->route('users.index')->with('success', 'Usuario actualizado.');
