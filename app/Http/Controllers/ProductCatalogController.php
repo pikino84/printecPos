@@ -69,23 +69,27 @@ class ProductCatalogController extends Controller
                 
             ])
             ->findOrFail($id);
-        $images = Product::join('product_variants', 'products.id', '=', 'product_variants.product_id')
-            ->join('product_images', 'product_variants.id', '=', 'product_images.product_variant_id')
-            ->where('products.id', $producto->id)
-            ->select('product_images.*')
-            ->get();
 
-        $variants = ProductVariant::where('product_variants.product_id', $producto->id)
-            ->get();
+        // Saca la imagen principal
+        $mainImage = [
+            'image' => $producto->main_image,
+            'type' => 'main' // Opcional, por si quieres saber que esta es la principal
+        ];
+        // Saca las imágenes de las variantes
+        $variantImages = ProductVariant::where('product_id', $id)
+        ->get(['image', 'color_name']) // Traemos ambos campos
+        ->map(function ($variant) {
+            return [
+                'image' => $variant->image,
+                'type' => 'variant',
+                'color' => $variant->color_name, // Ahora sí tienes el color
+            ];
+        })->toArray();
 
-        
+        // Combina en un solo array
+        $images = array_merge([$mainImage], $variantImages);
 
-        //dd( $variants);
-        if (!$producto) {
-            abort(404, 'Producto no encontrado');
-        }
-        //dd($producto);
-        return view('products.show', compact('producto'));
+        return view('products.show', compact('producto', 'images'));
     }
 
 }

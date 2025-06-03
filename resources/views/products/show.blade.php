@@ -4,39 +4,101 @@
 <div class="container py-4">
     <div class="row">
         <!-- Galería de imágenes -->
-        <div class="col-md-6">
-            {{-- 
-            @if($producto->imagenes->count())
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach($producto->imagenes as $imagen)
-                        <img src="{{ asset('storage/' . $imagen->path) }}" class="img-thumbnail" style="width: 150px; height: 150px; object-fit: contain;">
-                    @endforeach
+        <div class="col-xl-6 col-md-6">            
+            <div class="row">
+                <!-- Thumbnails -->
+                <div class="col-sm-12 col-md-3 mb-4 order-xl-1 order-md-1 order-sm-2 order-2 ">
+                    <div class="swiper mySwiperThumbs">
+                        <div class="swiper-wrapper">
+                            @foreach ($images as $img)
+                            <div class="swiper-slide">
+                                <img src="{{ asset('storage/' . $img['image']) }}" alt="Thumbnail" class="img-fluid rounded shadow-sm" />
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
-            @else
-                <div class="alert alert-warning">Sin imágenes disponibles.</div>
-            @endif
-            --}}
-            <div class="d-flex flex-wrap gap-2">
-                <img src="{{ asset('storage/' . $producto->main_image) }}" class="img-thumbnail" style="width: auto;  object-fit: contain;">
+
+                <!-- Imagen principal -->
+                <div class="col-sm-12 col-md-9  order-xl-2 order-md-2 order-sm-1 order-1">
+                    <div class="swiper mySwiper2 mb-4">
+                        <div class="swiper-wrapper">
+                            @foreach ($images as $img)
+                            <div class="swiper-slide">
+                                <img src="{{ asset('storage/' . $img['image']) }}" alt="Imagen del producto" class="img-fluid rounded shadow-sm" />
+                            </div>
+                            @endforeach
+                        </div>                        
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <h2>{{ $producto->product_name }}</h2>
+                <p class="text-muted">{{ $producto->description }}</p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item"><strong>Categoría:</strong> {{ $producto->category_name ?? 'N/A' }}</li>
+                    <li class="list-group-item"><strong>Proveedor:</strong> {{ $producto->provider->name ?? 'N/A' }}</li>
+                    <li class="list-group-item"><strong>Modelo:</strong> {{ $producto->model_code ?? 'N/A' }}</li>
+                    <li class="list-group-item"><strong>Stock Total:</strong> {{ $producto->stock->quantity ?? 0 }}</li>
+                </ul>
             </div>
         </div>
 
-        <!-- Detalles del producto -->
-        <div class="col-md-6">
-            <h2>{{ $producto->product_name }}</h2>
-            <p class="text-muted">{{ $producto->description }}</p>
-            <ul class="list-group list-group-flush mb-3">
-                <li class="list-group-item"><strong>Categoría:</strong> {{ $producto->category_name ?? 'N/A' }}</li>
-                <li class="list-group-item"><strong>Proveedor:</strong> {{ $producto->provider->name ?? 'N/A' }}</li>
-                <li class="list-group-item"><strong>Modelo:</strong> {{ $producto->model_code ?? 'N/A' }}</li>
-                <li class="list-group-item"><strong>Stock Total:</strong> {{ $producto->stock->quantity ?? 0 }}</li>
-            </ul>
-
-            <form method="POST" action="{{-- route('cotizaciones.agregar') --}}">
-                @csrf
-                <input type="hidden" name="producto_id" value="{{ $producto->id }}">
-                <button class="btn btn-primary">Cotizar este producto</button>
-            </form>
+        <!-- Detalles del producto (la tabla de variantes) -->
+        <div id="table_variant" class="col-xl-6 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-hover table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>SKU</th>
+                                <th>Img</th>
+                                <th>Stock</th>
+                                <th>Color</th>
+                                <th>Precio</th>
+                                <th>Cantidad</th>
+                                <th>Agregar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($producto->variants as $variant)
+                                <tr>
+                                    <td>{{ $variant->sku }}</td>
+                                    <td>
+                                        @if($variant->image)
+                                            <img src="{{ asset('storage/' . $variant->image) }}" alt="Thumbnail" style="width: 50px; height: 50px; object-fit: contain;">
+                                        @else
+                                            <span class="text-muted">N/A</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ number_format($variant->totalStock()) }}</td>
+                                    <td>{{ $variant->color_name ?? 'N/A' }}</td>
+                                    <td>${{ number_format($variant->price, 2) }}</td>
+                                    <td style="width: 130px;">
+                                        <div class="input-group quantity-selector">
+                                            <button type="button" class="btn btn-light btn-sm btn-minus" data-variant="{{ $variant->id }}">−</button>
+                                            <input 
+                                                type="number" 
+                                                name="quantity" 
+                                                value="1" 
+                                                min="1" 
+                                                max="3" 
+                                                class="form-control form-control-sm text-center quantity-input" 
+                                                data-variant="{{ $variant->id }}" 
+                                                style="width: 50px;"
+                                            >
+                                            <button type="button" class="btn btn-light btn-sm btn-plus" data-variant="{{ $variant->id }}">+</button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm">Add to Cart</button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
     {{--
@@ -126,4 +188,32 @@
     @endif
     --}}
 </div>
+@endsection
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.btn-minus').forEach(button => {
+        button.addEventListener('click', function () {
+            const variantId = this.getAttribute('data-variant');
+            const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
+            let value = parseInt(input.value);
+            if (value > 1) {
+                input.value = value - 1;
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-plus').forEach(button => {
+        button.addEventListener('click', function () {
+            const variantId = this.getAttribute('data-variant');
+            const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
+            let value = parseInt(input.value);
+            const max = parseInt(input.getAttribute('max'));
+            if (value < max) {
+                input.value = value + 1;
+            }
+        });
+    });
+});
+</script>
 @endsection

@@ -16,6 +16,7 @@
         "vite": "^4.0.0"
     },
     "dependencies": {
-        "sweetalert": "^2.1.2"
+        "sweetalert": "^2.1.2",
+        "swiper": "^11.2.8"
     }
 }

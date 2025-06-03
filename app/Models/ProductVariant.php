@@ -13,4 +13,19 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function stock()
+    {
+        return $this->hasOne(ProductStock::class, 'variant_id');
+    }
+
+    public function stocks()
+    {
+        return $this->hasMany(ProductStock::class, 'variant_id');
+    }
+
+    public function totalStock()
+    {
+        return $this->stocks()->sum('stock');
+    }
+
 }
