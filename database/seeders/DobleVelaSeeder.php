@@ -112,43 +112,46 @@ class DobleVelaSeeder extends Seeder
                     'color_name' => $color_name,
                     'image' => $variantLocalPath,
                 ]);
-
                 $productVariant->save();
-
-
-                $warehouses = [
-                    7 => intval($first['Disponible Almacen 7'] ?? 0),
-                    8 => intval($first['Disponible Almacen 8'] ?? 0),
-                    9 => intval($first['Disponible Almacen 9'] ?? 0),
-                    10 => intval($first['Disponible Almacen 10'] ?? 0),
-                    20 => intval($first['Disponible Almacen 20'] ?? 0),
-                    24 => intval($first['Disponible Almacen 24'] ?? 0),
-                ];
-                
-                foreach ($warehouses as $warehouseId => $quantity) {
-                    if ($quantity > 0) {
-                        if (!in_array($warehouseId, $existingWarehouses)) {
-                            \App\Models\ProductWarehouse::create([
-                                'id' => $warehouseId,
-                                'provider_id' => $provider->id,
-                                'codigo' => $warehouseId,
-                                'name' => 'Almacén ' . $warehouseId,
-                                'nickname' => null,
-                            ]);
-                            $existingWarehouses[] = $warehouseId; // 👈🏻 Actualizas el array en memoria
+                // Cargar dinámicamente todos los almacenes
+                $warehouses = \App\Models\ProductWarehouse::all();
+                /*ALMACENES DOBLE VELA
+                "Disponible Almacen 7": 41,
+                "Disponible Almacen 8": 125,
+                "Disponible Almacen 9": 0,
+                "Disponible Almacen 10": 0,
+                "Disponible Almacen 20": 0,
+                "Disponible Almacen 24": 0,
+                "Comprometido Almacen 7": 0,
+                "Comprometido Almacen 8": 0,
+                "Comprometido Almacen 9": 0,
+                "Comprometido Almacen 10": 0,
+                "Comprometido Almacen 20": 0,
+                "Comprometido Almacen 24": 0
+                */
+                foreach ($warehouses as $warehouse) {
+                    $warehouseArray = explode('-',$warehouse->codigo);
+                    $warehousePrefix = $warehouseArray[0];
+                    $warehouseSuffix = $warehouseArray[1];
+                    if ($warehousePrefix == 'dv') {
+                        $warehouseId = $warehouse->id;
+                        $warehouseName = "Disponible Almacen {$warehouseSuffix}";
+                        $warehouseCommittedName = "Comprometido Almacen {$warehouseSuffix}";
+                        $quantity = $data[$warehouseName] - $data[$warehouseCommittedName];
+                        if ($quantity < 0) {
+                            $quantity = 0; // Asegurarse de que la cantidad no sea negativa
                         }
-                
-                        \App\Models\ProductStock::create([
-                            'variant_id' => $productVariant->id,
-                            'warehouse_id' => $warehouseId,
-                            'stock' => $quantity,
-                        ]);
+                    } else {
+                        // Si el almacén no es de Doble Vela, saltar al siguiente
+                        continue;    
                     }
+                    \App\Models\ProductStock::updateOrCreate([
+                        'variant_id' => $productVariant->id,
+                        'warehouse_id' => $warehouseId,
+                    ], [
+                        'stock' => $quantity,
+                    ]);
                 }
-                
-                
-
-                
             }
         }
     }

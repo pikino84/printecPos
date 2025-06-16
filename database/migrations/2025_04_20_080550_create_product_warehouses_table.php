@@ -10,9 +10,10 @@ return new class extends Migration {
         Schema::create('product_warehouses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('provider_id')->constrained('product_providers')->onDelete('cascade');
-            $table->unsignedInteger('codigo');
-            $table->string('name')->nullable(); // Añadido
-            $table->string('nickname')->nullable(); // Añadido
+            $table->string('codigo')->unique(); // Código único para identificar el almacén
+            $table->string('name')->nullable();
+            $table->string('nickname')->nullable();
+            $table->integer('ciudad')->nullable(); // ciudad del almacén
             $table->timestamps();
 
             $table->unique(['provider_id', 'codigo']);

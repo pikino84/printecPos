@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
             ModelHasRolesSeeder::class,
             ProductProviderSeeder::class,
             PrintecCategorySeeder::class,
-            ProductWarehouseSeeder::class,
-            DobleVelaSeeder::class,
-            InnovationSeeder::class,
+            /*ProductWarehouseSeeder::class,*/
+            ProductWarehouseCitiesSeeder::class,
+            ProductWarehouseDobleVelaSeeder::class,
+            ProductWarehouseInnovationSeeder::class,
+            /*DobleVelaSeeder::class,*/
+            /*InnovationSeeder::class,
             FourPromotionalSeeder::class,
-            ProductKeywordSeeder::class,
+            ProductKeywordSeeder::class,*/
 
         ]);
     }

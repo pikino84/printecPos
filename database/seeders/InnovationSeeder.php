@@ -35,6 +35,7 @@ class InnovationSeeder extends Seeder
         $salePriceData = collect($salePriceJson['data']);
 
         foreach ($products as $productData) {
+            $id_product_inno = $productData['idProducto'] ?? null;
             $mainSlug = Str::slug($productData['codigo']);
             $productCategory = null;
 
@@ -105,6 +106,43 @@ class InnovationSeeder extends Seeder
                 }
 
             }
+            // Stock
+            $warehouses = \App\Models\ProductWarehouse::all();
+            foreach ($stockData as $stockItem) {
+                foreach ($warehouses as $warehouse) {
+                    // Separar el código del almacén en prefijo y sufijo: inno-algarin, inno-15, etc.
+                    $warehouseParts = explode('-', $warehouse->codigo);
+                    if (count($warehouseParts) < 2) {
+                        continue; // Evitar errores si el código no tiene guion
+                    }
+                    $warehousePrefix = $warehouseParts[0]; // 'inno'
+                    $warehouseSuffix = $warehouseParts[1]; // 'algarin', '15', etc.
+                    if ($warehousePrefix !== 'inno') {
+                        continue;
+                    }
+                    foreach ($stockItem['existencias'] as $keyStock => $valeuStock) {                            
+                        // Saltar valores vacíos o no numéricos
+                        if (!is_array($valeuStock)) {
+                            continue;
+                        }                            
+                        foreach ($valeuStock as $key => $value) {
+                            // El key puede ser: stock_algarin, almacen_15, general_stock, etc.
+                            $nameParts = explode('_', $key);                               
+                            $stockSuffix = end($nameParts); // ejemplo: 'algarin', '15', etc.
+                            if ($stockSuffix == $warehouseSuffix) {                                    
+                                Log::info("Actualizando stock: {$valeuStock[$key] }");
+                                \App\Models\ProductStock::updateOrCreate([
+                                    'variant_id' => $variant->id,
+                                    'warehouse_id' => $warehouse->id,
+                                ], [
+                                    'stock' => $valeuStock[$key] ?? 0,
+                                ]);
+                                break 2; // Ya se encontró el almacén correspondiente
+                            }
+                        }
+                    }
+                }
+            }
 
             // Técnicas de impresión
             foreach ($productData['tecnicas_impresion'] ?? [] as $tech) {
@@ -116,7 +154,7 @@ class InnovationSeeder extends Seeder
                 ]);
             }
 
-            // Variantes + Stock
+            // Variantes
             foreach ($productData['colores'] ?? [] as $color) {
                 $imageUrl = $color['image'];
                 $imgName = basename(parse_url($imageUrl, PHP_URL_PATH));
@@ -143,40 +181,7 @@ class InnovationSeeder extends Seeder
                         'code_name' => $color['clave'],
                         'color_name' => $color['color'],
                     ]
-                );
-
-                // Stock
-                $stockItem = $stockData->firstWhere('codigo', $productData['codigo']);
-                if ($stockItem && isset($stockItem['existencias'])) {
-                    foreach ($stockItem['existencias'] as $entry) {
-                        if ($entry['clave'] !== $color['clave']) continue;
-
-                        foreach ($entry as $key => $value) {
-                            if (Str::startsWith($key, 'almacen_') && intval($value) > 0) {
-                                $warehouseId = intval(Str::replaceFirst('almacen_', '', $key));
-                                if (!in_array($warehouseId, $existingWarehouses)) {
-                                    ProductWarehouse::updateOrCreate([
-                                        'provider_id' => $provider->id,
-                                        'codigo' => $warehouseId,
-                                    ], [
-                                        'id' => $warehouseId,
-                                        'codigo' => $warehouseId,
-                                        'name' => "Almacén {$warehouseId}",
-                                        'nickname' => null,
-                                    ]);
-                                    
-                                    $existingWarehouses[] = $warehouseId;
-                                }
-
-                                ProductStock::create([
-                                    'variant_id' => $variant->id,
-                                    'warehouse_id' => $warehouseId,
-                                    'stock' => intval($value),
-                                ]);
-                            }
-                        }
-                    }
-                }
+                );                
             }
 
             // Escalas de precio

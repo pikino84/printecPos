@@ -136,28 +136,15 @@ class FourPromotionalSeeder extends Seeder
 
             $productVariant->save();
 
-            $existingWarehouses = \App\Models\ProductWarehouse::pluck('id')->toArray();
-            // Crear o actualizar el stock del producto en el almacen por que solo tiene un almacen
-            $warehouses = [
-                '1' => $product['inventario'] ?? 0,
-            ];
-            foreach ($warehouses as $warehouseId => $quantity) {
-                if ($quantity > 0) {
-                    if (!in_array($warehouseId, $existingWarehouses)) {
-                        \App\Models\ProductWarehouse::create([
-                            'id' => $warehouseId,
-                            'provider_id' => $provider->id,
-                            'codigo' => $warehouseId,
-                            'name' => 'Almacén 4Promotional',
-                            'nickname' => null,
-                        ]);
-                        $existingWarehouses[] = $warehouseId; // 👈🏻 Actualizas el array en memoria
-                    }
-            
-                    \App\Models\ProductStock::create([
+
+            $warehouses = \App\Models\ProductWarehouse::all();
+            foreach ($warehouses as $warehouse) {
+                if ($warehouse->codigo === '4promo-001') {                    
+                    \App\Models\ProductStock::updateOrCreate([
                         'variant_id' => $productVariant->id,
-                        'warehouse_id' => $warehouseId,
-                        'stock' => $quantity,
+                        'warehouse_id' => $warehouse->id,
+                    ], [
+                        'stock' => $product['inventario'] ?? 0,
                     ]);
                 }
             }
