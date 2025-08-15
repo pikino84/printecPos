@@ -25,4 +25,11 @@ env.sh
 error_log
 nodejs/
 phpinfo.php
-
+/public/build
+/public/hot
+/node_modules
+/vendor
+/storage/*.key
+/storage/framework/*
+/storage/logs/*
+/bootstrap/cache/*.php
