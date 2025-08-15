@@ -33,3 +33,7 @@ phpinfo.php
 /storage/framework/*
 /storage/logs/*
 /bootstrap/cache/*.php
+
+# Vite build artifacts
+/public/build
+/public/hot
