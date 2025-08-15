@@ -41,5 +41,18 @@ return [
         'username' => env('INNOVATION_API_USER'),
         'password' => env('INNOVATION_API_PASSWORD'),
     ],
+    'innovation_v3' => [
+        'auth_token' => env('INNO_V3_AUTH_TOKEN'),
+        'user'       => env('INNO_V3_USER'),
+        'password'   => env('INNO_V3_PASS'),
+        // Endpoints del manual (puedes moverlos a .env si quieres):
+        'endpoints'  => [
+            'GetProducto'        => 'https://zbobxn2ot3.execute-api.us-east-1.amazonaws.com/default/Innovation_get_Producto',
+            'GetAllProducts'     => 'https://4vumtdis3m.execute-api.us-east-1.amazonaws.com/default/Innovation_GetAllProductos',
+            'GetAllProductslight'=> 'https://1x4nyx8c80.execute-api.us-east-1.amazonaws.com/default/Innovation_GetAll_ProducLight',
+            'GetAllVariantes'    => 'https://9tlzim70va.execute-api.us-east-1.amazonaws.com/default/Innovation_GetAllVariantes',
+        ],
+        'page_limit' => 1500, // recomendado por el manual
+    ],
 
 ];

@@ -7,6 +7,16 @@
     align-items: center;
 }
 /*End menu nav*/
+/*Catalogo*/
+.wrapper-filters {
+    display: flex;
+    gap: 8px;
+}
+@media (width < 550px) {
+    .wrapper-filters {
+        flex-direction: column;
+    }
+}
 .productGrid .card {
     min-height: 317px;
 }
@@ -20,6 +30,9 @@
     overflow-y: auto;
     background: #fff; /* o el color de fondo de tu menú */
     z-index: 1030; /* asegúrate que esté encima del contenido */
+}
+.card .card-header h5+span {
+    display: block
 }
 
 .mySwiperThumbs {
@@ -73,7 +86,7 @@
     object-fit: contain;
 }
 #table_variant .table th{
-    padding: 3px 17px;
+    padding: 3px 0px;
     text-align: center;
 }
 #table_variant .table td {
@@ -114,4 +127,100 @@
 .quantity-input::-webkit-inner-spin-button {
     -webkit-appearance: none !important;
     margin: 0;
+}
+/*======PRODUCTO INDIVIDUAL=================*/
+#table_variant th {
+    font-size: 12px;
+}
+#table_variant .table>:not(caption)>*>*{
+    box-shadow: none;
+    border-bottom-width: 0;
+}
+.col_sku {
+    font-size: 11px;
+}
+#table_variant td.col_img {
+    padding: 0;
+    margin: 0;
+    min-width: 50px;
+}
+#table_variant td.col_img img{
+    width: 55px;
+    margin: 0 auto;
+}
+.order_columns{
+    display: flex;
+}
+/*======COLORS PRODUCTS=================*/
+.wrapper_color {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    text-transform: capitalize;
+    font-size: 11px;
+}
+.color-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: solid 1px #000;
+}
+.rojo {
+    background-color: #ff0000;
+}
+.blanco {
+    background-color: #ffffff;
+}
+.negro {
+    background-color: #000000;
+}
+.naranja{
+    background-color: #eb7c20;
+}
+.rosa{
+    background-color: #f59fbc;
+}
+.verde{
+    background-color: #009d3c;
+}
+.amarillo{
+    background-color: #f8f400;
+}
+.verde.claro{
+    background-color: #7dc623;
+}
+.azul{
+    background-color: #025896;
+}
+.vino{
+    background-color: #8f0940;
+}
+.oro{
+    background: radial-gradient(ellipse farthest-corner at right bottom, #FEDB37 0%, #FDB931 8%, #9f7928 30%, #8A6E2F 40%, transparent 80%),
+                radial-gradient(ellipse farthest-corner at left top, #FFFFFF 0%, #FFFFAC 8%, #D1B464 25%, #5d4a1f 62.5%, #5d4a1f 100%)
+}
+.morado{
+    background-color: #702675;
+}
+.turquesa{
+    background-color: #36b0ba;
+}
+.lila{
+    background-color: #aa74ab;
+}
+.humo{
+    background-color: #c1c1c1;
+}
+.plata{
+    background-image: url(https://dv.secoweb.mx/assets/css/images/plata-color.jpg);
+}
+.transparente{
+    background-image: url(https://dv.secoweb.mx/assets/css/images/transparent-color2.jpg);
+    background-size: cover;
+}
+.plata{
+    background-image: url(https://dv.secoweb.mx/assets/css/images/plata-color.jpg);
+}
+.gris{
+    background-color: #7c7c7c;
 }

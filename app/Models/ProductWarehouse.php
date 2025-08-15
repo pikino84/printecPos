@@ -14,10 +14,25 @@ class ProductWarehouse extends Model
         'codigo',
         'name',
         'nickname',
+        'city_id',
+        'is_active',
     ];
 
-    public function provider()
+    public function city()
     {
-        return $this->belongsTo(ProductProvider::class, 'provider_id');
+        return $this->belongsTo(ProductWarehouseCity::class, 'city_id');
+    }
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function stocks(){ 
+        return $this->hasMany(ProductStock::class, 'warehouse_id'); 
+    }
+    
+    // Almacenes del proveedor X (útil al capturar variantes)
+    public function scopeForProvider($q, int $partnerId){ 
+        return $q->where('partner_id',$partnerId); 
     }
 }

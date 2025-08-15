@@ -11,7 +11,7 @@ class CategoryMappingController extends Controller
     public function index()
     {
         // Trae todas las categorías externas con sus relaciones actuales
-        $categories = ProductCategory::with(['printecCategories', 'productProvider'])->get()->sortBy('name');
+        $categories = ProductCategory::with(['printecCategories', 'partner'])->get()->sortBy('name');
         $printecCategories = PrintecCategory::orderBy('name')->get();
 
         return view('category-mappings.index', compact('categories', 'printecCategories'));

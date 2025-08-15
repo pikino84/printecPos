@@ -9,21 +9,21 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            /*AsociadoSeeder::class,*/
-            UserSeeder::class,
+            PartnerSeeder::class,
             RolePermissionSeeder::class,
-            ModelHasRolesSeeder::class,
-            ProductProviderSeeder::class,
+            NavigationRolesPermissionsSeeder::class,
+            UserSeeder::class,
+            AssignRolesToExistingUsersSeeder::class,
             PrintecCategorySeeder::class,
-            /*ProductWarehouseSeeder::class,*/
             ProductWarehouseCitiesSeeder::class,
+            ProductWarehouseSeeder::class,
             ProductWarehouseDobleVelaSeeder::class,
-            ProductWarehouseInnovationSeeder::class,
-            /*DobleVelaSeeder::class,*/
-            /*InnovationSeeder::class,
+           /* ProductWarehouseInnovationSeeder::class,*/
+            ProductWarehouseFourPromotionalSeeder::class,
+            ProductWarehouseCitySeeder::class,
+            DobleVelaSeeder::class,
             FourPromotionalSeeder::class,
-            ProductKeywordSeeder::class,*/
-
+            /*InnovationSeeder::class,*/
         ]);
     }
 }

@@ -4,7 +4,7 @@
 <div class="container py-4">
     <div class="row">
         <!-- Galería de imágenes -->
-        <div class="col-xl-6 col-md-6">            
+        <div class="col-xl-6 col-md-6">
             <div class="row">
                 <!-- Thumbnails -->
                 <div class="col-sm-12 col-md-3 mb-4 order-xl-1 order-md-1 order-sm-2 order-2 ">
@@ -18,7 +18,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Imagen principal -->
                 <div class="col-sm-12 col-md-9  order-xl-2 order-md-2 order-sm-1 order-1">
                     <div class="swiper mySwiper2 mb-4">
@@ -32,71 +31,107 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="col-xl-6 col-md-6">
             <div class="row">
-                <h2>{{ $producto->product_name }}</h2>
+                <h2 class="text-3xl font-sans">{{ $producto->product_name }}</h2>
                 <p class="text-muted">{{ $producto->description }}</p>
                 <ul class="list-group list-group-flush mb-3">
-                    <li class="list-group-item"><strong>Categoría:</strong> {{ $producto->category_name ?? 'N/A' }}</li>
-                    <li class="list-group-item"><strong>Proveedor:</strong> {{ $producto->provider->name ?? 'N/A' }}</li>
-                    <li class="list-group-item"><strong>Modelo:</strong> {{ $producto->model_code ?? 'N/A' }}</li>
-                    <li class="list-group-item"><strong>Stock Total:</strong> {{ $producto->stock->quantity ?? 0 }}</li>
+                    <li class="list-group-item">
+                        <strong>Categoría:</strong> 
+                        @foreach ($producto->productCategory->printecCategories as $cat)
+                            {{ $cat->name }}@if (!$loop->last), @endif
+                        @endforeach
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Proveedor:</strong> 
+                            {{ $producto->partner->nombre_comercial ?? 'N/A' }}
+                        </li>
+                    <li class="list-group-item">
+                        <strong>Modelo:</strong> 
+                        {{ $producto->model_code ?? 'N/A' }}
+                    </li>
                 </ul>
             </div>
         </div>
 
         <!-- Detalles del producto (la tabla de variantes) -->
-        <div id="table_variant" class="col-xl-6 col-md-6">
+        <div id="table_variant" class="col-xl-12 col-md-12">
             <div class="card">
                 <div class="card-body">
-                    <table class="table table-hover table-bordered">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>SKU</th>
-                                <th>Img</th>
-                                <th>Stock</th>
-                                <th>Color</th>
-                                <th>Precio</th>
-                                <th>Cantidad</th>
-                                <th>Agregar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($producto->variants as $variant)
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
                                 <tr>
-                                    <td>{{ $variant->sku }}</td>
-                                    <td>
-                                        @if($variant->image)
-                                            <img src="{{ asset('storage/' . $variant->image) }}" alt="Thumbnail" style="width: 50px; height: 50px; object-fit: contain;">
-                                        @else
-                                            <span class="text-muted">N/A</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ number_format($variant->totalStock()) }}</td>
-                                    <td>{{ $variant->color_name ?? 'N/A' }}</td>
-                                    <td>${{ number_format($variant->price, 2) }}</td>
-                                    <td style="width: 130px;">
-                                        <div class="input-group quantity-selector">
-                                            <button type="button" class="btn btn-light btn-sm btn-minus" data-variant="{{ $variant->id }}">−</button>
-                                            <input 
-                                                type="number" 
-                                                name="quantity" 
-                                                value="1" 
-                                                min="1" 
-                                                max="3" 
-                                                class="form-control form-control-sm text-center quantity-input" 
-                                                data-variant="{{ $variant->id }}" 
-                                                style="width: 50px;"
-                                            >
-                                            <button type="button" class="btn btn-light btn-sm btn-plus" data-variant="{{ $variant->id }}">+</button>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-primary btn-sm">Add to Cart</button>
-                                    </td>
+                                    <th>SKU</th>
+                                    <th>Img</th>
+                                    <th>Stock Total</th>
+                                    <th>Color</th>
+                                    <th>Precio</th>
+                                    <th>Cantidad</th>
+                                    <th>Agregar</th>
+                                    @foreach($almacenesUnicos as $warehouse)
+                                    <th>{{ $warehouse->nickname ?? 'Almacén' }}</th>
+                                    @endforeach
+                                    
+                                    
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach($producto->variants as $variant)
+                                    <tr>
+                                        <td class="col_sku">{{ $variant->sku }}</td>
+                                        <td class="col_img">
+                                            @if($variant->image)
+                                                <img src="{{ asset('storage/' . $variant->image) }}" alt="Thumbnail">
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            {{ number_format($variant->totalStock()) }}
+                                        </td>
+                                        <td class="wrapper_color">
+                                            {{ $variant->color_name ?? 'no_color' }}
+                                            <div class="color-icon {{ $variant->color_name ?? 'no_color' }}"></div>
+                                        </td>
+                                        <td>${{ number_format($producto->price, 2) }}</td>
+                                        <td style="min-width: 130px;">
+                                            <div class="input-group quantity-selector">
+                                                <button type="button" class="btn btn-light btn-sm btn-minus" data-variant="{{ $variant->id }}">−</button>
+                                                <input 
+                                                    type="number" 
+                                                    name="quantity" 
+                                                    value="1" 
+                                                    min="1" 
+                                                    max="3" 
+                                                    class="form-control form-control-sm text-center quantity-input" 
+                                                    data-variant="{{ $variant->id }}" 
+                                                    style="width: 50px;"
+                                                >
+                                                <button type="button" class="btn btn-light btn-sm btn-plus" data-variant="{{ $variant->id }}">+</button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary btn-sm">Add to Cart</button>
+                                        </td>
+                                        @foreach($variant->stocks as $stock)
+                                            <td>
+                                                @if($stock->stock > 0)
+                                                    <span class="text-success">{{ number_format($stock->stock) }}</span>
+                                                @else
+                                                    <span class="text-danger">0</span>
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                        
+                                        
+                                        
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

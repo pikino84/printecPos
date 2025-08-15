@@ -9,10 +9,12 @@ class ProductWarehousesCities extends Model
 {
     use HasFactory;
 
+    protected $table = 'product_warehouses_cities';
+    
     protected $fillable = [
         'name',
         'slug',
     ];
 
-    
+    public function warehouses(){ return $this->hasMany(ProductWarehouse::class, 'city_id'); }
 }

@@ -11,6 +11,11 @@ use App\Http\Controllers\CategoryMappingController;
 use App\Http\Controllers\ProviderCategoryMappingController;
 use App\Http\Controllers\PrintecCategoryController;
 use App\Http\Controllers\ProductWarehouseController;
+use App\Http\Controllers\ProductWarehousesCitiesController;
+use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\PartnerEntityController;
+use App\Http\Controllers\PartnerEntityBankAccountController;
+use App\Http\Controllers\PartnerProductController;
 
 
 
@@ -37,7 +42,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // 👮‍♂️ Rutas para usuarios (solo para rol admin)
-    Route::middleware(['auth', 'role:admin|super admin'])->group(function () {
+    Route::middleware(['auth', 'role:admin|super admin|Asociado Administrador'])->group(function () {
+        Route::resource('partners', PartnerController::class);
+        //usuarios por socio
+        Route::get('partners/{partner}/users', [PartnerController::class, 'users'])->name('partners.users');
+        //Productos por socio
+        Route::get('partners/{partner}/products', [PartnerController::class, 'products'])->name('partners.products');
+
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
@@ -53,6 +64,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/printec-categories', [PrintecCategoryController::class, 'store']);
     Route::delete('/printec-categories/{id}', [PrintecCategoryController::class, 'destroy']);
     Route::put('/printec-categories/{id}', [PrintecCategoryController::class, 'update']);
+    // Rutas para la gestión de ciudades donde estan los almacenes de los proveedores de Printec
+    Route::get('/printec-cities', [ProductWarehousesCitiesController::class, 'index']);
+    Route::post('/printec-cities', [ProductWarehousesCitiesController::class, 'store']);
+    Route::put('/printec-cities/{id}', [ProductWarehousesCitiesController::class, 'update']);
+    Route::delete('/printec-cities/{id}', [ProductWarehousesCitiesController::class, 'destroy']);
 
 
     // Rutas para asociar categorías de proveedores a categorías de Printec
@@ -63,7 +79,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/warehouses', [ProductWarehouseController::class, 'index']);
     Route::put('/warehouses/{id}', [ProductWarehouseController::class, 'update'])->name('warehouses.update');
 
-    Route::resource('asociados', \App\Http\Controllers\AsociadoController::class);
+
+
+    Route::resource('partners', PartnerController::class)->middleware('auth');
+    Route::resource('partners.entities', PartnerEntityController::class)->parameters(['entities' => 'entity'])->shallow();
+    Route::resource('partner-entities.bank-accounts', PartnerEntityBankAccountController::class)->parameters(['bank-accounts' => 'bank_account'])->shallow();
+    Route::resource('partner-products', PartnerProductController::class)->parameters(['partner-products' => 'product'])->shallow();
+
 
     
 

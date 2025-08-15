@@ -3,61 +3,89 @@
         <div class="pcoded-inner-navbar main-menu">
             <div class="pcoded-navigation-label">Navigation</div>
             <ul class="pcoded-item pcoded-left-item">
-                <li class="pcoded-hasmenu {{ menuActive(['users.*', 'permissions.*', 'roles.*', 'activity.logs.*']) }}">
+                <li class="pcoded-hasmenu {{ menuActive(['partners.*', 'users.*', 'permissions.*', 'roles.*', 'activity.logs.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                         <span class="pcoded-mtext">Dashboard</span>
                     </a>
                     <ul class="pcoded-submenu">
+                        @can('partners_index')
+                            <li class="{{ request()->routeIs('partners.*') ? 'active' : '' }}">
+                                <a href="{{ route('partners.index') }}" class="waves-effect waves-dark">
+                                    <span class="pcoded-mtext">Partners</span>
+                                </a>
+                            </li>
+                        @endcan
+                        @can('manage users')
                         <li class="{{ request()->routeIs('users.*') ? 'active' : '' }}">
                             <a href="{{ route('users.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Usuarios</span>
                             </a>
-                        </li>                        
+                        </li>
+                        @endcan
+                        @can('permisos')                   
                         <li class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}">
                             <a href="{{ route('permissions.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Permisos</span>
                             </a>
                         </li>
+                        @endcan
+                        @can('roles')
                         <li class="{{ request()->routeIs('roles.*') ? 'active' : '' }}">
                             <a href="{{ route('roles.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Roles</span>
                             </a>
                         </li>
+                        @endcan
+                        @can('actividad')
                         <li class="{{ request()->routeIs('activity.logs.*') ? 'active' : '' }}">
                             <a href="{{ route('activity.logs.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Historial de Actividad</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="{{ route('asociados.index') }}" class="nav-link {{ request()->routeIs('asociados.*') ? 'active' : '' }}">
-                                <i class="feather icon-users"></i>
-                                <span class="menu-title">Asociados</span>
-                            </a>
-                        </li>                        
+                        @endcan
                     </ul>
                 </li>
-                <li class="pcoded-hasmenu {{ menuActive(['printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*']) }}">
+                <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*']) }}">
+                    <a href="javascript:void(0)" class="waves-effect waves-dark">
+                        <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
+                        <span class="pcoded-mtext">Asociado</span>
+                    </a>
+                </li>
+                <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
                         <span class="pcoded-mtext">Productos</span>
                     </a>
                     <ul class="pcoded-submenu">
-                        <li class="nav-item {{ request()->is('printec-categories*') ? 'active' : '' }}">
-                            <a href="{{ url('/printec-categories') }}" class="nav-link">
-                                <span class="pcoded-mtext">Categorías Internas</span>
-                            </a>
-                        </li>
+                        @can('ciudades')
+                            <li class="nav-item {{ request()->is('printec-cities*') ? 'active' : '' }}">
+                                <a href="{{ url('/printec-cities') }}" class="nav-link">
+                                    <span class="pcoded-mtext">Ciudades</span>
+                                </a>
+                            </li>
+                        @endcan
+                        @can('almacenes')
+                            <li class="nav-item {{ request()->is('warehouses*') ? 'active' : '' }}">
+                                <a href="{{ url('/warehouses') }}" class="nav-link">
+                                    <span class="pcoded-mtext">Almacenes</span>
+                                </a>
+                            </li>
+                        @endcan
+                        @can('categorias internas')
+                            <li class="nav-item {{ request()->is('printec-categories*') ? 'active' : '' }}">
+                                <a href="{{ url('/printec-categories') }}" class="nav-link">
+                                    <span class="pcoded-mtext">Categorías Internas</span>
+                                </a>
+                            </li>
+                        @endcan
+                        {{-- @can('asignar categorias') --}}
                         <li class="nav-item {{ request()->is('category-mappings*') ? 'active' : '' }}">
                             <a href="{{ url('/category-mappings') }}" class="nav-link">
                                 <span class="pcoded-mtext">Asignar Categorías</span>
                             </a>
                         </li>
-                        <li class="nav-item {{ request()->is('warehouses*') ? 'active' : '' }}">
-                            <a href="{{ url('/warehouses') }}" class="nav-link">                                
-                                <span class="pcoded-mtext">Almacenes</span>
-                            </a>
-                        </li>
+                        {{-- @endcan --}}
                         <li class="{{ request()->routeIs('catalogo.*') ? 'active' : '' }}">
                             <a href="{{ route('catalogo.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Catalogo</span>

@@ -6,7 +6,6 @@
 <div class="page-header">
     <div class="row">
         <div class="col-md-12">
-            <h5>Categorías Printec</h5>
             @if (session('success'))                
             <script>
                 document.addEventListener("DOMContentLoaded", function () {
@@ -23,8 +22,11 @@
         </div>
     </div>
 </div>
-
-<div class="card mb-4">
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Crear Nueva Categoría</h5>
+        <span>Por favor, completa el siguiente formulario para agregar una nueva categoría.</span>
+    </div>
     <div class="card-body">
         <form action="{{ url('/printec-categories') }}" method="POST" class="form-inline">
             @csrf
@@ -34,9 +36,6 @@
             <button type="submit" class="btn btn-success mb-2">Agregar Categoría</button>
         </form>
     </div>
-</div>
-
-<div class="card">
     <div class="card-block table-border-style">
         <div class="table-responsive">
             <table class="table table-striped table-hover">

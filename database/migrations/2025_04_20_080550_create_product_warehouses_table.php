@@ -9,14 +9,23 @@ return new class extends Migration {
     {
         Schema::create('product_warehouses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('provider_id')->constrained('product_providers')->onDelete('cascade');
-            $table->string('codigo')->unique(); // Código único para identificar el almacén
+            // El almacén pertenece al proveedor (partner) que lo opera
+            $table->foreignId('partner_id')->constrained('partners')->cascadeOnDelete();
+            // Código interno del almacén: único por partner/proveedor
+            $table->string('codigo'); // ej. inno-algarin
             $table->string('name')->nullable();
             $table->string('nickname')->nullable();
-            $table->integer('ciudad')->nullable(); // ciudad del almacén
+            // Ciudad (catálogo de ciudades)
+            $table->foreignId('city_id')->nullable()->constrained('product_warehouses_cities')->nullOnDelete();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['provider_id', 'codigo']);
+            // Unicidad por proveedor
+            $table->unique(['partner_id','codigo']);
+
+            // Índices útiles
+            $table->index(['partner_id','city_id']);
+            $table->index('nickname');
         });
     }
 

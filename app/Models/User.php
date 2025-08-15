@@ -27,6 +27,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'partner_id',
     ];
 
     /**
@@ -66,9 +67,14 @@ class User extends Authenticatable
         $this->notify(new CustomResetPassword($token));
     }
     
-    /*public function asociados()
+    public function partner()
     {
-        return $this->hasMany(Asociado::class);
-    }*/
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function createdProducts()
+    {
+        return $this->hasMany(Product::class, 'created_by');
+    }
 
 }

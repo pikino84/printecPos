@@ -9,11 +9,13 @@ class ProductCategory extends Model
 {
     use HasFactory;
 
+    protected $table = 'product_categories';
+    
     protected $fillable = [
         'name',
         'subcategory',
         'slug',
-        'provider_id',
+        'partner_id',
         'provider_name',
         'provider_slug',
 
@@ -29,10 +31,9 @@ class ProductCategory extends Model
             'printec_category_id'
         );
     }
-
-
-    public function productProvider()
+    public function partner()
     {
-        return $this->belongsTo(ProductProvider::class);
+        return $this->belongsTo(Partner::class);
     }
+
 }

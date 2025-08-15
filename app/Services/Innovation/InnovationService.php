@@ -18,6 +18,10 @@ class InnovationService
         $this->user = config('services.innovation.username');
         $this->password = config('services.innovation.password');       
         $this->client = new \nusoap_client($wsdl, 'wsdl');
+        Log::info('Inicializando cliente de Innovation', [
+            'wsdl' => $wsdl,
+            'user' => $this->user,
+        ]);
     }
 
     public function validateConnection(): array
@@ -27,7 +31,7 @@ class InnovationService
             'api_key' => $this->password,
             'format' => 'JSON',
         ];
-
+        Log::info('Validando conexión con Innovation', ['params' => $params]);
         $response = $this->client->call('Validate', $params);
         Log::info('Respuesta de validación de Innovation:', ['response' => $response]);
 

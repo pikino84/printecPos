@@ -27,6 +27,8 @@ class Product extends Model
         'product_provider_id',
         'image_path',
         'area_print',
+        'partner_id',
+        'created_by',
     ];
 
     public function provider()
@@ -38,6 +40,28 @@ class Product extends Model
     {
         return $this->hasMany(ProductVariant::class);
     }
+    
+    // Visibilidad: Printec (1) + del partner logueado
+    public function scopeVisibleFor($q, User $user){
+        return $q->whereIn('partner_id', [1, $user->partner_id]);
+    }
+
+    // Galería = [main_image, imágenes de variantes]
+    public function getGalleryAttribute(): array
+    {
+        $images = [];
+        if ($this->main_image) {
+            $images[] = Storage::disk('public')->url($this->main_image);
+        }
+        foreach ($this->variants as $v) {
+            if ($v->image) {
+                $images[] = Storage::disk('public')->url($v->image);
+            }
+        }
+        // Quita duplicados por si alguna variante repite archivo
+        return array_values(array_unique($images));
+    }
+
 
     public function categories()
     {
@@ -54,6 +78,28 @@ class Product extends Model
     public function productCategory()
     {
         return $this->belongsTo(\App\Models\ProductCategory::class, 'product_category_id');
+    }
+
+    public function stocks()
+    {
+        return $this->hasManyThrough(
+            \App\Models\ProductStock::class,
+            \App\Models\ProductVariant::class,
+            'product_id',     // Foreign key en variants
+            'variant_id',     // Foreign key en stocks
+            'id',             // Local key en products
+            'id'              // Local key en variants
+        );
+    }
+
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
 }

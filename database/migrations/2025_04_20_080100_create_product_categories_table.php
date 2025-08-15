@@ -11,11 +11,18 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('subcategory')->nullable();
-            $table->string('slug')->unique();
-            $table->unsignedBigInteger('product_provider_id');
-            $table->foreign('product_provider_id')->references('id')->on('product_providers')->onDelete('cascade');
+            $table->string('slug');
+            $table->foreignId('partner_id')
+                ->constrained('partners')
+                ->cascadeOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            // ✅ Unicidad por partner + slug (evita choques entre proveedores)
+            $table->unique(['partner_id','slug'], 'pcat_partner_slug_unique');
+
+            // (Opcionales) índices útiles
+            $table->index(['partner_id','name']);
         });
     }
 

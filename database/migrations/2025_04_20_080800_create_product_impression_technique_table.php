@@ -12,6 +12,9 @@ return new class extends Migration {
             $table->string('code')->nullable(); // Código interno de la técnica
             $table->string('name'); // Nombre de la técnica
             $table->timestamps();
+
+            $table->index('code');
+            $table->unique(['product_id','code']); // evita duplicados por producto
         });
     }
 

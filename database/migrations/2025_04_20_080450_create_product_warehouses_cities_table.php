@@ -13,6 +13,8 @@ class CreateProductWarehousesCitiesTable extends Migration
             $table->string('name')->unique();
             $table->string('slug')->unique();
             $table->timestamps();
+
+            $table->index('name'); // búsquedas por ciudad
         });
     }
 

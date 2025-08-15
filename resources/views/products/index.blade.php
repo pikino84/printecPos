@@ -2,18 +2,25 @@
 
 @section('content')
 <div class="container">
-    <div class="row mb-4">
-        <div class="col-md-6">
+    <div class="row">
+        <div class="col-lg-6 col-md-4 col-sm-12 mb-4">
             <h4>Catálogo de Productos</h4>
         </div>
-        <div class="col-md-6 text-right">
-            <select id="categoryFilter" class="form-control" style="width: 180px; display: inline-block;">
-                <option value="">Todas las categorías</option>
+        <div class="col-lg-6 col-md-8 col-sm-12 mb-4 text-right wrapper-filters">
+            <select id="categoryFilter" class="form-control">
+                <option value="">Categorías</option>
                 @foreach($categories as $category)
                     <option value="{{ $category->slug }}">{{ $category->name }}</option>
                 @endforeach
             </select>
-
+            <select id="cityFilter" class="form-control">
+                <option value="">Ciudades</option>
+                @foreach($cities as $city)
+                    <option value="{{ $city->id }}" {{ request('city_id') == $city->id ? 'selected' : '' }}>
+                        {{ $city->name }}
+                    </option>
+                @endforeach
+            </select>
             <input type="text" id="searchInput" class="form-control" placeholder="Buscar..."
                 style="width: 250px; display: inline-block;" />
         </div>

@@ -24,15 +24,15 @@
                 <input type="password" name="password" class="form-control">
             </div>
 
-            {{-- Solo Printec puede editar el asociado --}}
-            @if (auth()->user()->asociado_id === null)
+            {{-- Solo Printec puede editar el partner --}}
+            @if (auth()->user()->partner_id === 1)
                 <div class="form-group">
-                    <label>Asociado</label>
-                    <select name="asociado_id" class="form-control">
+                    <label>Partner</label>
+                    <select name="partner_id" class="form-control">
                         <option value="">Ninguno</option>
-                        @foreach ($asociados as $asociado)
-                            <option value="{{ $asociado->id }}" {{ $user->asociado_id == $asociado->id ? 'selected' : '' }}>
-                                {{ $asociado->nombre_comercial }}
+                        @foreach ($partners as $partner)
+                            <option value="{{ $partner->id }}" {{ $user->partner_id == $partner->id ? 'selected' : '' }}>
+                                {{ $partner->nombre_comercial }}
                             </option>
                         @endforeach
                     </select>

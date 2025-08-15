@@ -9,13 +9,13 @@ function loadMoreProducts() {
 
     const category = $('#categoryFilter').val();
     const search = $('#searchInput').val();
+    const city = $('#cityFilter').val(); // 👈 Nuevo
 
     page++;
-    $.get(`?page=${page}&category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`, function (data) {
+    $.get(`?page=${page}&category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}&city_id=${encodeURIComponent(city)}`, function (data) {
         if (data.trim().length > 0) {
             $('#productGrid').append(data);
         } else {
-            // Detiene el scroll si ya no hay más productos, pero NO muestra mensaje
             $(window).off('scroll');
         }
         $('#loader').hide();
@@ -29,12 +29,13 @@ $(window).scroll(function () {
     }
 });
 
-$('#categoryFilter, #searchInput').on('change keyup', function () {
+$('#categoryFilter, #searchInput, #cityFilter').on('change keyup', function () {
     page = 1;
     const category = $('#categoryFilter').val();
     const search = $('#searchInput').val();
+    const city = $('#cityFilter').val(); // 👈 Nuevo
 
-    $.get(`?page=1&category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`, function (data) {
+    $.get(`?page=1&category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}&city_id=${encodeURIComponent(city)}`, function (data) {
         if ($.trim(data).length === 0) {
             $('#productGrid').html(`
                 <div class="col-12 text-center mt-4">

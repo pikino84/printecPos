@@ -3,11 +3,21 @@
 
 @section('content')
 <div class="card">
+    {{-- show error messages --}}
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    
     <div class="card-header"><h5>Crear Usuario</h5></div>
     <div class="card-block">
         <form action="{{ route('users.store') }}" method="POST">
-            @csrf
-
+            @csrf           
             <div class="form-group">
                 <label>Nombre</label>
                 <input type="text" name="name" class="form-control" required>
@@ -23,18 +33,25 @@
                 <input type="password" name="password" class="form-control" required>
             </div>
 
-            {{-- Solo Printec puede elegir el asociado --}}
-            @if (auth()->user()->asociado_id === null)
+            {{-- Solo Printec puede elegir el partner --}}
+            @if (auth()->user()->partner_id === 1)
                 <div class="form-group">
-                    <label>Asociado</label>
-                    <select name="asociado_id" class="form-control">
-                        <option value="">Ninguno</option>
-                        @foreach ($asociados as $asociado)
-                            <option value="{{ $asociado->id }}">{{ $asociado->nombre_comercial }}</option>
+                    <label for="partner_id">Partner</label>
+                    <select name="partner_id" class="form-control">
+                        <option value="">-- Selecciona --</option>
+                        @foreach($partners as $partner)
+                            <option value="{{ $partner->id }}"
+                                {{ old('partner_id', $user->partner_id ?? '') == $partner->id ? 'selected' : '' }}>
+                                {{ $partner->nombre_comercial }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
+            @else
+                <input type="hidden" name="partner_id" value="{{ Auth::user()->partner_id }}">
             @endif
+
+            {{-- Fin del select de asociados --}}
 
             <div class="form-group">
                 <label>Roles</label>

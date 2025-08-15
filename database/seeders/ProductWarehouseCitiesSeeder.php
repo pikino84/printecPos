@@ -3,27 +3,30 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\ProductWarehousesCities;
-
+use App\Models\ProductWarehousesCities; 
 
 class ProductWarehouseCitiesSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $warehouses = [
+        $cities = [
             'cdmx' => 'CDMX',
-            'gdl' => 'Guadalajara',
-            'mty' => 'Monterrey',
-            'cun' => 'Cancún',
+            'gdl'  => 'Guadalajara',
+            'mty'  => 'Monterrey',
+            'cun'  => 'Cancún',
         ];
 
-        foreach ($warehouses as $key => $name) {
-            ProductWarehousesCities::firstOrCreate(                
-                [
-                    'name' => $name,
-                    'slug' => $key
-                ]
+        $created = 0; $updated = 0;
+
+        foreach ($cities as $slug => $name) {
+            $model = ProductWarehousesCities::updateOrCreate(
+                ['slug' => $slug],     // clave idempotente
+                ['name' => $name]      // datos actualizables
             );
+
+            $model->wasRecentlyCreated ? $created++ : $updated++;
         }
+
+        $this->command?->info("Cities: creadas {$created}, actualizadas {$updated}.");
     }
 }

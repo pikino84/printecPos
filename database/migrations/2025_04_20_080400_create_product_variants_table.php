@@ -14,7 +14,12 @@ return new class extends Migration {
             $table->string('code_name')->nullable();
             $table->string('color_name')->nullable();
             $table->string('image')->nullable();
+            $table->decimal('price', 10, 2)->nullable(); // si no se llena, usar price del producto
             $table->timestamps();
+
+            $table->unique(['product_id','sku']);
+            $table->index('sku');
+            $table->index('color_name');
             
         });
     }

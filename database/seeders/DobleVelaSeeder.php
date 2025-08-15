@@ -4,178 +4,233 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\User;
+use App\Models\Partner;
 use App\Models\Product;
 use App\Models\ProductCategory;
-use App\Models\ProductProvider;
 use App\Models\ProductVariant;
-use Illuminate\Support\Facades\Log;
+use App\Models\ProductWarehouse;
+use App\Models\ProductStock;
 
 class DobleVelaSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $provider = ProductProvider::firstOrCreate([
-            'slug' => 'doble-vela',
-        ], [
-            'name' => 'Doble Vela'
-        ]);
+        // Dueño/publicador (Printec) y proveedor (Doble Vela)
+        $publisher = Partner::where('slug', 'printec')->firstOrFail();   // owner_id = 1 (público)
+        $provider  = Partner::where('slug', 'doble-vela')->firstOrFail(); // partner_id = proveedor
 
+        // Usuario creador (fallback a 1)
+        $createdBy = User::where('email', 'ebutron@printec.mx')->value('id')
+            ?? User::where('email', 'ingrid@printec.mx')->value('id')
+            ?? 1;
+
+        // JSON
         if (!Storage::exists('doblevela/products.json')) {
-            Log::error('Archivo no encontrado: doblevela/products.json');
+            $this->command?->error('Archivo no encontrado: storage/app/doblevela/products.json');
             return;
         }
-        $json = Storage::get('doblevela/products.json');
-        $products = json_decode($json, true);
+        $rows = json_decode(Storage::get('doblevela/products.json'), true) ?? [];
+        if (empty($rows)) {
+            $this->command?->warn('JSON vacío o inválido: doblevela/products.json');
+            return;
+        }
 
-        $existingWarehouses = \App\Models\ProductWarehouse::pluck('id')->toArray();
+        // Almacenes del proveedor (códigos normalizados: "7","8","9","10","20","24")
+        $dvWarehouses = ProductWarehouse::where('partner_id', $provider->id)->get()
+            ->keyBy(fn ($w) => (string) $w->codigo);
 
+        // Agrupar por MODELO
+        $grouped = collect($rows)->groupBy(fn ($r) => trim($r['MODELO'] ?? ''));
 
-        $grouped = collect($products)->groupBy('MODELO');
+        $created = 0; $updated = 0; $variants = 0; $stocks = 0;
 
         foreach ($grouped as $model => $items) {
-            $first = $items->first();
+            if (!$model) continue;
 
-            $slug = Str::slug($first['Familia']);
+            DB::transaction(function () use (
+                $model, $items, $provider, $publisher, $createdBy, $dvWarehouses,
+                &$created, &$updated, &$variants, &$stocks
+            ) {
+                $first = collect($items)->first();
 
-            $productCategory = ProductCategory::firstOrCreate([
-                'slug' => $slug, 
-            ], [
-                'name' => $first['Familia'],
-                'subcategory' => $first['SubFamilia'],
-                'product_provider_id' => $provider->id,
-            ]);
-            
+                // ===== Categoría (del proveedor)
+                $familia = trim($first['Familia'] ?? 'Sin familia');
+                $subfam  = trim($first['SubFamilia'] ?? null);
+                $catSlug = Str::slug($familia);
 
-            $product = Product::updateOrCreate([
-                'slug' => Str::slug($model),
-            ], [
-                'name' => $first['Nombre Corto'] ?? $first['NOMBRE'],
-                'description' => $first['Descripcion'],
-                'material' => $first['Material'] ?? null,
-                'unit_package' => $first['Unidad Empaque'] ?? null,
-                'box_size' => $first['Medida Caja Master'] ?? null,
-                'box_weight' => $first['Peso caja'] ?? null,
-                'product_weight' => $first['Peso Producto'] ?? null,
-                'product_size' => $first['Medida Producto'] ?? null,
-                'model_code' => $model,
-                'product_provider_id' => $provider->id,
-                'meta_description' => $first['Nombre Corto'] ?? null,
-                'meta_keywords' => $first['Tipo Impresion'] ?? null,
-                'product_category_id' => $productCategory->id,
-            ]);
+                $productCategory = ProductCategory::firstOrCreate(
+                    ['slug' => $catSlug, 'partner_id' => $provider->id],
+                    ['name' => $familia, 'subcategory' => $subfam]
+                );
 
-            $product->save();
-            
+                // ===== Producto (owner=Printec, partner=DV)
+                $slug = 'dv-' . Str::slug($model);
 
+                $product = Product::updateOrCreate(
+                    ['slug' => $slug, 'partner_id' => $provider->id],
+                    [
+                        'owner_id'           => $publisher->id,
+                        'model_code'         => $model,
+                        'name'               => $first['Nombre Corto'] ?? ($first['NOMBRE'] ?? $model),
+                        'price'              => (float) ($first['Price'] ?? 0),
+                        'description'        => $first['Descripcion'] ?? null,
+                        'short_description'  => $first['Nombre Corto'] ?? null,
+                        'material'           => $first['Material'] ?? null,
+                        'packing_type'       => $first['Tipo Empaque'] ?? null,
+                        'unit_package'       => $first['Unidad Empaque'] ?? null,
+                        'box_size'           => $first['Medida Caja Master'] ?? null,
+                        'box_weight'         => $first['Peso caja'] ?? null,
+                        'product_weight'     => $first['Peso Producto'] ?? null,
+                        'product_size'       => $first['Medida Producto'] ?? null,
+                        'meta_description'   => $first['Nombre Corto'] ?? null,
+                        'meta_keywords'      => $first['Tipo Impresion'] ?? null,
+                        'featured'           => false,
+                        'new'                => false,
+                        'product_category_id'=> $productCategory->id,
+                        'partner_id'         => $provider->id,   // proveedor real = DV
+                        'owner_id'           => $publisher->id,  // dueño/publicador = Printec
+                        'created_by'         => $createdBy,
+                        'is_active'          => true,
+                    ]
+                );
 
-            // Imagen principal del producto
-            $mainImageName = "{$model}_lrg.jpg";
-            $mainImageUrl = "https://www.doblevela.com/images/large/" . rawurlencode($mainImageName);
-            $mainLocalPath = "products/doblevela/{$mainImageName}";
-            $mainStoragePath = storage_path("app/public/{$mainLocalPath}");
+                $product->wasRecentlyCreated ? $created++ : $updated++;
 
-            $this->downloadImage($mainImageUrl, $mainStoragePath);
-
-            $product->main_image = $mainLocalPath;
-            $product->save();
-
-            foreach ($items as $data) {
-                $parts = explode('-', $data['COLOR']);
-                $color_name = mb_strtolower(trim(end($parts)), 'UTF-8');
-
-                $color_slug = Str::slug($data['COLOR']);
-                $color_image = explode("-", $data['COLOR']);
-                $color_image = trim( end($color_image) );
-                $color_image = str_replace(' ', '', mb_strtolower($color_image, 'UTF-8'));
-                $modelo = str_replace(' ', '', $data['MODELO']);
-                $variantImageName = "{$modelo}_{$color_image}_lrg.jpg";
-                $variantImageUrl = "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName);
-                $variantLocalPath = "products/doblevela/{$variantImageName}";
-                $variantStoragePath = storage_path("app/public/{$variantLocalPath}");
-
-                $this->downloadImage($variantImageUrl, $variantStoragePath);
-                
-
-                // Generar nombre base de imagen
-                $variantImageName = "{$model}_{$color_name}_lrg.jpg";
-                $variantImageUrl = "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName);
-                
-                
-                $productVariant = ProductVariant::firstOrNew([
-                    'sku' => $data['CLAVE'],
-                ]);
-                $productVariant->fill([
-                    'product_id' => $product->id,
-                    'slug' => Str::slug($data['CLAVE']),
-                    'code_name' => $data['CLAVE'],
-                    'color_name' => $color_name,
-                    'image' => $variantLocalPath,
-                ]);
-                $productVariant->save();
-                // Cargar dinámicamente todos los almacenes
-                $warehouses = \App\Models\ProductWarehouse::all();
-                /*ALMACENES DOBLE VELA
-                "Disponible Almacen 7": 41,
-                "Disponible Almacen 8": 125,
-                "Disponible Almacen 9": 0,
-                "Disponible Almacen 10": 0,
-                "Disponible Almacen 20": 0,
-                "Disponible Almacen 24": 0,
-                "Comprometido Almacen 7": 0,
-                "Comprometido Almacen 8": 0,
-                "Comprometido Almacen 9": 0,
-                "Comprometido Almacen 10": 0,
-                "Comprometido Almacen 20": 0,
-                "Comprometido Almacen 24": 0
-                */
-                foreach ($warehouses as $warehouse) {
-                    $warehouseArray = explode('-',$warehouse->codigo);
-                    $warehousePrefix = $warehouseArray[0];
-                    $warehouseSuffix = $warehouseArray[1];
-                    if ($warehousePrefix == 'dv') {
-                        $warehouseId = $warehouse->id;
-                        $warehouseName = "Disponible Almacen {$warehouseSuffix}";
-                        $warehouseCommittedName = "Comprometido Almacen {$warehouseSuffix}";
-                        $quantity = $data[$warehouseName] - $data[$warehouseCommittedName];
-                        if ($quantity < 0) {
-                            $quantity = 0; // Asegurarse de que la cantidad no sea negativa
-                        }
-                    } else {
-                        // Si el almacén no es de Doble Vela, saltar al siguiente
-                        continue;    
-                    }
-                    \App\Models\ProductStock::updateOrCreate([
-                        'variant_id' => $productVariant->id,
-                        'warehouse_id' => $warehouseId,
-                    ], [
-                        'stock' => $quantity,
-                    ]);
+                // ===== Imagen principal del producto
+                $mainImageName = "{$model}_lrg.jpg";
+                $mainLocalPath = "products/doblevela/{$mainImageName}";
+                $this->downloadImageIfNeeded(
+                    "https://www.doblevela.com/images/large/" . rawurlencode($mainImageName),
+                    storage_path("app/public/{$mainLocalPath}")
+                );
+                if ($product->main_image !== $mainLocalPath) {
+                    $product->main_image = $mainLocalPath;
+                    $product->save();
                 }
-            }
+
+                // ===== Técnicas de impresión (si existe la tabla)
+                $this->upsertImpressionTechniques($product->id, trim($first['Tipo Impresion'] ?? ''));
+
+                // ===== Variantes + stock por almacén del proveedor
+                foreach ($items as $row) {
+                    $sku = trim($row['CLAVE'] ?? '');
+                    if ($sku === '') continue;
+
+                    // Color: "04 - ROJO" => "ROJO"
+                    $colorName = trim(preg_replace('/^\d+\s*-\s*/', '', (string)($row['COLOR'] ?? '')));
+                    $colorKey  = Str::of($colorName)->lower()->replace(' ', '')->toString();
+
+                    // Imagen variante
+                    $variantImageName  = Str::of($model)->replace(' ', '')->append('_', $colorKey, '_lrg.jpg')->toString();
+                    $variantLocalPath  = "products/doblevela/{$variantImageName}";
+                    $this->downloadImageIfNeeded(
+                        "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName),
+                        storage_path("app/public/{$variantLocalPath}")
+                    );
+
+                    // Upsert variante
+                    $variant = ProductVariant::updateOrCreate(
+                        ['sku' => $sku],
+                        [
+                            'product_id' => $product->id,
+                            'slug'       => Str::slug($sku),
+                            'code_name'  => $sku,
+                            'color_name' => $colorName ?: null,
+                            'image'      => $variantLocalPath,
+                        ]
+                    );
+                    $variants++;
+
+                    // Stock por almacén (Disponible - Comprometido)
+                    foreach ($dvWarehouses as $code => $warehouse) {
+                        $dispKey = "Disponible Almacen {$code}";
+                        $compKey = "Comprometido Almacen {$code}";
+                        $disp    = (int)($row[$dispKey] ?? 0);
+                        $comp    = (int)($row[$compKey] ?? 0);
+                        $qty     = max(0, $disp - $comp);
+
+                        ProductStock::updateOrCreate(
+                            ['variant_id' => $variant->id, 'warehouse_id' => $warehouse->id],
+                            ['stock' => $qty]
+                        );
+                        $stocks++;
+                    }
+                }
+            });
+        }
+
+        $this->command?->info("Doble Vela → productos creados/act: {$created}/{$updated}, variantes: {$variants}, stocks: {$stocks}.");
+    }
+
+    private function upsertImpressionTechniques(int $productId, string $codes): void
+    {
+        if (!Schema::hasTable('product_impression_technique') || $codes === '') return;
+
+        $map = [
+            'SE' => 'Serigrafía',
+            'BR' => 'Bordado',
+            'TR' => 'Transfer',
+            'TM' => 'Tampografía',
+            'FC' => 'Full Color',
+            'LB' => 'Láser',
+            'GR' => 'Grabado',
+        ];
+
+        $tokens = collect(preg_split('/[\s,;|]+/', $codes, -1, PREG_SPLIT_NO_EMPTY))
+            ->map(fn($c) => strtoupper(trim($c)))
+            ->unique()
+            ->values();
+
+        foreach ($tokens as $code) {
+            DB::table('product_impression_technique')->updateOrInsert(
+                ['product_id' => $productId, 'code' => $code],
+                ['name' => $map[$code] ?? $code, 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
+
+        // (Opcional) Sync: eliminar técnicas que ya no aparecen
+        $existing = DB::table('product_impression_technique')
+            ->where('product_id', $productId)->pluck('code')->toArray();
+
+        $toDelete = array_diff($existing, $tokens->all());
+        if ($toDelete) {
+            DB::table('product_impression_technique')
+                ->where('product_id', $productId)
+                ->whereIn('code', $toDelete)
+                ->delete();
         }
     }
 
-    private function downloadImage($url, $path)
+    private function downloadImageIfNeeded(string $url, string $destPath): void
     {
         try {
-            if (!file_exists($path)) {
-                $ch = curl_init($url);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
-                $imageData = curl_exec($ch);
-                curl_close($ch);
+            $dir = dirname($destPath);
+            if (!is_dir($dir)) @mkdir($dir, 0775, true);
+            if (file_exists($destPath)) return;
 
-                if ($imageData !== false) {
-                    file_put_contents($path, $imageData);
-                } else {
-                    Log::warning("No se pudo descargar la imagen: $url");
-                }
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_USERAGENT      => 'Mozilla/5.0',
+                CURLOPT_TIMEOUT        => 30,
+                CURLOPT_CONNECTTIMEOUT => 10,
+            ]);
+            $img = curl_exec($ch);
+            curl_close($ch);
+
+            if ($img !== false && strlen($img) > 0) {
+                file_put_contents($destPath, $img);
+            } else {
+                $this->command?->warn("No se pudo descargar imagen: {$url}");
             }
-        } catch (\Exception $e) {
-            Log::error("Error descargando imagen: {$url} - " . $e->getMessage());
+        } catch (\Throwable $e) {
+            $this->command?->warn("Error descargando imagen {$url}: {$e->getMessage()}");
         }
     }
 }
