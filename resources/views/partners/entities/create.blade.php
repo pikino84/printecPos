@@ -7,7 +7,7 @@
     <h5>Agregar razón social a: {{ $partner->nombre_comercial }}</h5>
   </div>
   <div class="card-body">
-    <form method="POST" action="{{ route('partners.entities.store', $partner) }}">
+    <form method="POST" action="{{ route('partners.entities.store', $partner) }}" enctype="multipart/form-data">
       @csrf
 
       <div class="form-group mb-3">
@@ -35,11 +35,19 @@
         <label>Dirección fiscal</label>
         <textarea name="direccion" class="form-control col-md-6">{{ old('direccion') }}</textarea>
       </div>
-
+      <div class="form-group">
+        <label>Logo (JPG/PNG/WEBP máx 2MB)</label>
+        <input type="file" class="form-control @error('logo_path') is-invalid @enderror"
+              name="logo" accept=".jpg,.jpeg,.png,.webp">
+        @error('logo_path')
+          <span class="invalid-feedback">{{ $message }}</span>
+        @enderror
+      </div>
       <div class="form-check mb-3">
         <input type="checkbox" class="form-check-input" id="is_default" name="is_default" value="1">
         <label class="form-check-label" for="is_default">Marcar como principal</label>
       </div>
+      
 
       <button class="btn btn-success">Guardar</button>
       <a href="{{ route('partners.entities.index', $partner) }}" class="btn btn-secondary">Cancelar</a>

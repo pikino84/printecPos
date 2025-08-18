@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('telefono')->nullable();
             $table->string('correo_contacto')->nullable();
             $table->text('direccion')->nullable();
-            $table->string('logo')->nullable();
+            $table->string('logo_path')->nullable();
 
             // Opcionales útiles
             $table->boolean('is_default')->default(false); // marcar la principal

@@ -25,24 +25,18 @@ class PartnerController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nombre_comercial' => 'required|unique:partners',
-            'razon_social' => 'nullable',
-            'rfc' => 'nullable',
-            'telefono' => 'nullable',
-            'correo_contacto' => 'nullable|email',
+            'name' => 'required|unique:partners',
+            'contact_name' => 'nullable',
+            'contact_phone' => 'nullable',
+            'contact_email' => 'nullable|email',
             'direccion' => 'nullable',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'tipo' => 'required|in:proveedor,asociado,mixto',
-            'condiciones_comerciales' => 'nullable',
-            'comentarios' => 'nullable',
+            'type' => 'required|in:Proveedor,Asociado,Mixto',
+            'commercial_terms' => 'nullable',
+            'comments' => 'nullable',
             'is_active' => 'nullable|boolean',
         ]);
-        $data['slug'] = Str::slug($data['nombre_comercial']);
-        // subir logo si viene
-        if ($request->hasFile('logo')) {
-            Storage::disk('public')->makeDirectory('partners/logos'); // crea si no existe
-            $data['logo_path'] = $request->file('logo')->store('partners/logos', 'public'); // => storage/app/public/partners/logos
-        }
+        $data['slug'] = Str::slug($data['name']);
+        
         Partner::create($data);
         return redirect()->route('partners.index')->with('success', 'Partner creado.');
     }
@@ -55,36 +49,18 @@ class PartnerController extends Controller
     public function update(Request $request, Partner $partner)
     {
         $data = $request->validate([
-            'nombre_comercial' => 'required|unique:partners,nombre_comercial,' . $partner->id,
-            'razon_social' => 'nullable',
-            'rfc' => 'nullable',
-            'telefono' => 'nullable',
-            'correo_contacto' => 'nullable|email',
+            'name' => 'required|unique:partners,name,' . $partner->id,
+            'contact_name' => 'nullable',
+            'contact_phone' => 'nullable',
+            'contact_email' => 'nullable|email',
             'direccion' => 'nullable',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'remove_logo' => 'sometimes|boolean',
-            'tipo' => 'required|in:proveedor,asociado,mixto',
-            'condiciones_comerciales' => 'nullable',
-            'comentarios' => 'nullable',
+            'type' => 'required|in:Proveedor,Asociado,Mixto',
+            'commercial_terms' => 'nullable',
+            'comments' => 'nullable',
             'is_active' => 'nullable|boolean',
         ]);
 
-        $data['slug'] = Str::slug($data['nombre_comercial']);
-        unset($data['logo']);
-        // borrar logo si lo piden
-        if ($request->boolean('remove_logo') && $partner->logo_path) {
-            Storage::disk('public')->delete($partner->logo_path);
-            $data['logo_path'] = null;
-        }
-
-        // reemplazar por uno nuevo si subieron
-        if ($request->hasFile('logo')) {
-            if ($partner->logo_path) {
-                Storage::disk('public')->delete($partner->logo_path);
-            }
-            Storage::disk('public')->makeDirectory('partners/logos');
-            $data['logo_path'] = $request->file('logo')->store('partners/logos', 'public');
-        }
+        $data['slug'] = Str::slug($data['name']);
 
         $partner->update($data);
 

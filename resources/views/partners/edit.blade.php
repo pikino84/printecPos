@@ -1,93 +1,85 @@
 @extends('layouts.app')
-
 @section('title', 'Editar Partner')
 
 @section('content')
-<div class="card">
-    <div class="card-header"><h5>Editar Partner</h5></div>
-
-    <div class="card-body">
-        <form action="{{ route('partners.update', $partner) }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-
-            <div class="form-group">
-                <label class="form-label">Nombre Comercial</label>
-                <input type="text" name="nombre_comercial" class="form-control" value="{{ $partner->nombre_comercial }}" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Razón Social</label>
-                <input type="text" name="razon_social" class="form-control" value="{{ $partner->razon_social }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">RFC</label>
-                <input type="text" name="rfc" class="form-control" value="{{ $partner->rfc }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Teléfono</label>
-                <input type="text" name="telefono" class="form-control" value="{{ $partner->telefono }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Correo de Contacto</label>
-                <input type="email" name="correo_contacto" class="form-control" value="{{ $partner->correo_contacto }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Dirección</label>
-                <textarea name="direccion" class="form-control">{{ $partner->direccion }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Tipo</label>
-                <select name="tipo" class="form-control" required>
-                    <option value="asociado" {{ $partner->tipo === 'asociado' ? 'selected' : '' }}>Asociado</option>
-                    <option value="proveedor" {{ $partner->tipo === 'proveedor' ? 'selected' : '' }}>Proveedor</option>
-                    <option value="mixto" {{ $partner->tipo === 'mixto' ? 'selected' : '' }}>Proveedor-Asociado</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Condiciones Comerciales</label>
-                <textarea name="condiciones_comerciales" class="form-control">{{ $partner->condiciones_comerciales }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Comentarios</label>
-                <textarea name="comentarios" class="form-control">{{ $partner->comentarios }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">¿Activo?</label>
-                <select name="is_active" class="form-control">
-                    <option value="1" {{ $partner->is_active ? 'selected' : '' }}>Sí</option>
-                    <option value="0" {{ !$partner->is_active ? 'selected' : '' }}>No</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label col-md-2 d-block">Logo</label>
-
-                @if($partner->logo_url)
-                    <div class="mb-2">
-                        <img src="{{ $partner->logo_url }}" alt="Logo" style="max-height: 80px">
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="remove_logo" name="remove_logo" value="1">
-                        <label class="form-check-label" for="remove_logo">Quitar logo</label>
-                    </div>
-                @endif
-
-                <input type="file" name="logo" class="form-control col-md-4" accept="image/*">
-                <small class="text-muted">JPG/PNG/WEBP hasta 2MB.</small>
-                @error('logo') <small class="text-danger">{{ $message }}</small> @enderror
-            </div>
-
-            <button type="submit" class="btn btn-primary">Actualizar</button>
-            <a href="{{ route('partners.index') }}" class="btn btn-secondary">Cancelar</a>
-        </form>
+{{-- show error --}}
+<div class="mb-4">
+  @if ($errors->any())
+    <div class="alert alert-danger">
+      <ul>
+        @foreach ($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
     </div>
+  @endif
+</div>
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="{{ route('partners.update', $partner) }}">
+      @csrf
+      @method('PUT')
+
+      <div class="form-group mb-3">
+        <label>Nombre del Partner</label>
+        <input type="text" name="name" value="{{ old('name', $partner->name) }}" class="form-control" required>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="form-group">
+          <label>Nombre de la persona de contacto</label>
+          <input type="text" name="contact_name" value="{{ old('contact_name', $partner->contact_name) }}" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Celular de la persona de contacto</label>
+          <input type="text" name="contact_phone" value="{{ old('contact_phone', $partner->contact_phone) }}" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Correo de la persona de contacto</label>
+          <input type="email" name="contact_email" value="{{ old('contact_email', $partner->contact_email) }}" class="form-control">
+        </div>
+      </div>
+
+      {{-- Dirección --}}
+      <div class="form-group mt-3">
+        <label>Dirección</label>
+        <textarea name="address" class="form-control" rows="2">{{ old('address', $partner->address) }}</textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+        <div class="form-group">
+          <label>Tipo</label>
+          <select name="type" class="form-control" required>
+            @foreach (['Proveedor','Asociado','Mixto'] as $opt)
+              <option value="{{ $opt }}" @selected(old('type', $partner->type) === $opt)>{{ $opt }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>¿Activo?</label>
+          <select name="is_active" class="form-control" required>
+            <option value="1" @selected(old('is_active', $partner->is_active) == 1)>Sí</option>
+            <option value="0" @selected(old('is_active', $partner->is_active) == 0)>No</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group mt-3">
+        <label>Condiciones comerciales</label>
+        <textarea name="commercial_terms" class="form-control" rows="3">{{ old('commercial_terms', $partner->commercial_terms) }}</textarea>
+      </div>
+
+      <div class="form-group mt-3">
+        <label>Comentarios</label>
+        <textarea name="comments" class="form-control" rows="3">{{ old('comments', $partner->comments) }}</textarea>
+      </div>
+
+      <div class="mt-4 flex gap-2">
+        <button class="btn btn-primary">Actualizar</button>
+        <a href="{{ route('partners.index') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
 </div>
 @endsection

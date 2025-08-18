@@ -30,10 +30,15 @@ class PartnerEntityController extends Controller
             'telefono'        => ['nullable','string'],
             'correo_contacto' => ['nullable','email'],
             'direccion'       => ['nullable','string'],
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'logo'             => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'is_default'      => ['sometimes','boolean'],
             'is_active'       => ['sometimes','boolean'],
         ]);
+
+        if ($request->hasFile('logo')) {
+            // guarda en storage/app/public/partners/logos
+            $data['logo_path'] = $request->file('logo')->store('partners/logos', 'public');
+        }
 
         // Asegura una sola default por partner
         if ($request->boolean('is_default')) {
@@ -71,11 +76,18 @@ class PartnerEntityController extends Controller
             'telefono'        => ['nullable','string'],
             'correo_contacto' => ['nullable','email'],
             'direccion'       => ['nullable','string'],
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'remove_logo' => 'sometimes|boolean',
+            'logo'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'remove_logo'     => 'sometimes|boolean',
             'is_default'      => ['sometimes','boolean'],
             'is_active'       => ['sometimes','boolean'],
         ]);
+
+        if ($request->hasFile('logo')) {
+            if ($entity->logo_path) {
+                Storage::disk('public')->delete($entity->logo_path);
+            }
+            $data['logo_path'] = $request->file('logo')->store('partners/logos', 'public');
+        }
 
         if ($request->boolean('is_default')) {
             $partner->entities()->where('id','!=',$entity->id)->update(['is_default' => false]);

@@ -18,11 +18,11 @@ class DatabaseSeeder extends Seeder
             ProductWarehouseCitiesSeeder::class,
             ProductWarehouseSeeder::class,
             ProductWarehouseDobleVelaSeeder::class,
-           /* ProductWarehouseInnovationSeeder::class,*/
             ProductWarehouseFourPromotionalSeeder::class,
             ProductWarehouseCitySeeder::class,
             DobleVelaSeeder::class,
             FourPromotionalSeeder::class,
+            /* ProductWarehouseInnovationSeeder::class,*/
             /*InnovationSeeder::class,*/
         ]);
     }

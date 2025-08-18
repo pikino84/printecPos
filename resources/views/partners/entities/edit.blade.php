@@ -7,7 +7,7 @@
     <h5>Editar razón social de: {{ $partner->nombre_comercial }}</h5>
   </div>
   <div class="card-body">
-    <form method="POST" action="{{ route('entities.update', $entity) }}">
+    <form method="POST" action="{{ route('entities.update', $entity) }}" enctype="multipart/form-data">
       @csrf @method('PUT')
 
       <div class="form-group mb-3">
@@ -40,7 +40,19 @@
         <input type="checkbox" class="form-check-input" id="is_default" name="is_default" value="1" {{ $entity->is_default ? 'checked' : '' }}>
         <label class="form-check-label" for="is_default">Marcar como principal</label>
       </div>
-
+      <div class="form-group">
+        <label>Logo (JPG/PNG/WEBP máx 2MB)</label>
+        @if($entity->logo_url)
+          <div class="mb-2">
+            <img src="{{ $entity->logo_url }}" alt="Logo" style="height:48px" class="rounded shadow-sm">
+          </div>
+        @endif
+        <input type="file" class="form-control @error('logo') is-invalid @enderror"
+              name="logo" accept=".jpg,.jpeg,.png,.webp">
+        @error('logo')
+          <span class="invalid-feedback">{{ $message }}</span>
+        @enderror
+      </div>
       <div class="form-check mb-3">
         <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="1" {{ $entity->is_active ? 'checked' : '' }}>
         <label class="form-check-label" for="is_active">Activo</label>

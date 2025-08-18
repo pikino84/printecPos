@@ -31,12 +31,11 @@
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>Nombre Comercial</th>
-                        <th>Slug</th>
-                        <th>Razón Social</th>
-                        <th>Tipo</th>
+                        <th>Nombre</th>
+                        <th>Contacto</th>
                         <th>Correo</th>
                         <th>Teléfono</th>
+                        <th>Tipo</th>
                         <th>Activo</th>
                         <th>Acciones</th>
                     </tr>
@@ -44,12 +43,11 @@
                 <tbody>
                     @forelse ($partners as $partner)
                         <tr>
-                            <td>{{ $partner->nombre_comercial }}</td>
-                            <td>{{ $partner->slug }}</td>
-                            <td>{{ $partner->razon_social }}</td>
-                            <td>{{ ucfirst($partner->tipo) }}</td>
-                            <td>{{ $partner->correo_contacto }}</td>
-                            <td>{{ $partner->telefono }}</td>
+                            <td>{{ $partner->name }}</td>
+                            <td>{{ $partner->contact_name }}</td>
+                            <td>{{ $partner->contact_email }}</td>
+                            <td>{{ $partner->contact_phone }}</td>
+                            <td>{{ ucfirst($partner->type) }}</td>
                             <td>{{ $partner->is_active ? 'Sí' : 'No' }}</td>
                             <td class="d-flex gap-1">
                               {{-- Ir al CRUD de razones sociales del partner --}}

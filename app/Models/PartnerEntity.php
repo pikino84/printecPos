@@ -19,7 +19,7 @@ class PartnerEntity extends Model
         'telefono',
         'correo_contacto',
         'direccion',
-        'logo',
+        'logo_path',
         'is_default',
         'is_active',
     ];

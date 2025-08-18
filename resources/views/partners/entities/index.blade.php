@@ -14,6 +14,7 @@
     <table class="table table-striped align-middle">
       <thead>
         <tr>
+          <th>Logo</th>
           <th>Razón social</th>
           <th>RFC</th>
           <th>Correo</th>
@@ -26,6 +27,11 @@
       <tbody>
         @forelse($entities as $e)
           <tr>
+            <td>
+              @if($e->logo_path)
+                <img src="/storage/{{ $e->logo_path }}" alt="Logo" style="height:48px" class="rounded shadow-sm">
+              @endif
+            </td>
             <td>{{ $e->razon_social }}</td>
             <td>{{ $e->rfc }}</td>
             <td>{{ $e->correo_contacto }}</td>
@@ -55,7 +61,7 @@
             </td>
           </tr>
         @empty
-          <tr><td colspan="7" class="text-center text-muted">Sin razones sociales aún.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted">Sin razones sociales aún.</td></tr>
         @endforelse
       </tbody>
     </table>

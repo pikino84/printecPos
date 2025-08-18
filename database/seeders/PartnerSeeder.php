@@ -19,13 +19,12 @@ class PartnerSeeder extends Seeder
         $printec = Partner::updateOrCreate(
             ['slug' => 'printec'],
             [
-                'nombre_comercial' => 'Printec',
-                'razon_social'     => 'Distribuidora Alpha S.A. de C.V.',
-                'rfc'              => 'ALP123456789',
-                'telefono'         => '555-123-4567',
-                'correo_contacto'  => 'contacto@alpha.com',
+                'name' => 'Printec',
+                'contact_name'     => 'Eduardo Butron',
+                'contact_phone'    => '9981669212',
+                'contact_email'    => 'ebutron@printec.mx',
                 'direccion'        => 'Calle Ficticia 123, CDMX',
-                'tipo'             => 'mixto', // si tu tabla tiene este campo
+                'type'             => 'mixto', // si tu tabla tiene este campo
             ]
         );
 
@@ -33,33 +32,30 @@ class PartnerSeeder extends Seeder
         $partners = [
             [
                 'slug' => 'doble-vela',
-                'nombre_comercial' => 'Doble Vela',
-                'razon_social' => 'Doble Vela S.A.',
-                'rfc' => null,
-                'telefono' => null,
-                'correo_contacto' => null,
-                'direccion' => null,
-                'tipo' => 'proveedor',
+                'name' => 'Doble Vela',
+                'contact_name' => 'Juan Perez',
+                'contact_phone' => '555-123-4567',
+                'contact_email' => 'juan@doblevela.com',
+                'direccion' => 'Calle Ficticia 456, CDMX',
+                'type' => 'proveedor',
             ],
             [
                 'slug' => '4promotional',
-                'nombre_comercial' => '4Promotional',
-                'razon_social' => '4Promotional S.A.',
-                'rfc' => null,
-                'telefono' => null,
-                'correo_contacto' => null,
+                'name' => '4Promotional',
+                'contact_name' => 'Maria Lopez',
+                'contact_phone' => '555-987-6543',
+                'contact_email' => null,
                 'direccion' => null,
-                'tipo' => 'proveedor',
+                'type' => 'proveedor',
             ],
             [
                 'slug' => 'beta-industrial',
-                'nombre_comercial' => 'Beta Industrial',
-                'razon_social' => 'Beta Industrial S.A. de C.V.',
-                'rfc' => 'BET987654321',
-                'telefono' => '555-987-6543',
-                'correo_contacto' => 'ventas@beta.com',
+                'name' => 'Beta Industrial',
+                'contact_name' => 'Beta Industrial S.A. de C.V.',
+                'contact_phone' => '555-987-6543',
+                'contact_email' => 'ventas@beta.com',
                 'direccion' => 'Avenida Imaginaria 456, Guadalajara',
-                'tipo' => 'asociado',
+                'type' => 'asociado',
             ],
         ];
 
