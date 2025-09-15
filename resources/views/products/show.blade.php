@@ -45,7 +45,7 @@
                     </li>
                     <li class="list-group-item">
                         <strong>Proveedor:</strong> 
-                            {{ $producto->partner->nombre_comercial ?? 'N/A' }}
+                            {{ $producto->partner->name ?? 'N/A' }}
                         </li>
                     <li class="list-group-item">
                         <strong>Modelo:</strong> 
@@ -91,9 +91,9 @@
                                         <td>
                                             {{ number_format($variant->totalStock()) }}
                                         </td>
-                                        <td class="wrapper_color">
+                                        <td class="wrapper_color" title="{{ $variant->color_name }}">
                                             {{ $variant->color_name ?? 'no_color' }}
-                                            <div class="color-icon {{ $variant->color_name ?? 'no_color' }}"></div>
+                                            <div class="color-icon {{ $variant->color_name ?? 'no_color' }}" ></div>
                                         </td>
                                         <td>${{ number_format($producto->price, 2) }}</td>
                                         <td style="min-width: 130px;">

@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'slug',
@@ -24,29 +27,177 @@ class Product extends Model
         'product_weight',
         'product_size',
         'model_code',
-        'product_provider_id',
-        'image_path',
+        'main_image',
         'area_print',
         'partner_id',
+        'owner_id',
         'created_by',
+        'product_category_id',
+        'price',
+        'short_description',
+        'meta_description',
+        'meta_keywords',
+        'featured',
+        'new',
+        'catalog_page',
+        'is_active',
+        // NUEVOS CAMPOS
+        'is_own_product',
+        'is_public',
     ];
 
-    public function provider()
+    protected $casts = [
+        'price' => 'decimal:2',
+        'featured' => 'boolean',
+        'new' => 'boolean',
+        'is_active' => 'boolean',
+        'is_own_product' => 'boolean',
+        'is_public' => 'boolean',
+    ];
+
+    // Activity Log
+    protected static $logName = 'producto';
+    protected static $logAttributes = ['name', 'price', 'is_active', 'is_own_product', 'is_public'];
+    protected static $logOnlyDirty = true;
+
+    public function getActivitylogOptions(): LogOptions
     {
-        return $this->belongsTo(ProductProvider::class, 'product_provider_id');
+        return LogOptions::defaults()
+            ->logOnly(['name', 'price', 'is_active', 'is_own_product', 'is_public'])
+            ->logOnlyDirty()
+            ->useLogName('producto');
     }
+
+    // ========================================================================
+    // RELACIONES EXISTENTES
+    // ========================================================================
 
     public function variants()
     {
-        return $this->hasMany(ProductVariant::class);
-    }
-    
-    // Visibilidad: Printec (1) + del partner logueado
-    public function scopeVisibleFor($q, User $user){
-        return $q->whereIn('partner_id', [1, $user->partner_id]);
+        return $this->hasMany(ProductVariant::class, 'product_id');
     }
 
-    // Galería = [main_image, imágenes de variantes]
+    public function productCategory()
+    {
+        return $this->belongsTo(ProductCategory::class);
+    }
+
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(Partner::class, 'owner_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function stocks()
+    {
+        return $this->hasManyThrough(ProductStock::class, ProductVariant::class, 'product_id', 'variant_id');
+    }
+
+    public function categories()
+    {
+        return $this->hasManyThrough(
+            PrintecCategory::class,
+            ProductCategory::class,
+            'id',
+            'id',
+            'product_category_id',
+            'printec_category_id'
+        );
+    }
+
+    // ========================================================================
+    // SCOPES PARA PRODUCTOS PROPIOS
+    // ========================================================================
+
+
+    // Scope para productos propios únicamente
+    public function scopeOwnProducts($query)
+    {
+        return $query->where('is_own_product', true);
+    }
+
+    // Scope para productos de proveedores únicamente
+    public function scopeProviderProducts($query)
+    {
+        return $query->where('is_own_product', false);
+    }
+
+    // Scope alternativo para visibilidad por partner (más detallado)
+    public function scopeVisibleFor($query, $user)
+    {
+        return $query->where(function($q) use ($user) {
+            $q->where(function($subQuery) use ($user) {
+                // Productos propios del partner del usuario
+                $subQuery->where('partner_id', $user->partner_id)
+                        ->where('is_own_product', true);
+            })
+            ->orWhere(function($subQuery) use ($user) {
+                // Productos públicos de Printec (si el usuario no es de Printec)
+                if ($user->partner_id != 1) {
+                    $subQuery->where('partner_id', 1)
+                            ->where('is_public', true);
+                }
+            })
+            ->orWhere(function($subQuery) use ($user) {
+                // Productos de proveedores (no propios) visibles para todos
+                $subQuery->where('is_own_product', false)
+                        ->where('is_active', true);
+            });
+        });
+    }
+
+    // ========================================================================
+    // MÉTODOS DE NEGOCIO PARA PRODUCTOS PROPIOS
+    // ========================================================================
+
+    public function canBeViewedBy(User $user): bool
+    {
+        // Si es producto de proveedor, todos pueden verlo
+        if (!$this->is_own_product) {
+            return true;
+        }
+
+        // Si es producto propio del mismo partner
+        if ($this->partner_id === $user->partner_id) {
+            return true;
+        }
+
+        // Si es producto público de Printec
+        if ($this->partner_id === 1 && $this->is_public) {
+            return true;
+        }
+
+        // Printec puede ver todo
+        if ($user->partner_id === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isOwnProductOf(User $user): bool
+    {
+        return $this->is_own_product && $this->partner_id === $user->partner_id;
+    }
+
+    public function isPrintecPublicProduct(): bool
+    {
+        return $this->is_own_product && $this->partner_id === 1 && $this->is_public;
+    }
+
+    // ========================================================================
+    // ACCESSORS EXISTENTES (mantener)
+    // ========================================================================
+
     public function getGalleryAttribute(): array
     {
         $images = [];
@@ -58,52 +209,41 @@ class Product extends Model
                 $images[] = Storage::disk('public')->url($v->image);
             }
         }
-        // Quita duplicados por si alguna variante repite archivo
         return array_values(array_unique($images));
     }
 
-
-    public function categories()
+    // Accessors
+    public function getMainImageUrlAttribute()
     {
-        return $this->hasManyThrough(
-            \App\Models\PrintecCategory::class,
-            \App\Models\ProductCategory::class,
-            'id', // ProductCategory.id
-            'id', // PrintecCategory.id
-            'product_category_id', // Product.product_category_id (asegúrate de que esto exista o ajústalo)
-            'printec_category_id' // ProductCategory.printec_category_id (ajusta si es diferente)
-        );
+        return $this->main_image ? Storage::url($this->main_image) : null;
     }
 
-    public function productCategory()
+    public function getDisplayPriceAttribute()
     {
-        return $this->belongsTo(\App\Models\ProductCategory::class, 'product_category_id');
+        return '$' . number_format($this->price, 2);
     }
 
-    public function stocks()
+    public function scopeActive($query)
     {
-        return $this->hasManyThrough(
-            \App\Models\ProductStock::class,
-            \App\Models\ProductVariant::class,
-            'product_id',     // Foreign key en variants
-            'variant_id',     // Foreign key en stocks
-            'id',             // Local key en products
-            'id'              // Local key en variants
-        );
+        return $query->where('is_active', true);
     }
 
-    public function partner()
+    public function getTotalStockAttribute()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->variants->sum(function($variant) {
+            return $variant->stocks->sum('stock');
+        });
+    }
+    // Métodos auxiliares
+    public function hasVariants()
+    {
+        return $this->variants()->count() > 0;
     }
 
-    public function creator()
+    public function getActiveVariants()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->variants()->whereHas('stocks', function($query) {
+            $query->where('stock', '>', 0);
+        })->get();
     }
-
 }
-
-
-    
-    

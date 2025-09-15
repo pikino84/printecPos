@@ -192,6 +192,9 @@
 .azul{
     background-color: #025896;
 }
+.azul.claro{
+    background-color: #8dcff4
+}
 .vino{
     background-color: #8f0940;
 }

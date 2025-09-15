@@ -34,6 +34,8 @@ class NavigationRolesPermissionsSeeder extends Seeder
             'cities.view', 'cities.manage',
 
             'printec_categories.view', 'printec_categories.manage',
+            'view-own-products', 
+            'manage-own-products',
         ];
 
         // b) Permisos "legado" (tal cual los espera tu menú actual)
@@ -95,6 +97,7 @@ class NavigationRolesPermissionsSeeder extends Seeder
                 'warehouses.view','warehouses.manage',
                 'cities.view','cities.manage',
                 'printec_categories.view','printec_categories.manage',
+                'view-own-products','manage-own-products',
             ],
             // legado necesario para que el menú actual no cambie
             [
@@ -133,6 +136,7 @@ class NavigationRolesPermissionsSeeder extends Seeder
                 'catalog.view',
                 'products.view','products.manage',
                 'product_categories.view', // ver categorías proveedor
+                'view-own-products','manage-own-products', // AGREGAR ESTA LÍNEA
             ],
             ['edit profile']
         );
@@ -147,6 +151,7 @@ class NavigationRolesPermissionsSeeder extends Seeder
             'dashboard.view',
             'catalog.view',
             'products.view',
+            'view-own-products',
             'edit profile',
         ];
         Role::where('name', 'Asociado Vendedor')->first()?->syncPermissions($asocVend);

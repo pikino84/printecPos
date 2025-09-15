@@ -91,10 +91,13 @@ class DobleVelaSeeder extends Seeder
                         'featured'           => false,
                         'new'                => false,
                         'product_category_id'=> $productCategory->id,
-                        'partner_id'         => $provider->id,   // proveedor real = DV
-                        'owner_id'           => $publisher->id,  // dueño/publicador = Printec
+                        'partner_id'         => $provider->id,
+                        'owner_id'           => $publisher->id,
                         'created_by'         => $createdBy,
                         'is_active'          => true,
+                        // NUEVOS CAMPOS
+                        'is_own_product'     => false, // Es producto de proveedor
+                        'is_public'          => true,  // Visible para todos
                     ]
                 );
 
@@ -122,6 +125,7 @@ class DobleVelaSeeder extends Seeder
 
                     // Color: "04 - ROJO" => "ROJO"
                     $colorName = trim(preg_replace('/^\d+\s*-\s*/', '', (string)($row['COLOR'] ?? '')));
+                    $colorName  = Str::of($colorName)->lower();
                     $colorKey  = Str::of($colorName)->lower()->replace(' ', '')->toString();
 
                     // Imagen variante

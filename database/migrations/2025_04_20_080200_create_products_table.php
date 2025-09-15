@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->text('keywords')->nullable();
             $table->string('short_description', 500)->nullable();
+
              // Atributos físicos
             $table->string('material')->nullable();
             $table->string('packing_type')->nullable();
@@ -28,12 +29,14 @@ return new class extends Migration {
             $table->string('product_weight')->nullable();
             $table->string('product_size')->nullable();
             $table->string('area_print')->nullable();
+
              // Meta
             $table->text('meta_description')->nullable();
             $table->text('meta_keywords')->nullable();
             $table->boolean('featured')->default(false);
             $table->boolean('new')->default(false);
             $table->integer('catalog_page')->nullable();
+            
             // Imágenes
             $table->string('main_image')->nullable();
             // Relaciones
@@ -44,6 +47,10 @@ return new class extends Migration {
             $table->foreignId('owner_id')->constrained('partners')->cascadeOnDelete();
             // auditoría
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+
+            $table->boolean('is_own_product')->default(false); // Si es producto propio vs proveedor
+            $table->boolean('is_public')->default(false); // Si Printec lo hace público para asociados
+            
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

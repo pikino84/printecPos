@@ -16,8 +16,16 @@ class ProductCatalogController extends Controller
         // Obtener todas las categorías internas de Printec order by name
         $categories = PrintecCategory::orderBy('name')->get();
 
-        $query = Product::with(['productCategory.printecCategories', 'variants'])
-            ->whereHas('stocks', function ($q) {
+        $query = Product::with(['productCategory.printecCategories', 'variants.stocks'])
+            ->where(function($q) {
+                $q->where('is_own_product', false) // Productos de proveedores
+                ->orWhere(function($subQ) {
+                    $subQ->where('is_own_product', true)
+                        ->where('is_public', true); // Productos propios públicos
+                });
+            })
+            ->where('is_active', true)
+            ->whereHas('variants.stocks', function ($q) {
                 $q->where('stock', '>', 0);
             });
 

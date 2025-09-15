@@ -25,12 +25,12 @@ class ProductWarehouseSeeder extends Seeder
             // Doble Vela
             ['codigo'=>'7',  'name'=>'Doble Vela Almacén', 'nickname'=>'C E D I S',     'partner_slug'=>'doble-vela', 'city_slug'=>'cdmx'],
             // Innovation
-            ['codigo'=>'15', 'name'=>'Almacén General',     'nickname'=>'ALGARÍN',       'partner_slug'=>'innovation',  'city_slug'=>'cdmx'],
+            /*['codigo'=>'15', 'name'=>'Almacén General',     'nickname'=>'ALGARÍN',       'partner_slug'=>'innovation',  'city_slug'=>'cdmx'],
             ['codigo'=>'16', 'name'=>'Almacén 16',          'nickname'=>'M T Y',         'partner_slug'=>'innovation',  'city_slug'=>'mty'],
             ['codigo'=>'17', 'name'=>'Almacén 17',          'nickname'=>'CDMX',          'partner_slug'=>'innovation',  'city_slug'=>'cdmx'],
             ['codigo'=>'18', 'name'=>'Almacén 18',          'nickname'=>'CANCUN',        'partner_slug'=>'innovation',  'city_slug'=>'cun'],
             ['codigo'=>'19', 'name'=>'Almacén 19',          'nickname'=>'EXTERNO 24 HR', 'partner_slug'=>'innovation',  'city_slug'=>'gdl'],
-            ['codigo'=>'20', 'name'=>'Almacén 20',          'nickname'=>null,            'partner_slug'=>'innovation',  'city_slug'=>null],
+            ['codigo'=>'20', 'name'=>'Almacén 20',          'nickname'=>null,            'partner_slug'=>'innovation',  'city_slug'=>null],*/
             // 4Promotional
             ['codigo'=>'001','name'=>'4Promotional 001',    'nickname'=>'CDMX Centro','partner_slug'=>'4promotional','city_slug'=>'cdmx'],
         ];

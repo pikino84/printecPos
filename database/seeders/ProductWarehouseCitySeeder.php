@@ -25,7 +25,7 @@ class ProductWarehouseCitySeeder extends Seeder
             ['partner_slug'=>'doble-vela','codigo'=>'24', 'city_slug'=>'cdmx', 'nickname'=>'CDMX Oeste'],
 
             // Innovation (nombres + numéricos normalizados)
-            ['partner_slug'=>'innovation','codigo'=>'algarin',      'city_slug'=>'cdmx', 'nickname'=>'CDMX Centro'],
+            /*['partner_slug'=>'innovation','codigo'=>'algarin',      'city_slug'=>'cdmx', 'nickname'=>'CDMX Centro'],
             ['partner_slug'=>'innovation','codigo'=>'nuevo_cedis',  'city_slug'=>'gdl',  'nickname'=>'GDL Norte'],
             ['partner_slug'=>'innovation','codigo'=>'fiscal',       'city_slug'=>'mty',  'nickname'=>'MTY Externo'],
             ['partner_slug'=>'innovation','codigo'=>'externo',      'city_slug'=>'gdl',  'nickname'=>'GDL Externo'],
@@ -36,7 +36,7 @@ class ProductWarehouseCitySeeder extends Seeder
             ['partner_slug'=>'innovation','codigo'=>'19',           'city_slug'=>'gdl',  'nickname'=>'GDL Belisario'],
             ['partner_slug'=>'innovation','codigo'=>'20',           'city_slug'=>'gdl',  'nickname'=>'GDL Chapu'],
             ['partner_slug'=>'innovation','codigo'=>'stock',        'city_slug'=>'gdl',  'nickname'=>'GDL Stock'],
-            ['partner_slug'=>'innovation','codigo'=>'apartados',    'city_slug'=>'gdl',  'nickname'=>'GDL Apartados'],
+            ['partner_slug'=>'innovation','codigo'=>'apartados',    'city_slug'=>'gdl',  'nickname'=>'GDL Apartados'],*/
 
             // 4Promotional
             ['partner_slug'=>'4promotional','codigo'=>'001',        'city_slug'=>'cdmx', 'nickname'=>'CDMX Centro'],

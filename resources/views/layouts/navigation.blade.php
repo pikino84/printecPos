@@ -86,6 +86,14 @@
                             </a>
                         </li>
                         {{-- @endcan --}}
+                        @can('view-own-products')
+                            <li class="nav-item {{ menuActive(['own-products*']) }}">
+                                <a href="{{ route('own-products.index') }}" class="nav-link">
+                                    <i class="feather icon-package"></i>
+                                    <span class="pcoded-mtext">Productos Propios</span>
+                                </a>
+                            </li>
+                        @endcan
                         <li class="{{ request()->routeIs('catalogo.*') ? 'active' : '' }}">
                             <a href="{{ route('catalogo.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Catalogo</span>

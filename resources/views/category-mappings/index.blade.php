@@ -38,7 +38,7 @@
                             <form method="POST" action="{{ url('/category-mappings/' . $mapping->id) }}">
                                 @csrf
 
-                                <td>{{ $mapping->partner->nombre_comercial ?? 'N/A' }}</td>
+                                <td>{{ $mapping->partner->name ?? 'N/A' }}</td>
                                 <td>{{ $mapping->name }}</td>
                                 <td>
                                     <select name="category_ids[]" class="form-control" multiple size="5">

@@ -10,12 +10,12 @@ class ProductPartnerSeeder extends Seeder
     public function run(): void
     {
         $partners = [
-            [
+            /*[
                 'nombre_comercial' => 'Innovation',
                 'slug' => 'innovation',
                 'razon_social' => 'Innovation S.A.',
                 'tipo' => 'proveedor'
-            ],
+            ],*/
             [
                 'nombre_comercial' => 'Doble Vela',
                 'slug' => 'doble-vela',

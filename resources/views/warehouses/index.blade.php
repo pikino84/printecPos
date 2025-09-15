@@ -36,7 +36,7 @@
             <tbody>
                 @foreach ($warehouses as $warehouse)
                     <tr>                        
-                        <td>{{ $warehouse->partner->nombre_comercial ?? 'Sin asignar' }}</td>
+                        <td>{{ $warehouse->partner->name ?? 'Sin asignar' }}</td>
 
                         <td>{{ $warehouse->name }}</td>
                         <td>

@@ -10,7 +10,7 @@ class ProductWarehouse extends Model
     use HasFactory;
 
     protected $fillable = [
-        'provider_id',
+        'partner_id',
         'codigo',
         'name',
         'nickname',

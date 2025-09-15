@@ -16,6 +16,7 @@ use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PartnerEntityController;
 use App\Http\Controllers\PartnerEntityBankAccountController;
 use App\Http\Controllers\PartnerProductController;
+use App\Http\Controllers\OwnProductController;
 
 
 
@@ -78,6 +79,11 @@ Route::middleware('auth')->group(function () {
     // Rutas para poner nicknames a los almacenes
     Route::get('/warehouses', [ProductWarehouseController::class, 'index']);
     Route::put('/warehouses/{id}', [ProductWarehouseController::class, 'update'])->name('warehouses.update');
+
+    // Productos propios
+    Route::resource('own-products', OwnProductController::class);
+    Route::get('api/own-products/search', [OwnProductController::class, 'search'])->name('own-products.search');
+    Route::post('own-products/{ownProduct}/duplicate', [OwnProductController::class, 'duplicate'])->name('own-products.duplicate');
 
 
 

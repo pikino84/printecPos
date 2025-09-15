@@ -135,6 +135,8 @@ class FourPromotionalSeeder extends Seeder
                     'owner_id'           => $owner->id,    // dueño/publicador (Printec)
                     'created_by'         => 1,
                     'is_active'          => true,
+                    'is_own_product'     => false, // Es producto de proveedor
+                    'is_public'          => true,  // Visible para todos
                 ]
             );
 

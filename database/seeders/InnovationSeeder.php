@@ -122,6 +122,8 @@ class InnovationSeeder extends Seeder
                         'owner_id'            => $publisher->id,
                         'created_by'          => $createdBy,
                         'is_active'           => (bool)($p['estatus_producto'] ?? 1),
+                        'is_own_product'      => false, // Es producto de proveedor
+                        'is_public'           => true,  // Visible para todos
                     ]
                 );
                 $product->wasRecentlyCreated ? $created++ : $updated++;
