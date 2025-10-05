@@ -85,6 +85,70 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert/dist/sweetalert.min.js"></script>
         <script type="text/javascript" src="{{ asset('js/script.min.js') }}"></script>
         @yield('scripts')
+        <script>
+            // Función global para actualizar el contador del carrito
+            function updateCartBadge() {
+                $.ajax({
+                    url: '{{ route("cart.count") }}',
+                    type: 'GET',
+                    success: function(response) {
+                        const badge = $('#cart-count-badge');
+                        if (response.count > 0) {
+                            badge.text(response.count).show();
+                        } else {
+                            badge.hide();
+                        }
+                    }
+                });
+            }
+
+            // Actualizar badge al cargar la página
+            $(document).ready(function() {
+                updateCartBadge();
+            });
+
+            // Función global para agregar al carrito desde cualquier página
+            window.addToCart = function(variantId, quantity, warehouseId = null) {
+                $.ajax({
+                    url: '{{ route("cart.add") }}',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        variant_id: variantId,
+                        quantity: quantity,
+                        warehouse_id: warehouseId
+                    },
+                    success: function(response) {
+                        // Actualizar badge con animación
+                        const badge = $('#cart-count-badge');
+                        badge.addClass('cart-pulse');
+                        setTimeout(() => badge.removeClass('cart-pulse'), 300);
+                        
+                        if (response.cart_count > 0) {
+                            badge.text(response.cart_count).show();
+                        }
+                        
+                        // Mostrar notificación
+                        swal({
+                            title: "¡Agregado!",
+                            text: response.message,
+                            icon: "success",
+                            timer: 2000,
+                            buttons: false
+                        });
+                    },
+                    error: function(xhr) {
+                        let message = 'Error al agregar al carrito';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        swal("Error", message, "error");
+                    }
+                });
+            };
+            </script>
 
     </body>
 </html>

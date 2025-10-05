@@ -1,3 +1,19 @@
+.pcoded .pcoded-navbar[navbar-theme="theme1"] .nav-user, .pcoded .pcoded-navbar[navbar-theme="theme1"] .pcoded-inner-navbar {
+    background-color:#1F4C94 !important;
+}
+.header-navbar .navbar-wrapper .navbar-logo[logo-theme="theme6"]{
+    background-color: rgb(36,87,170) !important;
+}
+.btn-primary, .sweet-alert button.confirm, .wizard>.actions a {
+    background-color: #1F4C94;
+    border-color: #1F4C94;
+}
+.badge-primary {
+    background: #1F4C94;
+}
+.text-primary {
+    color: #1F4C94 !important;
+}
 /*Start fix menu nav*/
 .header-navbar {
     height: 77px;
@@ -226,4 +242,34 @@
 }
 .gris{
     background-color: #7c7c7c;
+}
+
+/* Estilo para el badge del carrito */
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 2px 5px;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 14px;
+    border-radius: 9px;
+}
+
+.bg-c-pink {
+    background-color: #ff5370;
+    color: white;
+}
+
+/* Animación para agregar al carrito */
+@keyframes cartPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.cart-pulse {
+    animation: cartPulse 0.3s ease-in-out;
 }

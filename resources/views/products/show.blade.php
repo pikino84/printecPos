@@ -104,7 +104,6 @@
                                                     name="quantity" 
                                                     value="1" 
                                                     min="1" 
-                                                    max="3" 
                                                     class="form-control form-control-sm text-center quantity-input" 
                                                     data-variant="{{ $variant->id }}" 
                                                     style="width: 50px;"
@@ -113,7 +112,11 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <button class="btn btn-primary btn-sm">Add to Cart</button>
+                                            <button class="btn btn-primary btn-sm btn-add-to-cart" 
+                                                    data-variant="{{ $variant->id }}"
+                                                    data-warehouse="{{ $stock->warehouse_id ?? '' }}">
+                                                <i class="feather icon-shopping-cart"></i> Agregar
+                                            </button>
                                         </td>
                                         @foreach($variant->stocks as $stock)
                                             <td>
@@ -227,6 +230,7 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Selectores de cantidad
     document.querySelectorAll('.btn-minus').forEach(button => {
         button.addEventListener('click', function () {
             const variantId = this.getAttribute('data-variant');
@@ -243,9 +247,24 @@ document.addEventListener('DOMContentLoaded', function () {
             const variantId = this.getAttribute('data-variant');
             const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
             let value = parseInt(input.value);
-            const max = parseInt(input.getAttribute('max'));
+            const max = parseInt(input.getAttribute('max')) || 9999;
             if (value < max) {
                 input.value = value + 1;
+            }
+        });
+    });
+
+    // Botón agregar al carrito
+    document.querySelectorAll('.btn-add-to-cart').forEach(button => {
+        button.addEventListener('click', function () {
+            const variantId = this.getAttribute('data-variant');
+            const warehouseId = this.getAttribute('data-warehouse') || null;
+            const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
+            const quantity = parseInt(input.value);
+
+            // Usar la función global
+            if (typeof addToCart === 'function') {
+                addToCart(variantId, quantity, warehouseId);
             }
         });
     });

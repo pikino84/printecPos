@@ -17,6 +17,8 @@ use App\Http\Controllers\PartnerEntityController;
 use App\Http\Controllers\PartnerEntityBankAccountController;
 use App\Http\Controllers\PartnerProductController;
 use App\Http\Controllers\OwnProductController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\QuoteController;
 
 
 
@@ -92,9 +94,32 @@ Route::middleware('auth')->group(function () {
     Route::resource('partner-entities.bank-accounts', PartnerEntityBankAccountController::class)->parameters(['bank-accounts' => 'bank_account'])->shallow();
     Route::resource('partner-products', PartnerProductController::class)->parameters(['partner-products' => 'product'])->shallow();
 
-
     
+    // ========================================================================
+    // RUTAS DEL CARRITO
+    // ========================================================================
+    Route::prefix('cart')->name('cart.')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::post('/add', [CartController::class, 'add'])->name('add');
+        Route::get('/count', [CartController::class, 'count'])->name('count');
+        Route::patch('/{item}', [CartController::class, 'update'])->name('update');
+        Route::delete('/{item}', [CartController::class, 'destroy'])->name('destroy');
+        Route::delete('/', [CartController::class, 'clear'])->name('clear');
+    });
 
+    // ========================================================================
+    // RUTAS DE COTIZACIONES
+    // ========================================================================
+    Route::prefix('quotes')->name('quotes.')->group(function () {
+        Route::get('/', [QuoteController::class, 'index'])->name('index');
+        Route::post('/create-from-cart', [QuoteController::class, 'createFromCart'])->name('create');
+        Route::get('/{quote}', [QuoteController::class, 'show'])->name('show');
+        Route::post('/{quote}/send', [QuoteController::class, 'send'])->name('send');
+        Route::get('/{quote}/pdf', [QuoteController::class, 'downloadPdf'])->name('pdf');
+        Route::post('/{quote}/clone-to-cart', [QuoteController::class, 'cloneToCart'])->name('clone-to-cart');
+        Route::post('/{quote}/edit-to-cart', [QuoteController::class, 'editToCart'])->name('edit-to-cart');
+        Route::delete('/{quote}', [QuoteController::class, 'destroy'])->name('destroy');
+    });
 
 
 });

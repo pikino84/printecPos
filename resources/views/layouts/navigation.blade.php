@@ -99,6 +99,11 @@
                                 <span class="pcoded-mtext">Catalogo</span>
                             </a>
                         </li>
+                        <li class="{{ request()->routeIs('quotes.*') ? 'active' : '' }}">
+                            <a href="{{ route('quotes.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Mis Cotizaciones</span>
+                            </a>
+                        </li>
                         <!--li class=" pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Vertical</span>
