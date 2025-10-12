@@ -1,3 +1,7 @@
+.navbar-logo a img {
+    height: 30px;
+}
+
 .pcoded .pcoded-navbar[navbar-theme="theme1"] .nav-user, .pcoded .pcoded-navbar[navbar-theme="theme1"] .pcoded-inner-navbar {
     background-color:#1F4C94 !important;
 }

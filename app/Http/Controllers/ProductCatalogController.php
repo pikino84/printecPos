@@ -112,7 +112,6 @@ class ProductCatalogController extends Controller
                 $almacenesUnicos->put($stock->warehouse_id, $stock->warehouse);
             }
         }
-
         return view('products.show', compact('producto', 'images', 'almacenesUnicos'));
     }
 

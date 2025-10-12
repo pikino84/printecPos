@@ -52,7 +52,7 @@
                         <span class="pcoded-mtext">Asociado</span>
                     </a>
                 </li>
-                <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*']) }}">
+                <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*', 'own-products.*','quotes.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
                         <span class="pcoded-mtext">Productos</span>
@@ -87,12 +87,11 @@
                         </li>
                         {{-- @endcan --}}
                         @can('view-own-products')
-                            <li class="nav-item {{ menuActive(['own-products*']) }}">
-                                <a href="{{ route('own-products.index') }}" class="nav-link">
-                                    <i class="feather icon-package"></i>
-                                    <span class="pcoded-mtext">Productos Propios</span>
-                                </a>
-                            </li>
+                        <li class="nav-item {{ request()->is('own-products*') ? 'active' : '' }}">
+                            <a href="{{ route('own-products.index') }}" class="nav-link">
+                                <span class="pcoded-mtext">Productos Propios</span>
+                            </a>
+                        </li>
                         @endcan
                         <li class="{{ request()->routeIs('catalogo.*') ? 'active' : '' }}">
                             <a href="{{ route('catalogo.index') }}" class="waves-effect waves-dark">
