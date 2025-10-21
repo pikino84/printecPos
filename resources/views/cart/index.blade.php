@@ -145,6 +145,83 @@
                         <form action="{{ route('quotes.create') }}" method="POST">
                             @csrf
                             
+                            {{-- Campo oculto para client_id --}}
+                            <input type="hidden" id="client_id" name="client_id" value="">
+
+                            {{-- Información del Cliente --}}
+                            <div class="mb-3">
+                                <h6 class="mb-3">Información del Cliente</h6>
+                                
+                                {{-- Buscar cliente existente --}}
+                                <div class="form-group mb-2">
+                                    <label>Buscar Cliente Registrado</label>
+                                    <select id="client_search" class="form-control form-control-sm" style="width: 100%;">
+                                        <option></option>
+                                    </select>
+                                    <small class="text-muted">Busque por nombre, RFC o email</small>
+                                </div>
+
+                                <div class="text-center my-2">
+                                    <small class="text-muted">- O -</small>
+                                </div>
+
+                                {{-- Email del cliente (requerido) --}}
+                                <div class="form-group mb-2">
+                                    <label>Email del Cliente <span class="text-danger">*</span></label>
+                                    <input 
+                                        type="email" 
+                                        class="form-control form-control-sm" 
+                                        id="client_email" 
+                                        name="client_email"
+                                        placeholder="cliente@ejemplo.com"
+                                        required
+                                    >
+                                    <small class="text-muted">Al ingresar el email verificaremos si ya está registrado</small>
+                                </div>
+
+                                {{-- Div para mostrar info del cliente --}}
+                                <div id="client_info" class="mb-2"></div>
+
+                                {{-- Campos adicionales (se muestran si no existe el cliente) --}}
+                                <div id="manual_client_fields" style="display: none;">
+                                    <div class="form-group mb-2">
+                                        <label>Nombre Completo</label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control form-control-sm" 
+                                            id="client_name" 
+                                            name="client_name"
+                                            placeholder="Juan Pérez García"
+                                        >
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label>RFC</label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control form-control-sm" 
+                                            id="client_rfc" 
+                                            name="client_rfc"
+                                            placeholder="XAXX010101000"
+                                            maxlength="13"
+                                        >
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label>Razón Social</label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control form-control-sm" 
+                                            id="client_razon_social" 
+                                            name="client_razon_social"
+                                            placeholder="Empresa S.A. de C.V."
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
                             <div class="form-group">
                                 <label>Descripción corta (opcional)</label>
                                 <input type="text" 
@@ -185,7 +262,6 @@
                                 <i class="feather icon-file-text"></i> Generar Cotización
                             </button>
                         </form>
-                        
 
                         <a href="{{ route('catalogo.index') }}" class="btn btn-outline-secondary btn-block mt-2">
                             <i class="feather icon-arrow-left"></i> Continuar Comprando
@@ -290,6 +366,105 @@ $(document).ready(function() {
     function updateCartBadge(count) {
         $('.cart-badge').text(count);
     }
+
+    // ===== SELECTOR DE CLIENTES =====
+    // Inicializar Select2
+    $('#client_search').select2({
+        placeholder: 'Buscar cliente...',
+        allowClear: true,
+        minimumInputLength: 2,
+        ajax: {
+            url: '{{ route("clients.search") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return { q: params.term };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.map(client => ({
+                        id: client.id,
+                        text: `${client.text} - ${client.rfc || 'Sin RFC'}`,
+                        email: client.email,
+                        telefono: client.telefono,
+                        rfc: client.rfc,
+                        razon_social: client.razon_social
+                    }))
+                };
+            }
+        }
+    });
+
+    // Cuando se selecciona un cliente
+    $('#client_search').on('select2:select', function(e) {
+        const client = e.params.data;
+        
+        $('#client_id').val(client.id);
+        $('#client_email').val(client.email || '');
+        $('#client_name').val(client.text);
+        $('#client_rfc').val(client.rfc || '');
+        $('#client_razon_social').val(client.razon_social || '');
+        
+        $('#manual_client_fields').hide();
+        
+        $('#client_info').html(`
+            <div class="alert alert-info alert-sm">
+                <strong>Cliente registrado:</strong> ${client.text}<br>
+                ${client.email ? `<strong>Email:</strong> ${client.email}<br>` : ''}
+                ${client.rfc ? `<strong>RFC:</strong> ${client.rfc}` : ''}
+            </div>
+        `);
+    });
+
+    // Cuando se limpia la selección
+    $('#client_search').on('select2:clear', function() {
+        $('#client_id').val('');
+        $('#client_email').val('');
+        $('#client_name').val('');
+        $('#client_rfc').val('');
+        $('#client_razon_social').val('');
+        $('#client_info').html('');
+        $('#manual_client_fields').hide();
+    });
+
+    // Verificar cliente cuando pierde foco el email
+    $('#client_email').on('blur', function() {
+        const email = $(this).val().trim();
+        
+        if (email && email.includes('@')) {
+            $.ajax({
+                url: '{{ route("clients.search") }}',
+                data: { q: email },
+                success: function(clients) {
+                    const existingClient = clients.find(c => c.email === email);
+                    
+                    if (existingClient) {
+                        $('#client_id').val(existingClient.id);
+                        $('#client_name').val(existingClient.text);
+                        $('#client_rfc').val(existingClient.rfc || '');
+                        $('#client_razon_social').val(existingClient.razon_social || '');
+                        
+                        $('#client_info').html(`
+                            <div class="alert alert-info alert-sm">
+                                <strong>✓ Cliente encontrado:</strong> ${existingClient.text}
+                            </div>
+                        `);
+                        
+                        $('#manual_client_fields').hide();
+                    } else {
+                        $('#client_id').val('');
+                        $('#manual_client_fields').show();
+                        
+                        $('#client_info').html(`
+                            <div class="alert alert-warning alert-sm">
+                                <strong>Cliente no registrado.</strong> Complete los datos adicionales.
+                            </div>
+                        `);
+                    }
+                }
+            });
+        }
+    });
 });
 </script>
 @endsection

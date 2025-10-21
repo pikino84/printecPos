@@ -52,4 +52,21 @@ class Partner extends Model
         return $this->entities()->where('is_default', true)->first()
             ?: $this->entities()->first();
     }
+
+    public function clients()
+    {
+        return $this->belongsToMany(Client::class, 'client_partner')
+            ->withPivot(['first_contact_at', 'notes'])
+            ->withTimestamps();
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+    
+    public function scopeAsociadosYMixtos($query)
+    {
+        return $query->whereIn('type', ['Asociado', 'Mixto']);
+    }
 }

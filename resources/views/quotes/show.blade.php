@@ -156,19 +156,25 @@
                             <div class="form-group">
                                 <label>Email del cliente *</label>
                                 <input type="email" 
-                                       name="email" 
-                                       class="form-control form-control-sm" 
-                                       required
-                                       placeholder="cliente@ejemplo.com">
+                                    name="email" 
+                                    class="form-control form-control-sm" 
+                                    required
+                                    value="{{ $quote->client ? $quote->client->email : $quote->client_email }}"
+                                    placeholder="cliente@ejemplo.com">
+                                @if($quote->client)
+                                    <small class="text-muted">
+                                        <i class="feather icon-user"></i> Cliente: {{ $quote->client->nombre_completo }}
+                                    </small>
+                                @endif
                             </div>
                             <div class="form-group">
                                 <label>Mensaje (opcional)</label>
                                 <textarea name="message" 
-                                          class="form-control form-control-sm" 
-                                          rows="3"
-                                          placeholder="Mensaje adicional para el cliente..."></textarea>
+                                        class="form-control form-control-sm" 
+                                        rows="3"
+                                        placeholder="Mensaje adicional para el cliente..."></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-block">
+                            <button type="submit" class="btn btn-primary btn-block btn-sm">
                                 <i class="feather icon-send"></i> Enviar por Email
                             </button>
                         </form>
@@ -181,6 +187,30 @@
                     <h5>Información</h5>
                 </div>
                 <div class="card-body">
+                    {{-- Información del Cliente --}}
+                    @if($quote->client || $quote->client_email)
+                        <p class="mb-2">
+                            <strong>Cliente:</strong><br>
+                            @if($quote->client)
+                                {{ $quote->client->nombre_completo }}<br>
+                                <small class="text-muted">
+                                    @if($quote->client->email)
+                                        <i class="feather icon-mail"></i> {{ $quote->client->email }}<br>
+                                    @endif
+                                    @if($quote->client->rfc)
+                                        <i class="feather icon-file-text"></i> RFC: {{ $quote->client->rfc }}
+                                    @endif
+                                </small>
+                            @else
+                                {{ $quote->client_name ?? 'Cliente no registrado' }}<br>
+                                <small class="text-muted">
+                                    <i class="feather icon-mail"></i> {{ $quote->client_email }}
+                                </small>
+                            @endif
+                        </p>
+                        <hr>
+                    @endif
+
                     <p class="mb-2">
                         <strong>Creada por:</strong><br>
                         {{ $quote->user->name }}

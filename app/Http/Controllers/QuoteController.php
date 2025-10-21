@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Quote;
 use App\Models\QuoteItem;
 use App\Models\CartSession;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -45,68 +46,7 @@ class QuoteController extends Controller
         return view('quotes.index', compact('quotes'));
     }
 
-    /**
-     * Crear cotización desde el carrito
-     */
-    public function createFromCart(Request $request)
-    {
-        $request->validate([
-            'notes' => 'nullable|string|max:1000',
-            'customer_notes' => 'nullable|string|max:1000',
-            'short_description' => 'nullable|string|max:255', // NUEVO
-            'valid_days' => 'nullable|integer|min:1|max:90',
-        ]);
-
-        $cartItems = CartSession::where('user_id', Auth::id())
-            ->with('variant.product')
-            ->get();
-
-        if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')
-                ->with('error', 'El carrito está vacío');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $quote = Quote::create([
-                'user_id' => Auth::id(),
-                'partner_id' => Auth::user()->partner_id,
-                'quote_number' => Quote::generateQuoteNumber(),
-                'status' => 'draft',
-                'notes' => $request->notes,
-                'customer_notes' => $request->customer_notes,
-                'short_description' => $request->short_description, // NUEVO
-                'valid_until' => now()->addDays($request->valid_days ?? 15),
-            ]);
-
-            foreach ($cartItems as $cartItem) {
-                $price = $cartItem->variant->price ?? $cartItem->variant->product->price;
-
-                QuoteItem::create([
-                    'quote_id' => $quote->id,
-                    'variant_id' => $cartItem->variant_id,
-                    'warehouse_id' => $cartItem->warehouse_id,
-                    'quantity' => $cartItem->quantity,
-                    'unit_price' => $price,
-                ]);
-            }
-
-            $quote->calculateTotals();
-            CartSession::where('user_id', Auth::id())->delete();
-
-            DB::commit();
-
-            return redirect()->route('quotes.show', $quote)
-                ->with('success', 'Cotización creada exitosamente');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->route('cart.index')
-                ->with('error', 'Error al crear cotización: ' . $e->getMessage());
-        }
-    }
-
+    
     /**
      * Ver detalle de cotización
      */
@@ -337,6 +277,121 @@ class QuoteController extends Controller
             ]);
 
             return back()->with('error', 'Error al editar cotización: ' . $e->getMessage());
+        }
+    }
+
+    public function createFromCart(Request $request)
+    {
+        $request->validate([
+            'client_email' => 'required|email',
+            'client_name' => 'nullable|string|max:255',
+            'client_rfc' => 'nullable|string|max:13',
+            'client_razon_social' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+            'customer_notes' => 'nullable|string|max:1000',
+            'short_description' => 'nullable|string|max:255',
+            'valid_days' => 'nullable|integer|min:1|max:90',
+        ]);
+
+        $cartItems = CartSession::where('user_id', Auth::id())
+            ->with('variant.product')
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')
+                ->with('error', 'El carrito está vacío');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $user = Auth::user();
+            $partnerId = $user->partner_id;
+
+            // 1. Buscar o crear cliente
+            $clientId = null;
+            $clientData = [];
+
+            $existingClient = Client::where('email', $request->client_email)->first();
+            
+            if ($existingClient) {
+                $clientId = $existingClient->id;
+                
+                // Agregar relación con este partner si no existe
+                if (!$existingClient->hasContactWith($partnerId)) {
+                    $existingClient->addPartner($partnerId);
+                }
+            } else {
+                // Si tenemos datos completos, crear cliente
+                if ($request->filled('client_name')) {
+                    $nameParts = explode(' ', trim($request->client_name), 2);
+                    
+                    $newClient = Client::create([
+                        'nombre' => $nameParts[0],
+                        'apellido' => $nameParts[1] ?? '',
+                        'email' => $request->client_email,
+                        'rfc' => $request->client_rfc,
+                        'razon_social' => $request->client_razon_social,
+                    ]);
+                    
+                    $newClient->partners()->attach($partnerId, [
+                        'first_contact_at' => now(),
+                    ]);
+                    
+                    $clientId = $newClient->id;
+                } else {
+                    // Guardar datos en campos separados
+                    $clientData = [
+                        'client_email' => $request->client_email,
+                        'client_name' => $request->client_name,
+                        'client_rfc' => $request->client_rfc,
+                        'client_razon_social' => $request->client_razon_social,
+                    ];
+                }
+            }
+
+            // 2. Crear cotización
+            $quote = Quote::create([
+                'user_id' => $user->id,
+                'partner_id' => $partnerId,
+                'client_id' => $clientId,
+                'client_email' => $clientData['client_email'] ?? null,
+                'client_name' => $clientData['client_name'] ?? null,
+                'client_rfc' => $clientData['client_rfc'] ?? null,
+                'client_razon_social' => $clientData['client_razon_social'] ?? null,
+                'quote_number' => Quote::generateQuoteNumber(),
+                'status' => 'draft',
+                'notes' => $request->notes,
+                'customer_notes' => $request->customer_notes,
+                'short_description' => $request->short_description,
+                'valid_until' => now()->addDays($request->valid_days ?? 15),
+            ]);
+
+            // 3. Crear items
+            foreach ($cartItems as $cartItem) {
+                $price = $cartItem->variant->price ?? $cartItem->variant->product->price;
+
+                QuoteItem::create([
+                    'quote_id' => $quote->id,
+                    'variant_id' => $cartItem->variant_id,
+                    'warehouse_id' => $cartItem->warehouse_id,
+                    'quantity' => $cartItem->quantity,
+                    'unit_price' => $price,
+                ]);
+            }
+
+            $quote->calculateTotals();
+            CartSession::where('user_id', Auth::id())->delete();
+
+            DB::commit();
+
+            return redirect()->route('quotes.show', $quote)
+                ->with('success', 'Cotización creada exitosamente');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('cart.index')
+                ->with('error', 'Error al crear cotización: ' . $e->getMessage());
         }
     }
 }

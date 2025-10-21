@@ -32,6 +32,8 @@
         <!-- Style.css -->
         <link rel="stylesheet" type="text/css" href="{{ asset('css/style.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ asset('css/widget.css' )}}">
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <!-- Custom css -->
         <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
         <!-- Scripts -->
@@ -83,6 +85,8 @@
         <script src="{{ asset('js/vertical/vertical-layout.min.js') }}"></script>
         <!--script type="text/javascript" src="{{ asset('pages/dashboard/custom-dashboard.min.js') }}"></script-->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert/dist/sweetalert.min.js"></script>
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script type="text/javascript" src="{{ asset('js/script.min.js') }}"></script>
         @yield('scripts')
         <script>

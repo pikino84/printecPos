@@ -12,6 +12,11 @@ class Quote extends Model
     protected $fillable = [
         'user_id',
         'partner_id',
+        'client_id',           
+        'client_email',        
+        'client_name',         
+        'client_rfc',          
+        'client_razon_social', 
         'quote_number',
         'status',
         'subtotal',
@@ -42,6 +47,11 @@ class Quote extends Model
     public function partner()
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
     }
 
     public function items()
@@ -104,5 +114,13 @@ class Quote extends Model
     public function canBeSent()
     {
         return $this->status === 'draft' && $this->items()->count() > 0;
+    }
+
+    public function getEffectiveClientEmail()
+    {
+        if ($this->client_id && $this->client) {
+            return $this->client->email;
+        }
+        return $this->client_email;
     }
 }

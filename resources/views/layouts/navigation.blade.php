@@ -52,7 +52,7 @@
                         <span class="pcoded-mtext">Asociado</span>
                     </a>
                 </li>
-                <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*', 'own-products.*','quotes.*']) }}">
+                <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*', 'own-products.*','quotes.*', 'clients.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
                         <span class="pcoded-mtext">Productos</span>
@@ -101,6 +101,11 @@
                         <li class="{{ request()->routeIs('quotes.*') ? 'active' : '' }}">
                             <a href="{{ route('quotes.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Mis Cotizaciones</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">
+                            <a href="{{ route('clients.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Clientes</span>
                             </a>
                         </li>
                         <!--li class=" pcoded-hasmenu">
