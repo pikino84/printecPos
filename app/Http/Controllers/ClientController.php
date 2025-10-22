@@ -63,7 +63,7 @@ class ClientController extends Controller
         if ($request->filled('rfc')) {
             $request->merge(['rfc' => strtoupper(trim($request->rfc))]);
         }
-
+        
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'apellido' => 'required|string|max:255',
@@ -78,7 +78,7 @@ class ClientController extends Controller
         ], [
             'rfc.regex' => 'El formato del RFC no es válido. Debe ser mayúsculas y números (ej: XAXX010101000)',
         ]);
-
+        
         try {
             DB::beginTransaction();
 
@@ -92,16 +92,21 @@ class ClientController extends Controller
             }
 
             if ($existingClient) {
-                // Cliente ya existe, solo agregar los nuevos partners
-                foreach ($validated['partner_ids'] as $partnerId) {
-                    $existingClient->addPartner($partnerId);
-                }
+                // Cliente ya existe, agregar partners sin duplicar
+                $existingClient->partners()->syncWithoutDetaching(
+                    collect($validated['partner_ids'])
+                        ->unique()
+                        ->mapWithKeys(function ($partnerId) {
+                            return [$partnerId => ['first_contact_at' => now()]];
+                        })
+                        ->toArray()
+                );
                 
                 DB::commit();
                 
                 return redirect()
                     ->route('clients.show', $existingClient)
-                    ->with('info', 'El cliente ya existía. Se agregó la relación con tu partner.');
+                    ->with('info', 'El cliente ya existía. Se actualizó la relación con los partners.');
             }
 
             // Crear nuevo cliente
@@ -116,12 +121,15 @@ class ClientController extends Controller
                 'notas' => $validated['notas'],
             ]);
 
-            // Adjuntar partners
-            foreach ($validated['partner_ids'] as $partnerId) {
-                $client->partners()->attach($partnerId, [
-                    'first_contact_at' => now(),
-                ]);
-            }
+            // Sincronizar partners (automáticamente elimina duplicados)
+            $syncData = collect($validated['partner_ids'])
+                ->unique()
+                ->mapWithKeys(function ($partnerId) {
+                    return [$partnerId => ['first_contact_at' => now()]];
+                })
+                ->toArray();
+
+            $client->partners()->sync($syncData);
 
             DB::commit();
 
@@ -135,6 +143,7 @@ class ClientController extends Controller
                 ->withInput()
                 ->with('error', 'Error al crear el cliente: ' . $e->getMessage());
         }
+        
     }
 
     public function show(Client $client)

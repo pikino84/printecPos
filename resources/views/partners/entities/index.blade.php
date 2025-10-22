@@ -4,7 +4,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0">
-    Razones sociales de: <strong>{{ $partner->nombre_comercial }}</strong>
+    Razones sociales de: <strong>{{ $partner->name }}</strong>
   </h4>
   <a href="{{ route('partners.entities.create', $partner) }}" class="btn btn-success">Agregar razón social</a>
 </div>

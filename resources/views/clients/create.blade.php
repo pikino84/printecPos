@@ -102,7 +102,7 @@
                             type="text" 
                             class="form-control form-control-sm @error('rfc') is-invalid @enderror" 
                             name="rfc"
-                            value="{{ old('rfc', $client->rfc ?? '') }}"
+                            value="{{ old('rfc') }}"
                             maxlength="13"
                             placeholder="XAXX010101000"
                             style="text-transform: uppercase;"
@@ -145,37 +145,40 @@
 
         {{-- Solo mostrar la sección si es super admin --}}
         @if(auth()->user()->hasRole('super admin'))
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5>Partners Asociados <span class="text-danger">*</span></h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted small">
-                    Seleccione los partners que tienen contacto con este cliente
-                </p>
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Partners Asociados <span class="text-danger">*</span></h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        Seleccione los partners que tienen contacto con este cliente
+                    </p>
 
-                @foreach($partners as $partner)
-                    <div class="form-check">
-                        <input 
-                            class="form-check-input" 
-                            type="checkbox" 
-                            name="partner_ids[]" 
-                            value="{{ $partner->id }}"
-                            id="partner_{{ $partner->id }}"
-                            {{ in_array($partner->id, old('partner_ids', [])) ? 'checked' : '' }}
-                        >
-                        <label class="form-check-label" for="partner_{{ $partner->id }}">
-                            {{ $partner->name }}
-                            <span class="badge badge-secondary">{{ $partner->type }}</span>
-                        </label>
-                    </div>
-                @endforeach
+                    @foreach($partners as $partner)
+                        <div class="form-check">
+                            <input 
+                                class="form-check-input" 
+                                type="checkbox" 
+                                name="partner_ids[]" 
+                                value="{{ $partner->id }}"
+                                id="partner_{{ $partner->id }}"
+                                {{ in_array($partner->id, old('partner_ids', [])) ? 'checked' : '' }}
+                            >
+                            <label class="form-check-label" for="partner_{{ $partner->id }}">
+                                {{ $partner->name }}
+                                <span class="badge badge-secondary">{{ $partner->type }}</span>
+                            </label>
+                        </div>
+                    @endforeach
 
-                @error('partner_ids')
-                    <div class="text-danger mt-2">{{ $message }}</div>
-                @enderror
+                    @error('partner_ids')
+                        <div class="text-danger mt-2">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
-        </div>
+        @else
+            {{-- Campo oculto para usuarios NO super admin --}}
+            <input type="hidden" name="partner_ids[]" value="{{ auth()->user()->partner_id }}">
         @endif
 
         <div class="card mt-3">
