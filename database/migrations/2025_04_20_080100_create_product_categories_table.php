@@ -9,20 +9,32 @@ return new class extends Migration {
     {
         Schema::create('product_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            
+            // ✅ Campos obligatorios (NO NULL)
+            $table->string('name')->nullable(false);
+            $table->string('slug')->nullable(false);
+            
+            // Campos opcionales
             $table->string('subcategory')->nullable();
-            $table->string('slug');
+            
+            // Relación con partners (obligatoria)
             $table->foreignId('partner_id')
+                ->nullable(false)
                 ->constrained('partners')
                 ->cascadeOnDelete();
+            
+            // Estado activo (por defecto true)
             $table->boolean('is_active')->default(true);
+            
             $table->timestamps();
 
-            // ✅ Unicidad por partner + slug (evita choques entre proveedores)
-            $table->unique(['partner_id','slug'], 'pcat_partner_slug_unique');
+            // ✅ Unicidad: partner + slug (evita duplicados por proveedor)
+            $table->unique(['partner_id', 'slug'], 'pcat_partner_slug_unique');
 
-            // (Opcionales) índices útiles
-            $table->index(['partner_id','name']);
+            // ✅ Índices para optimizar búsquedas
+            $table->index(['partner_id', 'name']);
+            $table->index(['partner_id', 'is_active']);
+            $table->index('slug');
         });
     }
 
