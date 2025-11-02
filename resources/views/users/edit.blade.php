@@ -32,7 +32,7 @@
                         <option value="">Ninguno</option>
                         @foreach ($partners as $partner)
                             <option value="{{ $partner->id }}" {{ $user->partner_id == $partner->id ? 'selected' : '' }}>
-                                {{ $partner->nombre_comercial }}
+                                {{ $partner->name }}
                             </option>
                         @endforeach
                     </select>

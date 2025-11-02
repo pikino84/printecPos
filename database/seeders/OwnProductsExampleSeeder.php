@@ -53,7 +53,7 @@ class OwnProductsExampleSeeder extends Seeder
                 'sku' => 'PRINTEC-001-' . strtoupper(substr($color, 0, 3)),
                 'slug' => Str::slug("playera-{$color}") . '-' . Str::random(4),
                 'color_name' => $color,
-                'price' => null, // Usa precio del producto principal
+                'price' => 100.00, // Usa precio del producto principal
             ]);
         }
 

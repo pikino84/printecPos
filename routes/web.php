@@ -105,6 +105,34 @@ Route::middleware('auth')->group(function () {
     Route::resource('partner-entities.bank-accounts', PartnerEntityBankAccountController::class)->parameters(['bank-accounts' => 'bank_account'])->shallow();
     Route::resource('partner-products', PartnerProductController::class)->parameters(['partner-products' => 'product'])->shallow();
 
+    // ========================================================================
+    // Razones Sociales para Asociados
+    // ========================================================================
+    Route::middleware(['role:Asociado Administrador|super admin'])->group(function () {
+        Route::get('/razones-sociales', [PartnerEntityController::class, 'myIndex'])->name('my-entities.index');
+        Route::get('/razones-sociales/create', [PartnerEntityController::class, 'myCreate'])->name('my-entities.create');
+        Route::post('/razones-sociales', [PartnerEntityController::class, 'myStore'])->name('my-entities.store');
+        Route::get('/razones-sociales/{id}/edit', [PartnerEntityController::class, 'myEdit'])->name('my-entities.edit');
+        Route::put('/razones-sociales/{id}', [PartnerEntityController::class, 'myUpdate'])->name('my-entities.update');
+        Route::delete('/razones-sociales/{id}', [PartnerEntityController::class, 'myDestroy'])->name('my-entities.destroy');
+    });
+
+    // ========================================================================
+    // Cuentas Bancarias para Asociados
+    // ========================================================================
+    Route::middleware(['role:Asociado Administrador|Asociado Vendedor|super admin'])->group(function () {
+        // Todos pueden ver
+        Route::get('/cuentas-bancarias', [PartnerEntityBankAccountController::class, 'myIndex'])->name('my-bank-accounts.index');
+    });
+
+    Route::middleware(['role:Asociado Administrador|super admin'])->group(function () {
+        // Solo admin puede crear/editar/eliminar
+        Route::get('/cuentas-bancarias/create', [PartnerEntityBankAccountController::class, 'myCreate'])->name('my-bank-accounts.create');
+        Route::post('/cuentas-bancarias', [PartnerEntityBankAccountController::class, 'myStore'])->name('my-bank-accounts.store');
+        Route::get('/cuentas-bancarias/{id}/edit', [PartnerEntityBankAccountController::class, 'myEdit'])->name('my-bank-accounts.edit');
+        Route::put('/cuentas-bancarias/{id}', [PartnerEntityBankAccountController::class, 'myUpdate'])->name('my-bank-accounts.update');
+        Route::delete('/cuentas-bancarias/{id}', [PartnerEntityBankAccountController::class, 'myDestroy'])->name('my-bank-accounts.destroy');
+    });
     
     // ========================================================================
     // RUTAS DEL CARRITO

@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('model_code')->nullable();
             
             // Datos comerciales
-            $table->decimal('price', 10, 2)->default(0.00);
+            $table->decimal('price', 10, 2)->nullable();
             $table->text('description')->nullable();
             $table->text('keywords')->nullable();
             $table->string('short_description', 500)->nullable();

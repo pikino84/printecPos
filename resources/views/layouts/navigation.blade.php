@@ -6,7 +6,7 @@
                 <li class="pcoded-hasmenu {{ menuActive(['partners.*', 'users.*', 'permissions.*', 'roles.*', 'activity.logs.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-home"></i></span>
-                        <span class="pcoded-mtext">Dashboard</span>
+                        <span class="pcoded-mtext">Administración</span>
                     </a>
                     <ul class="pcoded-submenu">
                         @can('partners_index')
@@ -23,6 +23,8 @@
                             </a>
                         </li>
                         @endcan
+                        
+                        
                         @can('permisos')                   
                         <li class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}">
                             <a href="{{ route('permissions.index') }}" class="waves-effect waves-dark">
@@ -46,11 +48,23 @@
                         @endcan
                     </ul>
                 </li>
-                <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*']) }}">
+                <li class="pcoded-hasmenu {{ menuActive(['my-entities.*', 'my-bank-accounts.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
                         <span class="pcoded-mtext">Asociado</span>
                     </a>
+                    <ul class="pcoded-submenu">
+                    <li class="{{ menuActive(['my-entities.*']) }}">
+                        <a href="{{ route('my-entities.index') }}" class="waves-effect waves-dark">
+                            <span class="pcoded-mtext">Razones Sociales</span>
+                        </a>
+                    </li>
+                    <li class="{{ menuActive(['my-bank-accounts.*']) }}">
+                        <a href="{{ route('my-bank-accounts.index') }}" class="waves-effect waves-dark">
+                            <span class="pcoded-mtext">Cuentas Bancarias</span>
+                        </a>
+                    </li>
+                </ul>
                 </li>
                 <li class="pcoded-hasmenu {{ menuActive(['printec-cities*', 'printec-categories*', 'category-mappings*', 'warehouses*', 'catalogo.*', 'own-products.*','quotes.*', 'clients.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">

@@ -12,14 +12,15 @@ class Partner extends Model
 
     protected $fillable = [
         'name',
+        'slug',
+        'contact_name',
+        'contact_phone',
+        'contact_email',
+        'direccion',
         'type',
+        'commercial_terms',
+        'comments',
         'is_active',
-        'code',
-        'description',
-        'email',
-        'phone',
-        'address',
-        // Agrega aquí otros campos según tu estructura
     ];
 
     protected $casts = [
@@ -139,8 +140,7 @@ class Partner extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
-              ->orWhere('code', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
+              ->orWhere('contact_name', 'like', "%{$search}%");
         });
     }
 
@@ -303,5 +303,49 @@ class Partner extends Model
         return $this->quotes()
             ->where('status', 'approved')
             ->sum('total');
+    }
+
+    /**
+     * Verificar si el partner requiere almacenes
+     */
+    public function requiresWarehouses()
+    {
+        return in_array($this->type, ['Proveedor', 'Mixto']);
+    }
+
+    /**
+     * Verificar si puede crear productos propios
+     */
+    public function canCreateOwnProducts()
+    {
+        return in_array($this->type, ['Asociado', 'Mixto']);
+    }
+
+    /**
+     * Obtener etiqueta del tipo
+     */
+    public function getTypeLabel()
+    {
+        $labels = [
+            'Proveedor' => 'Proveedor',
+            'Asociado' => 'Asociado',
+            'Mixto' => 'Mixto'
+        ];
+        
+        return $labels[$this->type] ?? $this->type;
+    }
+
+    /**
+     * Obtener descripción del tipo
+     */
+    public function getTypeDescription()
+    {
+        $descriptions = [
+            'Proveedor' => 'Solo provee productos, requiere almacén',
+            'Asociado' => 'Vende productos, no requiere almacén',
+            'Mixto' => 'Provee y vende, requiere almacén'
+        ];
+        
+        return $descriptions[$this->type] ?? '';
     }
 }

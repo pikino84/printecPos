@@ -284,7 +284,7 @@ class OwnProductController extends Controller
             'main_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             
             // Validación de variantes
-            'variants' => 'nullable|array',
+            'variants.*.price' => 'required|numeric|min:0',
             'variants.*.id' => 'nullable|exists:product_variants,id',
             'variants.*.sku' => 'required_with:variants|string|max:100',
             'variants.*.color_name' => 'nullable|string|max:100',

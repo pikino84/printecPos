@@ -51,11 +51,13 @@
                             <i class="feather icon-chevron-down"></i>
                         </div>
                         <ul class="show-notification profile-notification dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
+                            {{-- 
                             <li>
                                 <a href="#!">
                                     <i class="feather icon-settings"></i> Settings
                                 </a>
                             </li>
+                             --}}
                             @auth
                             <li>
                                 <a href="{{ route('profile.edit') }}">

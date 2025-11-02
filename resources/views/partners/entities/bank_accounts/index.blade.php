@@ -7,7 +7,7 @@
     <div class="col-md-12">
       <h5>
         Cuentas bancarias · <strong>{{ $entity->razon_social }}</strong>
-        <small class="text-muted">({{ $entity->partner->nombre_comercial }})</small>
+        <small class="text-muted">({{ $entity->partner->name }})</small>
       </h5>
 
       @if (session('success'))

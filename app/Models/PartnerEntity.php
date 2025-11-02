@@ -12,20 +12,19 @@ class PartnerEntity extends Model
 
     protected $fillable = [
         'partner_id',
-        'name',
         'rfc',
         'razon_social',
-        'address',
-        'phone',
-        'email',
-        'fiscal_regime',
-        'postal_code',
+        'direccion',
+        'telefono',
+        'correo_contacto',
+        'logo_path',
         'is_active',
-        'notes',
+        'is_default',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_default' => 'boolean',
     ];
 
     // ========================================================================

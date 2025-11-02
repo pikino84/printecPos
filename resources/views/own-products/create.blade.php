@@ -229,41 +229,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Precios -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Precios</h5>
-                                </div>
-                                <div class="card-block">
-                                    <div class="row">
-                                        <div class="col-md-6 form-group">
-                                            <label class="form-label">Precio Base</label>
-                                            <input type="number" 
-                                                   class="form-control @error('price') is-invalid @enderror" 
-                                                   name="price" 
-                                                   value="{{ old('price') }}"
-                                                   step="0.01"
-                                                   min="0">
-                                            @error('price')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                        <div class="col-md-6 form-group">
-                                            <label class="form-label">Precio Asociados</label>
-                                            <input type="number" 
-                                                   class="form-control @error('partner_price') is-invalid @enderror" 
-                                                   name="partner_price" 
-                                                   value="{{ old('partner_price') }}"
-                                                   step="0.01"
-                                                   min="0">
-                                            @error('partner_price')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Columna derecha -->
