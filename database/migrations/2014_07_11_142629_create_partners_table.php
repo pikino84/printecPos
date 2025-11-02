@@ -15,7 +15,8 @@ return new class extends Migration {
             $table->string('contact_phone', 30)->nullable(); // Celular de contacto
             $table->string('contact_email')->nullable(); // Correo de contacto
             $table->text('direccion')->nullable(); // Dirección
-            $table->enum('type', ['Proveedor', 'Asociado', 'Mixto'])->default('Mixto');
+            $table->string('type', 50)->default('Mixto'); // Tipo de partner
+            $table->index('type');
             $table->text('commercial_terms')->nullable(); // Condiciones comerciales
             $table->text('comments')->nullable(); // Comentarios
             $table->boolean('is_active')->default(true); // Activo o no

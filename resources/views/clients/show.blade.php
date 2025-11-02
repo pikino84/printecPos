@@ -15,9 +15,31 @@
             <a href="{{ route('clients.edit', $client) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Editar
             </a>
+            @if(auth()->user()->hasRole('super admin') && $client->is_active)
+                <button 
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="confirmDelete()"
+                >
+                    <i class="fas fa-trash"></i> Desactivar
+                </button>
+            @endif
             <a href="{{ route('clients.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
+            
+            {{-- Formulario oculto para eliminar --}}
+            @if(auth()->user()->hasRole('super admin'))
+                <form 
+                    id="delete-form" 
+                    action="{{ route('clients.destroy', $client) }}" 
+                    method="POST" 
+                    style="display: none;"
+                >
+                    @csrf
+                    @method('DELETE')
+                </form>
+            @endif
         </div>
     </div>
 
@@ -240,4 +262,67 @@
         </div>
     </div>
 </div>
+@endsection
+@section('scripts')
+<script>
+function confirmDelete() {
+    console.log('confirmDelete called'); // Debug
+    
+    // Detectar SweetAlert1 o SweetAlert2
+    if (typeof Swal !== 'undefined') {
+        // SweetAlert 2
+        Swal.fire({
+            title: '¿Estás seguro?',
+            html: '¿Deseas desactivar este cliente?<br><br>Esta acción no eliminará el cliente, solo lo marcará como inactivo.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, desactivar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        }).then((result) => {
+            console.log('Swal result:', result); // Debug
+            if (result.isConfirmed) {
+                console.log('Submitting form'); // Debug
+                document.getElementById('delete-form').submit();
+            }
+        });
+    } else if (typeof swal !== 'undefined') {
+        // SweetAlert 1
+        swal({
+            title: '¿Estás seguro?',
+            text: '¿Deseas desactivar este cliente?\n\nEsta acción no eliminará el cliente, solo lo marcará como inactivo.',
+            icon: 'warning',
+            buttons: {
+                cancel: {
+                    text: 'Cancelar',
+                    value: null,
+                    visible: true,
+                    closeModal: true,
+                },
+                confirm: {
+                    text: 'Sí, desactivar',
+                    value: true,
+                    visible: true,
+                    className: 'btn-danger',
+                    closeModal: true
+                }
+            },
+            dangerMode: true,
+        }).then((willDelete) => {
+            console.log('swal willDelete:', willDelete); // Debug
+            if (willDelete) {
+                console.log('Submitting form'); // Debug
+                document.getElementById('delete-form').submit();
+            }
+        });
+    } else {
+        // Fallback
+        if (confirm('¿Estás seguro de que deseas desactivar este cliente?')) {
+            document.getElementById('delete-form').submit();
+        }
+    }
+}
+</script>
 @endsection

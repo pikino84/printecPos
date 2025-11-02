@@ -4,84 +4,146 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\PartnerEntityBankAccount;
-
+use Illuminate\Database\Eloquent\Builder;
 
 class PartnerEntity extends Model
 {
     use HasFactory;
 
-    // Tabla: partner_entities (por convención no hace falta especificarla)
     protected $fillable = [
         'partner_id',
-        'razon_social',
+        'name',
         'rfc',
-        'telefono',
-        'correo_contacto',
-        'direccion',
-        'logo_path',
-        'is_default',
+        'razon_social',
+        'address',
+        'phone',
+        'email',
+        'fiscal_regime',
+        'postal_code',
         'is_active',
+        'notes',
     ];
 
     protected $casts = [
-        'is_default' => 'boolean',
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relaciones
-    |--------------------------------------------------------------------------
-    */
+    // ========================================================================
+    // RELACIONES
+    // ========================================================================
+    
+    /**
+     * Relación con el partner
+     */
     public function partner()
     {
         return $this->belongsTo(Partner::class);
     }
 
+    /**
+     * Relación con las cuentas bancarias
+     */
     public function bankAccounts()
     {
         return $this->hasMany(PartnerEntityBankAccount::class);
     }
 
-    // Relación cómoda a la cuenta bancaria marcada como default
-    public function defaultBankAccount()
+    /**
+     * Relación con cotizaciones
+     */
+    public function quotes()
     {
-        return $this->hasOne(PartnerEntityBankAccount::class)
-            ->where('is_default', true);
+        return $this->hasMany(Quote::class, 'partner_entity_id');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Scopes / Accesores útiles
-    |--------------------------------------------------------------------------
-    */
-
-    // Accesor: $entity->default_bank_account (con fallback a la primera)
-    public function getDefaultBankAccountAttribute()
+    // ========================================================================
+    // SCOPES
+    // ========================================================================
+    
+    /**
+     * Scope para obtener solo entidades activas
+     */
+    public function scopeActive(Builder $query)
     {
-        return $this->defaultBankAccount()->first() ?: $this->bankAccounts()->first();
+        return $query->where('is_active', true);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Reglas de integridad: solo una "is_default" por partner
-    |--------------------------------------------------------------------------
-    */
-    protected static function booted(): void
+    /**
+     * Scope para filtrar por partner
+     */
+    public function scopeForPartner(Builder $query, $partnerId)
     {
-        static::saving(function (self $entity) {
-            // Si marcan esta entidad como default, apaga las demás del mismo partner
-            if ($entity->is_default && $entity->partner_id) {
-                static::where('partner_id', $entity->partner_id)
-                    ->where('id', '!=', $entity->id ?? 0)
-                    ->update(['is_default' => false]);
-            }
+        return $query->where('partner_id', $partnerId);
+    }
+
+    /**
+     * Scope para buscar entidades
+     */
+    public function scopeSearch(Builder $query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('rfc', 'like', "%{$search}%")
+              ->orWhere('razon_social', 'like', "%{$search}%");
         });
     }
 
-    public function getLogoUrlAttribute(): ?string
+    // ========================================================================
+    // ACCESSORS Y MUTATORS
+    // ========================================================================
+    
+    /**
+     * Mutator para convertir RFC a mayúsculas
+     */
+    public function setRfcAttribute($value)
     {
-        return $this->logo ? asset('storage/'.$this->logo) : null;
+        $this->attributes['rfc'] = $value ? strtoupper(trim($value)) : null;
+    }
+
+    /**
+     * Accessor para obtener nombre completo (entidad o razón social)
+     */
+    public function getFullNameAttribute()
+    {
+        return $this->razon_social ?: $this->name;
+    }
+
+    /**
+     * Accessor para obtener el badge de estado
+     */
+    public function getStatusBadgeAttribute()
+    {
+        return $this->is_active 
+            ? '<span class="badge bg-success">Activa</span>'
+            : '<span class="badge bg-danger">Inactiva</span>';
+    }
+
+    // ========================================================================
+    // MÉTODOS AUXILIARES
+    // ========================================================================
+    
+    /**
+     * Verificar si tiene cuentas bancarias
+     */
+    public function hasBankAccounts()
+    {
+        return $this->bankAccounts()->exists();
+    }
+
+    /**
+     * Obtener la cuenta bancaria principal
+     */
+    public function getMainBankAccount()
+    {
+        return $this->bankAccounts()->where('is_primary', true)->first() 
+            ?? $this->bankAccounts()->first();
+    }
+
+    /**
+     * Obtener el conteo de cotizaciones
+     */
+    public function getQuotesCountAttribute()
+    {
+        return $this->quotes()->count();
     }
 }

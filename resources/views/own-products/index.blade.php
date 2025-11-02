@@ -3,6 +3,13 @@
 @section('title', 'Productos Propios')
 
 @section('content')
+{{-- show error --}}
+@if(session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+@endif
+
 <div class="page-header">
     <div class="page-block">
         <div class="row align-items-center">

@@ -28,6 +28,13 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     {{-- Filtros --}}
     <div class="card mb-3">
         <div class="card-body">
@@ -132,7 +139,30 @@
                                             >
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            @if(auth()->user()->hasRole('super admin'))
+                                                <button 
+                                                    type="button"
+                                                    class="btn btn-danger"
+                                                    title="Desactivar"
+                                                    onclick="confirmDelete({{ $client->id }}, '{{ str_replace("'", "\\'", $client->nombre_completo) }}')"
+                                                >
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endif
                                         </div>
+                                        
+                                        {{-- Formulario oculto para eliminar --}}
+                                        @if(auth()->user()->hasRole('super admin'))
+                                            <form 
+                                                id="delete-form-{{ $client->id }}" 
+                                                action="{{ route('clients.destroy', $client) }}" 
+                                                method="POST" 
+                                                style="display: none;"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -156,4 +186,39 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+function confirmDelete(clientId, clientName) {
+    console.log('confirmDelete called with:', clientId, clientName); // Debug
+    
+    swal({
+        title: '¿Estás seguro?',
+        text: '¿Deseas desactivar al cliente "' + clientName + '"?\n\nEsta acción no eliminará el cliente, solo lo marcará como inactivo.',
+        icon: 'warning',
+        buttons: {
+            cancel: {
+                text: 'Cancelar',
+                value: null,
+                visible: true,
+                className: '',
+                closeModal: true,
+            },
+            confirm: {
+                text: 'Sí, desactivar',
+                value: true,
+                visible: true,
+                className: 'btn-danger',
+                closeModal: true
+            }
+        },
+        dangerMode: true,
+    }).then((willDelete) => {
+        if (willDelete) {
+            document.getElementById('delete-form-' + clientId).submit();
+        }
+    });
+}
+</script>
 @endsection

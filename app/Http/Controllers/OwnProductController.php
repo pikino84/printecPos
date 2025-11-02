@@ -9,6 +9,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOwnProductRequest;
 use App\Http\Requests\UpdateOwnProductRequest;
+use App\Models\Partner;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
@@ -87,18 +88,29 @@ class OwnProductController extends Controller
     {
         $this->authorize('create', Product::class);
         
+        $userPartnerId = Auth::user()->partner_id;
+        
         // Categorías del partner actual
-        $categories = ProductCategory::where('partner_id', Auth::user()->partner_id)
+        $categories = ProductCategory::where('partner_id', $userPartnerId)
             ->orderBy('name')
             ->get();
-
-        // Almacenes del partner actual
-        $warehouses = ProductWarehouse::where('partner_id', Auth::user()->partner_id)
+        
+        // Partners que pueden crear productos propios (Asociado y Mixto)
+        $partners = Partner::whereIn('type', ['Asociado', 'Mixto'])
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
+        
+        // Almacenes del partner actual
+        $warehouses = ProductWarehouse::where('partner_id', $userPartnerId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        
+        // ⚠️ NUEVO: Validar que el partner tenga almacenes
+        $hasWarehouses = $warehouses->isNotEmpty();
 
-        return view('own-products.create', compact('categories', 'warehouses'));
+        return view('own-products.create', compact('categories', 'warehouses', 'partners', 'hasWarehouses'));
     }
 
     public function store(StoreOwnProductRequest $request)
@@ -107,6 +119,15 @@ class OwnProductController extends Controller
 
         DB::transaction(function() use ($request) {
             $partnerId = Auth::user()->partner_id;
+            
+            //Valida que el partner tenga al menos un almacén
+            $hasWarehouses = ProductWarehouse::where('partner_id', $partnerId)
+                ->where('is_active', true)
+                ->exists();
+                
+            if (!$hasWarehouses) {
+                throw new \Exception('No puedes crear productos sin almacenes configurados. Contacta al administrador o crea un almacén primero.');
+            }
             
             // Crear slug único
             $baseSlug = Str::slug($request->name);
@@ -158,13 +179,27 @@ class OwnProductController extends Controller
                 'price' => null, // Usa precio del producto
             ]);
 
-            // Stock inicial si se especifica
-            if ($request->filled('initial_stock') && $request->warehouse_id && $request->initial_stock > 0) {
+            //MODIFICADO: Stock inicial - SIEMPRE crear registro, aunque sea en 0
+            // Si el partner tiene almacén seleccionado, usar ese. Si no, usar el primero disponible
+            if ($request->filled('warehouse_id')) {
                 ProductStock::create([
                     'variant_id' => $variant->id,
                     'warehouse_id' => $request->warehouse_id,
-                    'stock' => $request->initial_stock,
+                    'stock' => $request->filled('initial_stock') ? (int)$request->initial_stock : 0,
                 ]);
+            } else {
+                // Si por alguna razón no hay warehouse_id, usar el primer almacén del partner
+                $firstWarehouse = ProductWarehouse::where('partner_id', $partnerId)
+                    ->where('is_active', true)
+                    ->first();
+                    
+                if ($firstWarehouse) {
+                    ProductStock::create([
+                        'variant_id' => $variant->id,
+                        'warehouse_id' => $firstWarehouse->id,
+                        'stock' => 0,
+                    ]);
+                }
             }
 
             return $product;
@@ -195,15 +230,18 @@ class OwnProductController extends Controller
 
     public function edit(Product $ownProduct)
     {
+    $owner = Auth::user();
         // Verificar que sea producto propio
         if (!$ownProduct->is_own_product) {
             abort(404, 'Producto no encontrado');
         }
-
+        
         $this->authorize('update', $ownProduct);
         
         // Cargar relaciones completas
         $ownProduct->load(['variants.stocks.warehouse']);
+        
+        $partners = Partner::where('is_active', true)->orderBy('name')->get();
         
         $categories = ProductCategory::where('partner_id', Auth::user()->partner_id)
             ->orderBy('name')
@@ -214,12 +252,7 @@ class OwnProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Debug: Verificar que hay warehouses
-        if ($warehouses->isEmpty()) {
-            return redirect()->back()->with('error', 'No tienes almacenes configurados. Contacta al administrador.');
-        }
-
-        return view('own-products.edit', compact('ownProduct', 'categories', 'warehouses'));
+        return view('own-products.edit', compact('ownProduct', 'categories', 'warehouses', 'partners'));
     }
 
     public function update(Request $request, Product $ownProduct)

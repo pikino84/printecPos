@@ -18,9 +18,13 @@ class ProductWarehouse extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     public function city()
     {
-        return $this->belongsTo(ProductWarehouseCity::class, 'city_id');
+        return $this->belongsTo(ProductWarehousesCities::class, 'city_id');
     }
     public function partner()
     {

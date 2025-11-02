@@ -63,6 +63,10 @@ Route::middleware('auth')->group(function () {
     //Route::get('/catalogo/fetch', [ProductCatalogController::class, 'fetch'])->name('catalogo.fetch');
     Route::get('/catalogo/{id}', [ProductCatalogController::class, 'show'])->name('catalogo.show');
 
+    // 🆕 API para obtener almacenes por partner (para formularios dinámicos)
+    Route::get('/api/partners/{partner}/warehouses', [ProductCatalogController::class, 'getWarehousesByPartner'])
+        ->name('api.partners.warehouses');
+
     // Rutas para la gestión de categorías de Printec
     Route::get('/printec-categories', [PrintecCategoryController::class, 'index']);
     Route::post('/printec-categories', [PrintecCategoryController::class, 'store']);
@@ -79,9 +83,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/category-mappings', [CategoryMappingController::class, 'index']);
     Route::post('/category-mappings/{category}', [CategoryMappingController::class, 'update']);
 
-    // Rutas para poner nicknames a los almacenes
-    Route::get('/warehouses', [ProductWarehouseController::class, 'index']);
-    Route::put('/warehouses/{id}', [ProductWarehouseController::class, 'update'])->name('warehouses.update');
+    // Rutas para gestión completa de almacenes (warehouses)
+    Route::middleware('auth')->group(function () {
+        Route::get('/warehouses', [ProductWarehouseController::class, 'index'])->name('warehouses.index');
+        Route::get('/warehouses/create', [ProductWarehouseController::class, 'create'])->name('warehouses.create');
+        Route::post('/warehouses', [ProductWarehouseController::class, 'store'])->name('warehouses.store');
+        Route::get('/warehouses/{id}/edit', [ProductWarehouseController::class, 'edit'])->name('warehouses.edit');
+        Route::put('/warehouses/{id}', [ProductWarehouseController::class, 'update'])->name('warehouses.update');
+        Route::delete('/warehouses/{id}', [ProductWarehouseController::class, 'destroy'])->name('warehouses.destroy');
+    });
 
     // Productos propios
     Route::resource('own-products', OwnProductController::class);

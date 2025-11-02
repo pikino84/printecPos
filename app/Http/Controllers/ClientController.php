@@ -37,7 +37,7 @@ class ClientController extends Controller
 
         // Para el filtro de partners (solo super admin)
         $partners = $user->hasRole('super admin') 
-            ? Partner::asociadosYMixtos()->orderBy('name')->get()
+            ? Partner::whereIn('type', ['Asociado', 'Mixto'])->orderBy('name')->get()
             : collect();
 
         return view('clients.index', compact('clients', 'partners'));
@@ -49,7 +49,7 @@ class ClientController extends Controller
         
         // Obtener partners disponibles según el rol
         if ($user->hasRole('super admin')) {
-            $partners = Partner::asociadosYMixtos()->active()->orderBy('name')->get();
+            $partners = Partner::whereIn('type', ['Asociado', 'Mixto'])->where('is_active', true)->orderBy('name')->get();
         } else {
             $partners = collect([$user->partner]);
         }
@@ -175,7 +175,7 @@ class ClientController extends Controller
 
         // Obtener partners disponibles
         if ($user->hasRole('super admin')) {
-            $partners = Partner::asociadosYMixtos()->active()->orderBy('name')->get();
+            $partners = Partner::whereIn('type', ['Asociado', 'Mixto'])->where('is_active', true)->orderBy('name')->get();
         } else {
             $partners = collect([$user->partner]);
         }

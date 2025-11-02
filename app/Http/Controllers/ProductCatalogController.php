@@ -8,6 +8,8 @@ use App\Models\PrintecCategory;
 use App\Models\ProductVariant;
 use App\Models\ProductStock;
 use App\Models\ProductWarehousesCities;
+use App\Models\Partner;
+use App\Models\ProductWarehouse;
 
 class ProductCatalogController extends Controller
 {
@@ -115,4 +117,43 @@ class ProductCatalogController extends Controller
         return view('products.show', compact('producto', 'images', 'almacenesUnicos'));
     }
 
+    /**
+     * 🆕 API: Obtener almacenes por partner (para formularios dinámicos)
+     * 
+     * @param int $partnerId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getWarehousesByPartner($partnerId)
+    {
+        $partner = Partner::findOrFail($partnerId);
+        
+        $response = [
+            'requires_warehouse' => $partner->requiresWarehouses(),
+            'can_create_own' => $partner->canCreateOwnProducts(),
+            'type' => $partner->type,
+            'type_label' => $partner->getTypeLabel(),
+            'type_description' => $partner->getTypeDescription(),
+            'warehouses' => []
+        ];
+
+        // Solo cargar almacenes si el partner los requiere
+        if ($partner->requiresWarehouses()) {
+            $response['warehouses'] = ProductWarehouse::where('partner_id', $partnerId)
+                ->where('is_active', true)
+                ->with('city:id,name')
+                ->get()
+                ->map(function($warehouse) {
+                    return [
+                        'id' => $warehouse->id,
+                        'name' => $warehouse->nickname ?: $warehouse->name,
+                        'full_name' => $warehouse->name,
+                        'nickname' => $warehouse->nickname,
+                        'city' => $warehouse->city ? $warehouse->city->name : null,
+                        'city_id' => $warehouse->city_id,
+                    ];
+                });
+        }
+
+        return response()->json($response);
+    }
 }

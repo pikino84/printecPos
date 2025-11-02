@@ -13,7 +13,9 @@ class PartnerController extends Controller
     public function index()
     {
         $this->authorize('partners_index');
-        $partners = Partner::withCount('entities')->get();
+        // Si el modelo Partner tiene la relación entities(), usa withCount
+        // Si no, simplemente obtén los partners sin el conteo
+        $partners = Partner::all();
         return view('partners.index', compact('partners'));
     }
 

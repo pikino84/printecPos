@@ -35,13 +35,65 @@
         <div class="page-wrapper">
             <div class="page-body">
                 
-                <form action="{{ route('own-products.update', $ownProduct) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('own-products.update', $ownProduct) }}" method="POST" enctype="multipart/form-data" id="productForm">
                     @csrf
                     @method('PUT')
                     
                     <div class="row">
                         <!-- Información básica -->
                         <div class="col-lg-8">
+            {{-- 🆕 CARD: PROVEEDOR Y ALMACÉN --}}
+            <div class="card">
+                <div class="card-header">
+                    <h5>Proveedor</h5>
+                </div>
+                <div class="card-block">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="form-label">
+                                Proveedor <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-control @error('partner_id') is-invalid @enderror" 
+                                    name="partner_id" 
+                                    id="partner_id"
+                                    required>
+                                <option value="">Seleccionar proveedor</option>
+                                @foreach($partners as $partner)
+                                    <option value="{{ $partner->id }}" 
+                                            data-type="{{ $partner->type }}"
+                                            {{ old('partner_id', $ownProduct->partner_id) == $partner->id ? 'selected' : '' }}>
+                                        {{ $partner->name }} ({{ $partner->type }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('partner_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted" id="partner-info">
+                                <i class="feather icon-info"></i> Proveedor del producto
+                            </small>
+                        </div>
+
+                        <div class="col-md-6 form-group" id="warehouse-group" style="display: none;">
+                            <label class="form-label">
+                                Almacén 
+                                <span class="text-danger" id="warehouse-required">*</span>
+                            </label>
+                            <select class="form-control @error('warehouse_id') is-invalid @enderror" 
+                                    name="warehouse_id"
+                                    id="warehouse_id">
+                                <option value="">Seleccionar almacén</option>
+                            </select>
+                            @error('warehouse_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted" id="warehouse-help"></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
                             <div class="card">
                                 <div class="card-header">
                                     <h5>Información Básica</h5>
@@ -453,12 +505,92 @@
     </div>
 </div>
 @endsection
-// Reemplazar completamente la sección @section('scripts') en edit.blade.php
-
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let variantCounter = document.querySelectorAll('.variant-item').length;
+
+    const partnerSelect = document.getElementById('partner_id');
+    const warehouseGroup = document.getElementById('warehouse-group');
+    const warehouseSelect = document.getElementById('warehouse_id');
+    const warehouseRequired = document.getElementById('warehouse-required');
+    const warehouseHelp = document.getElementById('warehouse-help');
+    const partnerInfo = document.getElementById('partner-info');
+
+    partnerSelect.addEventListener('change', function() {
+        const partnerId = this.value;
+        
+        // Limpiar
+        warehouseSelect.innerHTML = '<option value="">Seleccionar almacén</option>';
+        warehouseGroup.style.display = 'none';
+        warehouseSelect.removeAttribute('required');
+        partnerInfo.innerHTML = '<i class="feather icon-info"></i> Proveedor del producto';
+
+        if (!partnerId) {
+            return;
+        }
+
+        // Loading
+        partnerInfo.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Cargando...';
+
+        // AJAX
+        fetch(`/api/partners/${partnerId}/warehouses`)
+            .then(response => {
+                if (!response.ok) throw new Error('Error');
+                return response.json();
+            })
+            .then(data) {
+                console.log('Partner data:', data);
+
+                partnerInfo.innerHTML = `<strong>${data.type_label}</strong> - ${data.type_description}`;
+
+                if (data.requires_warehouse) {
+                    // Proveedor o Mixto: REQUIERE almacén
+                    warehouseGroup.style.display = 'block';
+                    warehouseSelect.setAttribute('required', 'required');
+                    warehouseRequired.style.display = 'inline';
+                    
+                    if (data.warehouses && data.warehouses.length > 0) {
+                        data.warehouses.forEach(warehouse => {
+                            const option = document.createElement('option');
+                            option.value = warehouse.id;
+                            
+                            let text = warehouse.name;
+                            if (warehouse.city) text += ` (${warehouse.city})`;
+                            option.textContent = text;
+                            
+                            // Seleccionar el warehouse actual
+                            if (warehouse.id == currentWarehouseId) {
+                                option.selected = true;
+                            }
+                            
+                            warehouseSelect.appendChild(option);
+                        });
+                        
+                        warehouseHelp.innerHTML = '<i class="feather icon-check text-success"></i> Almacén del producto.';
+                    } else {
+                        warehouseHelp.innerHTML = '<strong class="text-warning"><i class="feather icon-alert-triangle"></i> No hay almacenes disponibles.</strong>';
+                    }
+                } else {
+                    // Asociado: NO requiere almacén
+                    warehouseGroup.style.display = 'none';
+                    warehouseSelect.removeAttribute('required');
+                    partnerInfo.innerHTML += '<br><span class="text-success"><i class="feather icon-check"></i> No requiere almacén.</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                partnerInfo.innerHTML = '<span class="text-danger"><i class="feather icon-x"></i> Error al cargar</span>';
+            });
+    });
+
+    // Trigger para cargar almacenes del partner actual
+    if (partnerSelect.value) {
+        partnerSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Warehouse ID actual del producto
+    const currentWarehouseId = "{{ old('warehouse_id', $ownProduct->warehouse_id ?? '') }}";
     
     // Agregar nueva variante
     document.getElementById('addVariant').addEventListener('click', function() {
