@@ -20,6 +20,7 @@ return new class extends Migration
             $table->rememberToken();
             $table->foreignId('partner_id')->constrained('partners')->onDelete('cascade');
             $table->boolean('must_change_password')->default(false);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

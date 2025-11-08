@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $ownProduct->name)
+@section('title', $own_product->name)
 
 @section('content')
 <div class="page-header">
@@ -8,7 +8,7 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <div class="page-header-title">
-                    <h5 class="m-b-10">{{ $ownProduct->name }}</h5>
+                    <h5 class="m-b-10">{{ $own_product->name }}</h5>
                     <p class="m-b-0">Detalles del producto propio</p>
                 </div>
             </div>
@@ -20,7 +20,7 @@
                     <li class="breadcrumb-item">
                         <a href="{{ route('own-products.index') }}">Productos Propios</a>
                     </li>
-                    <li class="breadcrumb-item"><a href="#!">{{ $ownProduct->name }}</a></li>
+                    <li class="breadcrumb-item"><a href="#!">{{ $own_product->name }}</a></li>
                 </ul>
             </div>
         </div>
@@ -36,24 +36,24 @@
                 <div class="row mb-3">
                     <div class="col-md-8">
                         <h4 class="mb-0">
-                            {{ $ownProduct->name }}
-                            @if($ownProduct->featured)
+                            {{ $own_product->name }}
+                            @if($own_product->featured)
                                 <span class="badge badge-warning ml-2">Destacado</span>
                             @endif
-                            @if($ownProduct->is_public && $ownProduct->partner_id == 1)
+                            @if($own_product->is_public && $own_product->partner_id == 1)
                                 <span class="badge badge-info ml-1">Público</span>
                             @endif
-                            <span class="badge badge-{{ $ownProduct->is_active ? 'success' : 'secondary' }} ml-1">
-                                {{ $ownProduct->is_active ? 'Activo' : 'Inactivo' }}
+                            <span class="badge badge-{{ $own_product->is_active ? 'success' : 'secondary' }} ml-1">
+                                {{ $own_product->is_active ? 'Activo' : 'Inactivo' }}
                             </span>
                         </h4>
-                        @if($ownProduct->model_code)
-                            <p class="text-muted mb-0">Modelo: <code>{{ $ownProduct->model_code }}</code></p>
+                        @if($own_product->model_code)
+                            <p class="text-muted mb-0">Modelo: <code>{{ $own_product->model_code }}</code></p>
                         @endif
                     </div>
                     <div class="col-md-4 text-right">
-                        @can('update', $ownProduct)
-                            <a href="{{ route('own-products.edit', $ownProduct) }}" class="btn btn-warning">
+                        @can('update', $own_product)
+                            <a href="{{ route('own-products.edit', $own_product) }}" class="btn btn-warning">
                                 <i class="feather icon-edit"></i> Editar
                             </a>
                         @endcan
@@ -67,14 +67,14 @@
                     <!-- Información principal -->
                     <div class="col-lg-8">
                         <!-- Imagen principal -->
-                        @if($ownProduct->main_image_url)
+                        @if($own_product->main_image_url)
                             <div class="card">
                                 <div class="card-header">
                                     <h5>Imagen Principal</h5>
                                 </div>
                                 <div class="card-block text-center">
-                                    <img src="{{ $ownProduct->main_image_url }}" 
-                                         alt="{{ $ownProduct->name }}"
+                                    <img src="{{ $own_product->main_image_url }}" 
+                                         alt="{{ $own_product->name }}"
                                          class="img-fluid rounded shadow-sm"
                                          style="max-height: 400px;">
                                 </div>
@@ -87,13 +87,13 @@
                                 <h5>Descripción</h5>
                             </div>
                             <div class="card-block">
-                                @if($ownProduct->short_description)
-                                    <p class="lead">{{ $ownProduct->short_description }}</p>
+                                @if($own_product->short_description)
+                                    <p class="lead">{{ $own_product->short_description }}</p>
                                 @endif
                                 
-                                @if($ownProduct->description)
+                                @if($own_product->description)
                                     <div class="mt-3">
-                                        {!! nl2br(e($ownProduct->description)) !!}
+                                        {!! nl2br(e($own_product->description)) !!}
                                     </div>
                                 @else
                                     <p class="text-muted">Sin descripción detallada</p>
@@ -108,57 +108,57 @@
                             </div>
                             <div class="card-block">
                                 <div class="row">
-                                    @if($ownProduct->material)
+                                    @if($own_product->material)
                                         <div class="col-md-6 mb-3">
                                             <strong>Material:</strong><br>
-                                            <span class="text-muted">{{ $ownProduct->material }}</span>
+                                            <span class="text-muted">{{ $own_product->material }}</span>
                                         </div>
                                     @endif
                                     
-                                    @if($ownProduct->packing_type)
+                                    @if($own_product->packing_type)
                                         <div class="col-md-6 mb-3">
                                             <strong>Tipo de Empaque:</strong><br>
-                                            <span class="text-muted">{{ $ownProduct->packing_type }}</span>
+                                            <span class="text-muted">{{ $own_product->packing_type }}</span>
                                         </div>
                                     @endif
                                     
-                                    @if($ownProduct->unit_package)
+                                    @if($own_product->unit_package)
                                         <div class="col-md-6 mb-3">
                                             <strong>Unidad por Paquete:</strong><br>
-                                            <span class="text-muted">{{ $ownProduct->unit_package }}</span>
+                                            <span class="text-muted">{{ $own_product->unit_package }}</span>
                                         </div>
                                     @endif
                                     
-                                    @if($ownProduct->product_weight)
+                                    @if($own_product->product_weight)
                                         <div class="col-md-6 mb-3">
                                             <strong>Peso:</strong><br>
-                                            <span class="text-muted">{{ $ownProduct->product_weight }}</span>
+                                            <span class="text-muted">{{ $own_product->product_weight }}</span>
                                         </div>
                                     @endif
                                     
-                                    @if($ownProduct->product_size)
+                                    @if($own_product->product_size)
                                         <div class="col-md-6 mb-3">
                                             <strong>Tamaño:</strong><br>
-                                            <span class="text-muted">{{ $ownProduct->product_size }}</span>
+                                            <span class="text-muted">{{ $own_product->product_size }}</span>
                                         </div>
                                     @endif
                                     
-                                    @if($ownProduct->area_print)
+                                    @if($own_product->area_print)
                                         <div class="col-md-6 mb-3">
                                             <strong>Área de Impresión:</strong><br>
-                                            <span class="text-muted">{{ $ownProduct->area_print }}</span>
+                                            <span class="text-muted">{{ $own_product->area_print }}</span>
                                         </div>
                                     @endif
                                 </div>
                                 
-                                @if(!$ownProduct->material && !$ownProduct->packing_type && !$ownProduct->unit_package && !$ownProduct->product_weight && !$ownProduct->product_size && !$ownProduct->area_print)
+                                @if(!$own_product->material && !$own_product->packing_type && !$own_product->unit_package && !$own_product->product_weight && !$own_product->product_size && !$own_product->area_print)
                                     <p class="text-muted">No hay especificaciones registradas</p>
                                 @endif
                             </div>
                         </div>
 
                         <!-- Variantes y Stock -->
-                        @if($ownProduct->variants->count() > 0)
+                        @if($own_product->variants->count() > 0)
                             <div class="card">
                                 <div class="card-header">
                                     <h5>Variantes y Stock</h5>
@@ -176,7 +176,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach($ownProduct->variants as $variant)
+                                                @foreach($own_product->variants as $variant)
                                                 <tr>
                                                     <td><code>{{ $variant->sku }}</code></td>
                                                     <td>
@@ -190,7 +190,7 @@
                                                         @if($variant->price)
                                                             <strong>${{ number_format($variant->price, 2) }}</strong>
                                                         @else
-                                                            <span class="text-muted">${{ number_format($ownProduct->price, 2) }}</span>
+                                                            <span class="text-muted">${{ number_format($own_product->price, 2) }}</span>
                                                         @endif
                                                     </td>
                                                     <td>
@@ -235,7 +235,7 @@
                             <div class="card-block">
                                 <div class="mb-3">
                                     <strong>Precio de Venta:</strong><br>
-                                    <span class="h4 text-success">${{ number_format($ownProduct->price, 2) }}</span>
+                                    <span class="h4 text-success">${{ number_format($own_product->price, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -248,8 +248,8 @@
                             <div class="card-block">
                                 <div class="mb-3">
                                     <strong>Categoría:</strong><br>
-                                    @if($ownProduct->productCategory)
-                                        <span class="badge badge-primary">{{ $ownProduct->productCategory->name }}</span>
+                                    @if($own_product->productCategory)
+                                        <span class="badge badge-primary">{{ $own_product->productCategory->name }}</span>
                                     @else
                                         <span class="text-muted">Sin categoría</span>
                                     @endif
@@ -265,30 +265,30 @@
                             <div class="card-block">
                                 <div class="mb-3">
                                     <strong>Propietario:</strong><br>
-                                    <span class="badge badge-{{ $ownProduct->partner_id == auth()->user()->partner_id ? 'primary' : 'info' }}">
-                                        {{ $ownProduct->partner->name }}
+                                    <span class="badge badge-{{ $own_product->partner_id == auth()->user()->partner_id ? 'primary' : 'info' }}">
+                                        {{ $own_product->partner->name }}
                                     </span>
                                 </div>
                                 
                                 <div class="mb-3">
                                     <strong>Creado por:</strong><br>
-                                    <span class="text-muted">{{ $ownProduct->creator->name }}</span>
+                                    <span class="text-muted">{{ $own_product->creator->name }}</span>
                                 </div>
                                 
                                 <div class="mb-3">
                                     <strong>Fecha de creación:</strong><br>
-                                    <span class="text-muted">{{ $ownProduct->created_at->format('d/m/Y H:i') }}</span>
+                                    <span class="text-muted">{{ $own_product->created_at->format('d/m/Y H:i') }}</span>
                                 </div>
                                 
-                                @if($ownProduct->updated_at != $ownProduct->created_at)
+                                @if($own_product->updated_at != $own_product->created_at)
                                     <div class="mb-3">
                                         <strong>Última actualización:</strong><br>
-                                        <span class="text-muted">{{ $ownProduct->updated_at->format('d/m/Y H:i') }}</span>
+                                        <span class="text-muted">{{ $own_product->updated_at->format('d/m/Y H:i') }}</span>
                                     </div>
                                 @endif
 
                                 @php
-                                    $totalStock = $ownProduct->variants->sum(function($variant) {
+                                    $totalStock = $own_product->variants->sum(function($variant) {
                                         return $variant->stocks->sum('stock');
                                     });
                                 @endphp

@@ -14,13 +14,23 @@ class ProductPolicy
 
     public function view(User $user, Product $product): bool
     {
-        // Si es producto propio, usar la lógica existente
-        if ($product->is_own_product) {
-            return $product->canBeViewedBy($user);
+        // Si NO es producto propio, todos pueden verlo
+        if (!$product->is_own_product) {
+            return true;
         }
         
-        // Si es producto de proveedor, todos pueden verlo
-        return true;
+        // Si ES producto propio, verificar permisos
+        if (!$user->can('view-own-products') && !$user->can('manage-own-products')) {
+            return false;
+        }
+        
+        // Printec (partner_id = 1) puede ver TODOS los productos propios
+        if ($user->partner_id === 1) {
+            return true;
+        }
+        
+        // Los demás asociados solo pueden ver SUS propios productos
+        return $product->partner_id === $user->partner_id;
     }
 
     public function create(User $user): bool
@@ -31,13 +41,18 @@ class ProductPolicy
     public function update(User $user, Product $product): bool
     {
         if (!$product->is_own_product) {
-            return false; // Solo productos propios pueden editarse aquí
+            return false;
         }
         
-        return $user->can('manage-own-products') && (
-            $product->partner_id === $user->partner_id || 
-            $user->partner_id === 1 // Printec puede editar todo
-        );
+        if (!$user->can('manage-own-products')) {
+            return false;
+        }
+        
+        if ($user->partner_id === 1) {
+            return true;
+        }
+        
+        return $product->partner_id === $user->partner_id;
     }
 
     public function delete(User $user, Product $product): bool
@@ -46,9 +61,14 @@ class ProductPolicy
             return false;
         }
         
-        return $user->can('manage-own-products') && (
-            $product->partner_id === $user->partner_id || 
-            $user->partner_id === 1
-        );
+        if (!$user->can('manage-own-products')) {
+            return false;
+        }
+        
+        if ($user->partner_id === 1) {
+            return true;
+        }
+        
+        return $product->partner_id === $user->partner_id;
     }
 }

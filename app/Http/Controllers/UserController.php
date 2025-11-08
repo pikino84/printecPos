@@ -17,6 +17,7 @@ class UserController extends Controller
         'Asociado Administrador',
         'Asociado Vendedor',
     ];
+    
     /**
      * Display a listing of the resource.
      */
@@ -34,9 +35,6 @@ class UserController extends Controller
 
         return view('users.index', compact('users'));
     }
-
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -60,7 +58,6 @@ class UserController extends Controller
 
         return view('users.create', compact('roles', 'partners'));
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -89,6 +86,7 @@ class UserController extends Controller
             'password'             => Hash::make($request->password),
             'partner_id'           => $partnerId,
             'must_change_password' => true,
+            'is_active'            => true,
         ]);
 
         $newUser->assignRole($request->role);
@@ -121,8 +119,6 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'roles', 'partners'));
     }
 
-
-
     /**
      * Update the specified resource in storage.
      */
@@ -145,6 +141,11 @@ class UserController extends Controller
         // Actualizar datos básicos
         $userToUpdate->name  = $request->name;
         $userToUpdate->email = $request->email;
+        
+        // Actualizar estado activo si se envía
+        if ($request->has('is_active')) {
+            $userToUpdate->is_active = $request->boolean('is_active');
+        }
 
         // Solo admin (o printec) puede cambiar el partner
         if ($auth->partner_id === 1 && $request->filled('partner_id')) {
@@ -179,5 +180,149 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')->with('success', 'Usuario eliminado.');
+    }
+
+    // ========================================================================
+    // MÉTODOS PARA ASOCIADOS (My Users)
+    // ========================================================================
+
+    /**
+     * Mostrar usuarios del partner del usuario autenticado
+     */
+    public function myIndex()
+    {
+        $user = auth()->user();
+        
+        // Si es super admin, redirigir al index normal
+        if ($user->hasRole('super admin')) {
+            return redirect()->route('users.index');
+        }
+
+        $partner = $user->partner;
+        
+        // Obtener solo usuarios del mismo partner
+        $users = User::with('roles')
+            ->where('partner_id', $user->partner_id)
+            ->orderBy('name')
+            ->get();
+
+        return view('my-users.index', compact('users', 'partner'));
+    }
+
+    /**
+     * Formulario para crear usuario del partner
+     */
+    public function myCreate()
+    {
+        $user = auth()->user();
+        $partner = $user->partner;
+        
+        // Solo roles permitidos para asociados
+        $roles = collect(array_combine(self::ASOCIADO_ROLES, self::ASOCIADO_ROLES));
+
+        return view('my-users.create', compact('roles', 'partner'));
+    }
+
+    /**
+     * Guardar usuario del partner
+     */
+    public function myStore(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role'     => ['required', Rule::in(self::ASOCIADO_ROLES)],
+        ], [
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+        ]);
+
+        $newUser = User::create([
+            'name'                 => $request->name,
+            'email'                => $request->email,
+            'password'             => Hash::make($request->password),
+            'partner_id'           => $user->partner_id,
+            'must_change_password' => $request->boolean('must_change_password', true),
+            'is_active'            => true,
+        ]);
+
+        $newUser->assignRole($request->role);
+
+        return redirect()->route('my-users.index')->with('success', 'Usuario creado exitosamente.');
+    }
+
+    /**
+     * Formulario para editar usuario del partner
+     */
+    public function myEdit(string $id)
+    {
+        $user = auth()->user();
+        $partner = $user->partner;
+        
+        $userToEdit = User::where('partner_id', $user->partner_id)->findOrFail($id);
+        
+        // Solo roles permitidos para asociados
+        $roles = collect(array_combine(self::ASOCIADO_ROLES, self::ASOCIADO_ROLES));
+
+        return view('my-users.edit', compact('userToEdit', 'roles', 'partner'));
+    }
+
+    /**
+     * Actualizar usuario del partner
+     */
+    public function myUpdate(Request $request, string $id)
+    {
+        $auth = auth()->user();
+        
+        // Verificar que el usuario pertenece al mismo partner
+        $userToUpdate = User::where('partner_id', $auth->partner_id)->findOrFail($id);
+
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => "required|email|unique:users,email,{$id}",
+            'role'     => ['required', Rule::in(self::ASOCIADO_ROLES)],
+            'password' => 'nullable|string|min:8|confirmed',
+        ], [
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+        ]);
+
+        $userToUpdate->name  = $request->name;
+        $userToUpdate->email = $request->email;
+        $userToUpdate->is_active = $request->boolean('is_active', true);
+
+        // Si se cambia la contraseña
+        if ($request->filled('password')) {
+            $userToUpdate->password = Hash::make($request->password);
+            $userToUpdate->must_change_password = false;
+        }
+
+        $userToUpdate->save();
+
+        // Sincronizar rol
+        $userToUpdate->syncRoles($request->role);
+
+        return redirect()->route('my-users.index')->with('success', 'Usuario actualizado exitosamente.');
+    }
+
+    /**
+     * Eliminar usuario del partner
+     */
+    public function myDestroy(string $id)
+    {
+        $user = auth()->user();
+        
+        // Verificar que el usuario pertenece al mismo partner
+        $userToDelete = User::where('partner_id', $user->partner_id)->findOrFail($id);
+
+        // No permitir que se elimine a sí mismo
+        if ($userToDelete->id === $user->id) {
+            return redirect()->route('my-users.index')->with('error', 'No puedes eliminarte a ti mismo.');
+        }
+
+        $userToDelete->delete();
+
+        return redirect()->route('my-users.index')->with('success', 'Usuario eliminado exitosamente.');
     }
 }

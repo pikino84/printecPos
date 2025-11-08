@@ -172,7 +172,7 @@
                                             </td>
                                             <td>
                                                 @if($product->productCategory)
-                                                    <span class="badge badge-light">{{ $product->productCategory->name }}</span>
+                                                    <span>{{ $product->productCategory->name }}</span>
                                                 @else
                                                     <span class="text-muted">Sin categoría</span>
                                                 @endif

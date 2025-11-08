@@ -19,8 +19,8 @@ class OwnProductsExampleSeeder extends Seeder
 
         // Crear categoría para productos propios de Printec
         $category = ProductCategory::firstOrCreate(
-            ['slug' => 'printec-propios', 'partner_id' => $printecPartner->id],
-            ['name' => 'Productos Propios Printec', 'is_active' => true]
+            ['slug' => 'printec', 'partner_id' => $printecPartner->id],
+            ['name' => 'Printec', 'is_active' => true]
         );
 
         // Producto propio de Printec (público para asociados)

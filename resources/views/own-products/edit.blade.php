@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Editar: ' . $ownProduct->name)
+@section('title', 'Editar: ' . $own_product->name)
 
 @section('content')
 <div class="page-header">
@@ -9,7 +9,7 @@
             <div class="col-md-8">
                 <div class="page-header-title">
                     <h5 class="m-b-10">Editar Producto Propio</h5>
-                    <p class="m-b-0">{{ $ownProduct->name }}</p>
+                    <p class="m-b-0">{{ $own_product->name }}</p>
                 </div>
             </div>
             <div class="col-md-4">
@@ -21,7 +21,7 @@
                         <a href="{{ route('own-products.index') }}">Productos Propios</a>
                     </li>
                     <li class="breadcrumb-item">
-                        <a href="{{ route('own-products.show', $ownProduct) }}">{{ $ownProduct->name }}</a>
+                        <a href="{{ route('own-products.show', $own_product) }}">{{ $own_product->name }}</a>
                     </li>
                     <li class="breadcrumb-item"><a href="#!">Editar</a></li>
                 </ul>
@@ -34,46 +34,12 @@
     <div class="main-body">
         <div class="page-wrapper">
             <div class="page-body">
-                <form action="{{ route('own-products.update', $ownProduct) }}" method="POST" enctype="multipart/form-data" id="productForm">
+                <form action="{{ route('own-products.update', $own_product->id) }}" method="POST" enctype="multipart/form-data" id="productForm">
                     @csrf
                     @method('PUT')
                     <div class="row">
                         <!-- Información básica -->
                         <div class="col-lg-8">
-                        {{-- 🆕 CARD: PROVEEDOR--}}
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Proveedor</h5>
-                            </div>
-                            <div class="card-block">
-                                <div class="row">
-                                    <div class="col-md-6 form-group">
-                                        <label class="form-label">
-                                            Proveedor <span class="text-danger">*</span>
-                                        </label>
-                                        <select class="form-control @error('partner_id') is-invalid @enderror" 
-                                                name="partner_id" 
-                                                id="partner_id"
-                                                required>
-                                            <option value="">Seleccionar proveedor</option>
-                                            @foreach($partners as $partner)
-                                                <option value="{{ $partner->id }}" 
-                                                        data-type="{{ $partner->type }}"
-                                                        {{ old('partner_id', $ownProduct->partner_id) == $partner->id ? 'selected' : '' }}>
-                                                    {{ $partner->name }} ({{ $partner->type }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('partner_id')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                        <small class="form-text text-muted" id="partner-info">
-                                            <i class="feather icon-info"></i> Proveedor del producto
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         <div class="card">
                             <div class="card-header">
                                 <h5>Información Básica</h5>
@@ -85,7 +51,7 @@
                                         <input type="text" 
                                                 class="form-control @error('name') is-invalid @enderror" 
                                                 name="name" 
-                                                value="{{ old('name', $ownProduct->name) }}" 
+                                                value="{{ old('name', $own_product->name) }}" 
                                                 required>
                                         @error('name')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -96,7 +62,7 @@
                                         <input type="text" 
                                                 class="form-control @error('model_code') is-invalid @enderror" 
                                                 name="model_code" 
-                                                value="{{ old('model_code', $ownProduct->model_code) }}">
+                                                value="{{ old('model_code', $own_product->model_code) }}">
                                         @error('model_code')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -108,7 +74,7 @@
                                     <input type="text" 
                                             class="form-control @error('short_description') is-invalid @enderror" 
                                             name="short_description" 
-                                            value="{{ old('short_description', $ownProduct->short_description) }}"
+                                            value="{{ old('short_description', $own_product->short_description) }}"
                                             maxlength="500">
                                     @error('short_description')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -119,7 +85,7 @@
                                     <label class="form-label">Descripción Completa</label>
                                     <textarea class="form-control @error('description') is-invalid @enderror" 
                                                 name="description" 
-                                                rows="4">{{ old('description', $ownProduct->description) }}</textarea>
+                                                rows="4">{{ old('description', $own_product->description) }}</textarea>
                                     @error('description')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -139,7 +105,7 @@
                                         <input type="text" 
                                                 class="form-control @error('material') is-invalid @enderror" 
                                                 name="material" 
-                                                value="{{ old('material', $ownProduct->material) }}">
+                                                value="{{ old('material', $own_product->material) }}">
                                         @error('material')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -149,7 +115,7 @@
                                         <input type="text" 
                                                 class="form-control @error('packing_type') is-invalid @enderror" 
                                                 name="packing_type" 
-                                                value="{{ old('packing_type', $ownProduct->packing_type) }}">
+                                                value="{{ old('packing_type', $own_product->packing_type) }}">
                                         @error('packing_type')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -159,7 +125,7 @@
                                         <input type="text" 
                                                 class="form-control @error('unit_package') is-invalid @enderror" 
                                                 name="unit_package" 
-                                                value="{{ old('unit_package', $ownProduct->unit_package) }}">
+                                                value="{{ old('unit_package', $own_product->unit_package) }}">
                                         @error('unit_package')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -172,7 +138,7 @@
                                         <input type="text" 
                                                 class="form-control @error('product_weight') is-invalid @enderror" 
                                                 name="product_weight" 
-                                                value="{{ old('product_weight', $ownProduct->product_weight) }}">
+                                                value="{{ old('product_weight', $own_product->product_weight) }}">
                                         @error('product_weight')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -182,7 +148,7 @@
                                         <input type="text" 
                                                 class="form-control @error('product_size') is-invalid @enderror" 
                                                 name="product_size" 
-                                                value="{{ old('product_size', $ownProduct->product_size) }}"
+                                                value="{{ old('product_size', $own_product->product_size) }}"
                                                 placeholder="L x W x H">
                                         @error('product_size')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -193,7 +159,7 @@
                                         <input type="text" 
                                                 class="form-control @error('area_print') is-invalid @enderror" 
                                                 name="area_print" 
-                                                value="{{ old('area_print', $ownProduct->area_print) }}"
+                                                value="{{ old('area_print', $own_product->area_print) }}"
                                                 placeholder="Ej: 10x10cm">
                                         @error('area_print')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -209,10 +175,10 @@
                                 <h5>Imagen Principal</h5>
                             </div>
                             <div class="card-block">
-                                @if($ownProduct->main_image_url)
+                                @if($own_product->main_image_url)
                                     <div class="mb-3">
                                         <label class="form-label">Imagen Actual:</label><br>
-                                        <img src="{{ $ownProduct->main_image_url }}" 
+                                        <img src="{{ $own_product->main_image_url }}" 
                                                 alt="Imagen actual"
                                                 class="img-thumbnail"
                                                 style="max-height: 200px;">
@@ -243,7 +209,7 @@
                             </div>
                             <div class="card-block">
                                 <div id="variants-container">
-                                    @forelse($ownProduct->variants as $index => $variant)
+                                    @forelse($own_product->variants as $index => $variant)
                                         <div class="variant-item border rounded p-3 mb-3">
                                             <input type="hidden" name="variants[{{$index}}][id]" value="{{$variant->id}}">
                                             
@@ -377,7 +343,7 @@
                                         <input type="number" 
                                                 class="form-control @error('price') is-invalid @enderror" 
                                                 name="price" 
-                                                value="{{ old('price', $ownProduct->price) }}"
+                                                value="{{ old('price', $own_product->price) }}"
                                                 step="0.01"
                                                 min="0"
                                                 required>
@@ -402,7 +368,7 @@
                                         <option value="">Sin categoría</option>
                                         @foreach($categories as $category)
                                             <option value="{{ $category->id }}" 
-                                                    {{ old('product_category_id', $ownProduct->product_category_id) == $category->id ? 'selected' : '' }}>
+                                                    {{ old('product_category_id', $own_product->product_category_id) == $category->id ? 'selected' : '' }}>
                                                 {{ $category->name }}
                                             </option>
                                         @endforeach
@@ -427,7 +393,7 @@
                                                 name="is_active" 
                                                 id="is_active" 
                                                 value="1" 
-                                                {{ old('is_active', $ownProduct->is_active) ? 'checked' : '' }}>
+                                                {{ old('is_active', $own_product->is_active) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="is_active">
                                             Producto activo
                                         </label>
@@ -441,7 +407,7 @@
                                                 name="featured" 
                                                 id="featured" 
                                                 value="1" 
-                                                {{ old('featured', $ownProduct->featured) ? 'checked' : '' }}>
+                                                {{ old('featured', $own_product->featured) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="featured">
                                             Producto destacado
                                         </label>
@@ -456,7 +422,7 @@
                                                     name="is_public" 
                                                     id="is_public" 
                                                     value="1" 
-                                                    {{ old('is_public', $ownProduct->is_public) ? 'checked' : '' }}>
+                                                    {{ old('is_public', $own_product->is_public) ? 'checked' : '' }}>
                                             <label class="form-check-label" for="is_public">
                                                 Visible para asociados
                                             </label>
@@ -472,7 +438,7 @@
                                 <button type="submit" class="btn btn-primary btn-block">
                                     <i class="feather icon-save"></i> Actualizar Producto
                                 </button>
-                                <a href="{{ route('own-products.show', $ownProduct) }}" class="btn btn-secondary btn-block">
+                                <a href="{{ route('own-products.show', $own_product) }}" class="btn btn-secondary btn-block">
                                     <i class="feather icon-x"></i> Cancelar
                                 </a>
                             </div>
@@ -568,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Warehouse ID actual del producto
-    const currentWarehouseId = "{{ old('warehouse_id', $ownProduct->warehouse_id ?? '') }}";
+    const currentWarehouseId = "{{ old('warehouse_id', $own_product->warehouse_id ?? '') }}";
     
     // Agregar nueva variante CON DEBUGGING
     const addVariantBtn = document.getElementById('addVariant');

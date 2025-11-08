@@ -15,21 +15,47 @@ class ProductCatalogController extends Controller
 {
     public function index(Request $request)
     {
+        $user = auth()->user();
+        $userPartnerId = $user->partner_id;
+
         // Obtener todas las categorías internas de Printec order by name
         $categories = PrintecCategory::orderBy('name')->get();
 
-        $query = Product::with(['productCategory.printecCategories', 'variants.stocks'])
-            ->where(function($q) {
-                $q->where('is_own_product', false) // Productos de proveedores
-                ->orWhere(function($subQ) {
-                    $subQ->where('is_own_product', true)
-                        ->where('is_public', true); // Productos propios públicos
-                });
-            })
+        $query = Product::with(['productCategory.printecCategories', 'variants.stocks', 'partner'])
             ->where('is_active', true)
             ->whereHas('variants.stocks', function ($q) {
                 $q->where('stock', '>', 0);
             });
+
+        // 🔒 FILTRO PRINCIPAL POR TIPO DE PARTNER
+        if ($userPartnerId == 1) {
+            // ✅ PRINTEC (Mixto): Ve productos de proveedores + sus propios productos
+            $query->where(function($q) use ($userPartnerId) {
+                $q->where('is_own_product', false) // Productos de proveedores
+                  ->orWhere(function($subQ) use ($userPartnerId) {
+                      $subQ->where('is_own_product', true)
+                           ->where('partner_id', $userPartnerId); // Solo sus propios productos
+                  });
+            });
+        } else {
+            // ✅ ASOCIADOS: Ve productos de proveedores + productos de Mixtos (Printec) + sus propios productos
+            $query->where(function($q) use ($userPartnerId) {
+                $q->where('is_own_product', false) // Productos de proveedores
+                  ->orWhere(function($subQ) use ($userPartnerId) {
+                      // Productos propios del asociado
+                      $subQ->where('is_own_product', true)
+                           ->where('partner_id', $userPartnerId);
+                  })
+                  ->orWhere(function($subQ) {
+                      // Productos públicos de partners Mixtos (Printec)
+                      $subQ->where('is_own_product', true)
+                           ->where('is_public', true)
+                           ->whereHas('partner', function($partnerQuery) {
+                               $partnerQuery->where('type', 'Mixto');
+                           });
+                  });
+            });
+        }
 
         // Filtro por categoría interna de Printec
         if ($request->filled('category')) {
@@ -59,6 +85,8 @@ class ProductCatalogController extends Controller
                     });
             });
         }
+
+        // Filtro por ciudad
         if ($request->filled('city_id')) {
             $cityId = $request->city_id;
 
@@ -89,6 +117,30 @@ class ProductCatalogController extends Controller
             'productCategory.printecCategories', // categorías mapeadas
             'variants.stocks.warehouse' // almacenes por variante
         ])->findOrFail($id);
+
+        // Verificar acceso según tipo de producto y partner
+        $user = auth()->user();
+        $userPartnerId = $user->partner_id;
+
+        // Si es producto propio, verificar permisos
+        if ($producto->is_own_product) {
+            // Printec puede ver sus propios productos
+            if ($userPartnerId == 1 && $producto->partner_id == 1) {
+                // OK
+            }
+            // Asociados pueden ver sus propios productos
+            elseif ($producto->partner_id == $userPartnerId) {
+                // OK
+            }
+            // Asociados pueden ver productos públicos de Mixtos
+            elseif ($producto->is_public && $producto->partner->type == 'Mixto') {
+                // OK
+            }
+            // De lo contrario, no puede ver
+            else {
+                abort(403, 'No tienes permiso para ver este producto');
+            }
+        }
 
         // Imagen principal
         $mainImage = [

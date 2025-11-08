@@ -5,27 +5,25 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void
+    public function up()
     {
         Schema::create('partners', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Nombre del partner
+            $table->string('name');
             $table->string('slug')->unique();
-            $table->string('contact_name')->nullable(); // Nombre persona de contacto
-            $table->string('contact_phone', 30)->nullable(); // Celular de contacto
-            $table->string('contact_email')->nullable(); // Correo de contacto
-            $table->text('direccion')->nullable(); // Dirección
-            $table->string('type', 50)->default('Mixto'); // Tipo de partner
-            $table->index('type');
-            $table->text('commercial_terms')->nullable(); // Condiciones comerciales
-            $table->text('comments')->nullable(); // Comentarios
-            $table->boolean('is_active')->default(true); // Activo o no
+            $table->string('contact_name')->nullable();
+            $table->string('contact_phone')->nullable();
+            $table->string('contact_email')->nullable();
+            $table->text('direccion')->nullable();
+            $table->string('type');
+            $table->text('commercial_terms')->nullable();
+            $table->text('comments')->nullable();
+            $table->boolean('is_active')->default(true);
+            
+            // ✅ Solo la columna, SIN foreign key todavía
+            $table->unsignedBigInteger('default_entity_id')->nullable();
+            
             $table->timestamps();
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('partners');
     }
 };

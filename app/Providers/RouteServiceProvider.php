@@ -24,8 +24,18 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        parent::boot();
+        
+        // ✅ BINDING PERSONALIZADO: Carga relaciones antes de evaluar Policy
+        Route::bind('own_product', function ($value) {
+            return \App\Models\Product::with(['partner', 'productCategory'])
+                ->where('id', $value)
+                ->where('is_own_product', 1)
+                ->firstOrFail();
+        });
+        
         $this->configureRateLimiting();
-
+        
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')

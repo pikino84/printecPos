@@ -161,26 +161,37 @@ class Product extends Model
 
     public function canBeViewedBy(User $user): bool
     {
-        // Si es producto de proveedor, todos pueden verlo
+        // 🔍 DEBUG
+        \Log::info('=== canBeViewedBy DEBUG ===', [
+            'product_id' => $this->id,
+            'product_partner_id' => $this->partner_id,
+            'product_is_own' => $this->is_own_product,
+            'product_is_public' => $this->is_public,
+            'user_id' => $user->id,
+            'user_partner_id' => $user->partner_id,
+        ]);
+
         if (!$this->is_own_product) {
+            \Log::info('→ Not own product, returning TRUE');
             return true;
         }
 
-        // Si es producto propio del mismo partner
         if ($this->partner_id === $user->partner_id) {
+            \Log::info('→ Same partner, returning TRUE');
             return true;
         }
 
-        // Si es producto público de Printec
         if ($this->partner_id === 1 && $this->is_public) {
+            \Log::info('→ Public Printec product, returning TRUE');
             return true;
         }
 
-        // Printec puede ver todo
         if ($user->partner_id === 1) {
+            \Log::info('→ User is Printec, returning TRUE');
             return true;
         }
 
+        \Log::info('→ No condition met, returning FALSE');
         return false;
     }
 

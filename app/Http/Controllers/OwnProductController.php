@@ -1,10 +1,5 @@
 <?php
 
-// ============================================================================
-// CONTROLADOR: OWN PRODUCTS
-// ============================================================================
-
-// app/Http/Controllers/OwnProductController.php
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOwnProductRequest;
@@ -20,22 +15,31 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class OwnProductController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:manage-own-products|view-own-products');
     }
 
     public function index(Request $request)
     {
-        $query = Product::with(['productCategory', 'creator', 'variants.stocks.warehouse', 'partner'])
-            ->ownProducts()
-            ->visibleFor(Auth::user());
+        $user = Auth::user();
+        $userPartnerId = $user->partner_id;
 
-        // Filtros
+        $query = Product::with(['productCategory', 'creator', 'variants.stocks.warehouse', 'partner'])
+            ->ownProducts();
+
+        if ($userPartnerId == 1) {
+            // Printec: Ve TODOS los productos propios
+        } else {
+            // Asociados: Solo ven SUS productos propios
+            $query->where('partner_id', $userPartnerId);
+        }
+
+        // Filtros adicionales
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -68,18 +72,29 @@ class OwnProductController extends Controller
 
         if ($request->filled('owner')) {
             if ($request->owner === 'own') {
-                $query->where('partner_id', Auth::user()->partner_id);
-            } elseif ($request->owner === 'printec') {
-                $query->where('partner_id', 1)->where('is_public', true);
+                $query->where('partner_id', $userPartnerId);
+            } elseif ($request->owner === 'printec' && $userPartnerId == 1) {
+                $query->where('partner_id', 1);
             }
         }
 
         $products = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Categorías para el filtro (solo las que tienen productos propios)
-        $categories = ProductCategory::where('partner_id', Auth::user()->partner_id)
-            ->orderBy('name')
-            ->get();
+        // Categorías para el filtro
+        if ($userPartnerId == 1) {
+            $categories = ProductCategory::orderBy('name')->get();
+        } else {
+            $partnerIds = Partner::whereIn('type', ['proveedor', 'mixto'])
+                ->pluck('id')
+                ->push($userPartnerId)
+                ->push(1)
+                ->unique()
+                ->toArray();
+
+            $categories = ProductCategory::whereIn('partner_id', $partnerIds)
+                ->orderBy('name')
+                ->get();
+        }
 
         return view('own-products.index', compact('products', 'categories'));
     }
@@ -90,46 +105,46 @@ class OwnProductController extends Controller
         
         $userPartnerId = Auth::user()->partner_id;
         
-        // Categorías del partner actual
-        $categories = ProductCategory::where('partner_id', $userPartnerId)
-            ->orderBy('name')
-            ->get();
+        if ($userPartnerId == 1) {
+            $categories = ProductCategory::orderBy('name')->get();
+        } else {
+            $partnerIds = Partner::whereIn('type', ['proveedor', 'mixto'])
+                ->pluck('id')
+                ->push($userPartnerId)
+                ->push(1)
+                ->unique()
+                ->toArray();
+
+            $categories = ProductCategory::whereIn('partner_id', $partnerIds)
+                ->orderBy('name')
+                ->get();
+        }
         
-        // Partners que pueden crear productos propios (Asociado y Mixto)
-        $partners = Partner::whereIn('type', ['Asociado', 'Mixto'])
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-        
-        // Almacenes del partner actual
         $warehouses = ProductWarehouse::where('partner_id', $userPartnerId)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
         
-        // ⚠️ NUEVO: Validar que el partner tenga almacenes
         $hasWarehouses = $warehouses->isNotEmpty();
 
-        return view('own-products.create', compact('categories', 'warehouses', 'partners', 'hasWarehouses'));
+        return view('own-products.create', compact('categories', 'warehouses', 'hasWarehouses'));
     }
 
     public function store(StoreOwnProductRequest $request)
     {
         $this->authorize('create', Product::class);
-
-        DB::transaction(function() use ($request) {
+        
+        $product = DB::transaction(function() use ($request) {
             $partnerId = Auth::user()->partner_id;
             
-            //Valida que el partner tenga al menos un almacén
             $hasWarehouses = ProductWarehouse::where('partner_id', $partnerId)
                 ->where('is_active', true)
                 ->exists();
                 
             if (!$hasWarehouses) {
-                throw new \Exception('No puedes crear productos sin almacenes configurados. Contacta al administrador o crea un almacén primero.');
+                throw new \Exception('No puedes crear productos sin almacenes configurados.');
             }
             
-            // Crear slug único
             $baseSlug = Str::slug($request->name);
             $slug = $baseSlug;
             $counter = 1;
@@ -138,7 +153,6 @@ class OwnProductController extends Controller
                 $counter++;
             }
 
-            // Crear producto propio
             $product = Product::create([
                 'name' => $request->name,
                 'slug' => $slug,
@@ -162,177 +176,148 @@ class OwnProductController extends Controller
                 'is_public' => $request->boolean('is_public') && $partnerId == 1,
             ]);
 
-            // Imagen principal
             if ($request->hasFile('main_image')) {
                 $path = $request->file('main_image')->store("products/{$product->id}", 'public');
                 $product->update(['main_image' => $path]);
             }
 
-            // Crear variante principal
             $skuGenerated = $request->sku ?: ($product->model_code ?: 'PROD-' . $product->id);
             
             $variant = ProductVariant::create([
                 'product_id' => $product->id,
                 'sku' => strtoupper($skuGenerated),
                 'slug' => $product->slug . '-default',
-                'color_name' => 'Único',
-                'price' => null, // Usa precio del producto
+                'color_name' => 'Blanco',
+                'price' => $request->price,
             ]);
 
-            //MODIFICADO: Stock inicial - SIEMPRE crear registro, aunque sea en 0
-            // Si el partner tiene almacén seleccionado, usar ese. Si no, usar el primero disponible
             if ($request->filled('warehouse_id')) {
                 ProductStock::create([
                     'variant_id' => $variant->id,
                     'warehouse_id' => $request->warehouse_id,
                     'stock' => $request->filled('initial_stock') ? (int)$request->initial_stock : 0,
                 ]);
-            } else {
-                // Si por alguna razón no hay warehouse_id, usar el primer almacén del partner
-                $firstWarehouse = ProductWarehouse::where('partner_id', $partnerId)
-                    ->where('is_active', true)
-                    ->first();
-                    
-                if ($firstWarehouse) {
-                    ProductStock::create([
-                        'variant_id' => $variant->id,
-                        'warehouse_id' => $firstWarehouse->id,
-                        'stock' => 0,
-                    ]);
-                }
             }
 
             return $product;
         });
 
-        return redirect()->route('own-products.index')
-            ->with('success', 'Producto propio creado exitosamente.');
+        return redirect()
+            ->route('own-products.index')
+            ->with('success', 'Producto creado exitosamente');
     }
 
-    public function show(Product $ownProduct)
+    public function show(Product $own_product)
     {
+
         // Verificar que sea producto propio
-        if (!$ownProduct->is_own_product) {
+        if (!$own_product->is_own_product) {
             abort(404, 'Producto no encontrado');
         }
 
-        $this->authorize('view', $ownProduct);
-        
-        $ownProduct->load([
-            'productCategory', 
-            'creator', 
-            'partner',
-            'variants.stocks.warehouse'
+        // Autorizar
+        $this->authorize('view', $own_product);
+
+        // Cargar relaciones
+        $own_product->load([
+            'productCategory',
+            'variants.stocks.warehouse',
+            'creator',
+            'partner'
         ]);
 
-        return view('own-products.show', compact('ownProduct'));
+        return view('own-products.show', compact('own_product'));
     }
 
-    public function edit(Product $ownProduct)
+    public function edit(Product $own_product)
     {
-    $owner = Auth::user();
-        // Verificar que sea producto propio
-        if (!$ownProduct->is_own_product) {
+        if (!$own_product->is_own_product) {
             abort(404, 'Producto no encontrado');
         }
-        
-        $this->authorize('update', $ownProduct);
-        
-        // Cargar relaciones completas
-        $ownProduct->load(['variants.stocks.warehouse']);
-        
-        $partners = Partner::where('is_active', true)->orderBy('name')->get();
-        
-        $categories = ProductCategory::where('partner_id', Auth::user()->partner_id)
+
+        $this->authorize('update', $own_product);
+        $userPartnerId = Auth::user()->partner_id;
+
+        // Cargar relaciones necesarias
+        $own_product->load([
+            'productCategory',
+            'variants.stocks.warehouse',
+            'creator',
+            'partner'
+        ]);
+
+        $warehouses = ProductWarehouse::where('partner_id', $own_product->partner_id)
+            ->where('is_active', 1)
             ->orderBy('name')
             ->get();
 
-        $warehouses = ProductWarehouse::where('partner_id', Auth::user()->partner_id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        if ($userPartnerId == 1) {
+            $categories = ProductCategory::orderBy('name')->get();
+        } else {
+            $partnerIds = Partner::whereIn('type', ['proveedor', 'mixto'])
+                ->pluck('id')
+                ->push($userPartnerId)
+                ->push(1)
+                ->unique()
+                ->toArray();
 
-        return view('own-products.edit', compact('ownProduct', 'categories', 'warehouses', 'partners'));
+            $categories = ProductCategory::whereIn('partner_id', $partnerIds)
+                ->orderBy('name')
+                ->get();
+        }
+
+        // ✅ CAMBIO: Pasar todas las variables a la vista
+        return view('own-products.edit', compact(
+            'own_product',
+            'warehouses',
+            'categories'  // Si lo necesitas
+        ));
     }
 
-    public function update(Request $request, Product $ownProduct)
+    public function update(UpdateOwnProductRequest $request, Product $own_product)
     {
-        // Verificar que sea producto propio
-        if (!$ownProduct->is_own_product) {
+        if (!$own_product->is_own_product) {
             abort(404, 'Producto no encontrado');
         }
 
-        $this->authorize('update', $ownProduct);
+        $this->authorize('update', $own_product);
 
-        // Validación básica del producto
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'model_code' => 'nullable|string|max:100',
-            'short_description' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'material' => 'nullable|string|max:255',
-            'packing_type' => 'nullable|string|max:255',
-            'unit_package' => 'nullable|string|max:255',
-            'product_weight' => 'nullable|string|max:255',
-            'product_size' => 'nullable|string|max:255',
-            'area_print' => 'nullable|string|max:255',
-            'product_category_id' => 'nullable|exists:product_categories,id',
-            'is_active' => 'boolean',
-            'featured' => 'boolean',
-            'is_public' => 'boolean',
-            'main_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            
-            // Validación de variantes
-            'variants.*.price' => 'required|numeric|min:0',
-            'variants.*.id' => 'nullable|exists:product_variants,id',
-            'variants.*.sku' => 'required_with:variants|string|max:100',
-            'variants.*.color_name' => 'nullable|string|max:100',
-            'variants.*.price' => 'nullable|numeric|min:0',
-            'variants.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'variants.*.stocks' => 'nullable|array',
-            'variants.*.stocks.*' => 'nullable|integer|min:0',
-        ]);
-
-        DB::transaction(function () use ($validated, $request, $ownProduct) {
-            // Actualizar información básica del producto
-            $ownProduct->update([
-                'name' => $validated['name'],
-                'model_code' => $validated['model_code'],
-                'short_description' => $validated['short_description'],
-                'description' => $validated['description'],
-                'price' => $validated['price'],
-                'material' => $validated['material'],
-                'packing_type' => $validated['packing_type'],
-                'unit_package' => $validated['unit_package'],
-                'product_weight' => $validated['product_weight'],
-                'product_size' => $validated['product_size'],
-                'area_print' => $validated['area_print'],
-                'product_category_id' => $validated['product_category_id'],
-                'is_active' => $request->boolean('is_active'),
+        DB::transaction(function() use ($request, $own_product) {
+            $own_product->update([
+                'name' => $request->name,
+                'model_code' => $request->model_code,
+                'price' => $request->price,
+                'description' => $request->description,
+                'short_description' => $request->short_description,
+                'material' => $request->material,
+                'packing_type' => $request->packing_type,
+                'unit_package' => $request->unit_package,
+                'product_weight' => $request->product_weight,
+                'product_size' => $request->product_size,
+                'area_print' => $request->area_print,
+                'product_category_id' => $request->product_category_id,
+                'is_active' => $request->boolean('is_active', true),
                 'featured' => $request->boolean('featured'),
-                'is_public' => $request->boolean('is_public') && auth()->user()->partner_id == 1,
+                'is_public' => $request->boolean('is_public') && $own_product->partner_id == 1,
             ]);
 
-            // Manejar imagen principal
             if ($request->hasFile('main_image')) {
-                // Eliminar imagen anterior si existe
-                if ($ownProduct->main_image) {
-                    Storage::disk('public')->delete($ownProduct->main_image);
+                if ($own_product->main_image) {
+                    Storage::disk('public')->delete($own_product->main_image);
                 }
                 
-                $imagePath = $request->file('main_image')->store("products/{$ownProduct->id}", 'public');
-                $ownProduct->update(['main_image' => $imagePath]);
+                $path = $request->file('main_image')->store("products/{$own_product->id}", 'public');
+                $own_product->update(['main_image' => $path]);
             }
 
-            // Procesar variantes si existen
             if ($request->has('variants')) {
-                $this->updateVariantsForProduct($ownProduct, $request->input('variants'), $request);
+                $this->updateVariantsForProduct($own_product, $request->variants, $request);
             }
         });
 
+        // ✅ CAMBIO: Usa 'own_product' en lugar de 'ownProduct'
         return redirect()
-            ->route('own-products.show', $ownProduct)
+            ->route('own-products.show', $own_product)
             ->with('success', 'Producto actualizado correctamente');
     }
 
@@ -341,7 +326,6 @@ class OwnProductController extends Controller
         $existingVariantIds = [];
         
         foreach ($variantsData as $index => $variantData) {
-            // Verificar que el SKU sea único
             $skuExists = ProductVariant::where('sku', $variantData['sku'])
                 ->where('product_id', '!=', $product->id)
                 ->when(isset($variantData['id']), function($query) use ($variantData) {
@@ -354,7 +338,6 @@ class OwnProductController extends Controller
             }
 
             if (isset($variantData['id']) && $variantData['id']) {
-                // Actualizar variante existente
                 $variant = ProductVariant::where('product_id', $product->id)
                     ->findOrFail($variantData['id']);
                 $existingVariantIds[] = $variant->id;
@@ -366,7 +349,6 @@ class OwnProductController extends Controller
                     'price' => $variantData['price'] ?? null,
                 ]);
             } else {
-                // Crear nueva variante
                 $variant = ProductVariant::create([
                     'product_id' => $product->id,
                     'sku' => strtoupper($variantData['sku']),
@@ -377,9 +359,7 @@ class OwnProductController extends Controller
                 $existingVariantIds[] = $variant->id;
             }
 
-            // Actualizar imagen de la variante
             if ($request->hasFile("variants.{$index}.image")) {
-                // Eliminar imagen anterior si existe
                 if ($variant->image) {
                     Storage::disk('public')->delete($variant->image);
                 }
@@ -389,7 +369,6 @@ class OwnProductController extends Controller
                 $variant->update(['image' => $imagePath]);
             }
 
-            // Actualizar stock por almacén
             if (isset($variantData['stocks'])) {
                 foreach ($variantData['stocks'] as $warehouseId => $stockAmount) {
                     ProductStock::updateOrCreate(
@@ -405,131 +384,119 @@ class OwnProductController extends Controller
             }
         }
         
-        // Eliminar variantes que ya no están en el array
         $variantsToDelete = $product->variants()
             ->whereNotIn('id', $existingVariantIds)
             ->get();
             
         foreach ($variantsToDelete as $variant) {
-            // Eliminar imagen si existe
             if ($variant->image) {
                 Storage::disk('public')->delete($variant->image);
             }
             
-            // Eliminar stocks asociados
             $variant->stocks()->delete();
-            
-            // Eliminar la variante
             $variant->delete();
         }
     }
 
-    public function destroy(Product $ownProduct)
+    public function destroy(Product $own_product)
     {
-        // Verificar que sea producto propio
-        if (!$ownProduct->is_own_product) {
+        if (!$own_product->is_own_product) {
             abort(404, 'Producto no encontrado');
         }
 
-        $this->authorize('delete', $ownProduct);
+        $this->authorize('delete', $own_product);
 
-        // TODO: Verificar que no tenga ventas o cotizaciones activas
-        
-        // Eliminar imagen principal
-        if ($ownProduct->main_image) {
-            Storage::disk('public')->delete($ownProduct->main_image);
+        DB::transaction(function() use ($own_product) {
+            // Eliminar imagen
+            if ($own_product->main_image) {
+                Storage::disk('public')->delete($own_product->main_image);
+            }
+
+            $own_product->delete();
+        });
+
+        return redirect()
+            ->route('own-products.index')
+            ->with('success', 'Producto eliminado correctamente');
+    }
+    /**
+     * Duplicar un producto propio
+     */
+    public function duplicate(Product $own_product)
+    {
+        if (!$own_product->is_own_product) {
+            abort(404, 'Producto no encontrado');
         }
 
-        $ownProduct->delete();
+        $this->authorize('create', Product::class);
 
-        return redirect()->route('own-products.index')
-            ->with('success', 'Producto eliminado exitosamente.');
+        try {
+            $newProduct = DB::transaction(function() use ($own_product) {
+                $newProduct = $own_product->replicate();
+                $newProduct->name = $own_product->name . ' (Copia)';
+                $newProduct->slug = Str::slug($newProduct->name) . '-' . Str::random(6);
+                $newProduct->model_code = $own_product->model_code ? $own_product->model_code . '-COPY' : null;
+                $newProduct->created_by = Auth::id();
+                $newProduct->save();
+
+                if ($own_product->main_image && Storage::disk('public')->exists($own_product->main_image)) {
+                    $extension = pathinfo($own_product->main_image, PATHINFO_EXTENSION);
+                    $newImagePath = "products/{$newProduct->id}/main." . $extension;
+                    Storage::disk('public')->copy($own_product->main_image, $newImagePath);
+                    $newProduct->update(['main_image' => $newImagePath]);
+                }
+
+                foreach ($own_product->variants as $variant) {
+                    $newVariant = $variant->replicate();
+                    $newVariant->product_id = $newProduct->id;
+                    $newVariant->sku = $variant->sku . '-COPY';
+                    $newVariant->slug = Str::slug($newVariant->sku) . '-' . Str::random(4);
+                    $newVariant->save();
+
+                    foreach ($variant->stocks as $stock) {
+                        ProductStock::create([
+                            'variant_id' => $newVariant->id,
+                            'warehouse_id' => $stock->warehouse_id,
+                            'stock' => 0,
+                        ]);
+                    }
+                }
+
+                return $newProduct;
+            });
+
+            return redirect()
+                ->route('own-products.edit', $newProduct)
+                ->with('success', 'Producto duplicado exitosamente.');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Error al duplicar el producto: ' . $e->getMessage());
+        }
     }
 
-    // ========================================================================
-    // MÉTODOS ADICIONALES
-    // ========================================================================
-
-    // Endpoint para búsqueda AJAX
+    /**
+     * Buscar productos (API)
+     */
     public function search(Request $request)
     {
-        $query = Product::ownProducts()
-            ->visibleFor(Auth::user())
-            ->where('is_active', true);
+        $user = Auth::user();
+        $query = Product::with(['productCategory', 'variants'])
+            ->ownProducts();
+
+        if ($user->partner_id != 1) {
+            $query->where('partner_id', $user->partner_id);
+        }
 
         if ($request->filled('q')) {
             $search = $request->q;
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('model_code', 'like', "%{$search}%")
-                  ->orWhereHas('variants', function($vq) use ($search) {
-                      $vq->where('sku', 'like', "%{$search}%");
-                  });
+                ->orWhere('model_code', 'like', "%{$search}%");
             });
         }
 
-        $products = $query->with('variants')
-            ->limit(10)
-            ->get(['id', 'name', 'model_code', 'price', 'main_image']);
-
-        return response()->json($products);
-    }
-
-    // Ver variantes de un producto
-    public function variants(Product $ownProduct)
-    {
-        if (!$ownProduct->is_own_product) {
-            abort(404);
-        }
-
-        $this->authorize('view', $ownProduct);
-
-        $variants = $ownProduct->variants()
-            ->with(['stocks.warehouse'])
-            ->get();
-
-        return view('own-products.variants', compact('ownProduct', 'variants'));
-    }
-
-    // Duplicar producto
-    public function duplicate(Product $ownProduct)
-    {
-        if (!$ownProduct->is_own_product) {
-            abort(404);
-        }
-
-        $this->authorize('create', Product::class);
-
-        DB::transaction(function() use ($ownProduct) {
-            $newProduct = $ownProduct->replicate();
-            $newProduct->name = $newProduct->name . ' (Copia)';
-            $newProduct->slug = Str::slug($newProduct->name) . '-' . Str::random(4);
-            $newProduct->model_code = $newProduct->model_code ? $newProduct->model_code . '-COPY' : null;
-            $newProduct->created_by = Auth::id();
-            $newProduct->save();
-
-            // Duplicar variantes
-            foreach ($ownProduct->variants as $variant) {
-                $newVariant = $variant->replicate();
-                $newVariant->product_id = $newProduct->id;
-                $newVariant->sku = $newVariant->sku . '-COPY';
-                $newVariant->slug = Str::slug($newVariant->sku) . '-' . Str::random(4);
-                $newVariant->save();
-
-                // Duplicar stocks (en 0)
-                foreach ($variant->stocks as $stock) {
-                    ProductStock::create([
-                        'variant_id' => $newVariant->id,
-                        'warehouse_id' => $stock->warehouse_id,
-                        'stock' => 0, // Stock inicial en 0
-                    ]);
-                }
-            }
-
-            return $newProduct;
-        });
-
-        return redirect()->route('own-products.index')
-            ->with('success', 'Producto duplicado exitosamente.');
+        return response()->json($query->limit(20)->get());
     }
 }

@@ -3,6 +3,16 @@
 @section('title', 'Nuevo Producto Propio')
 
 @section('content')
+{{-- show errors --}}
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 <div class="page-header">
     <div class="page-block">
         <div class="row align-items-center">
@@ -35,70 +45,22 @@
                 @if(!$hasWarehouses)
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <strong><i class="feather icon-alert-triangle"></i> Atención:</strong>
-                    No tienes almacenes configurados. Contacta al administrador para crear al menos un almacén antes de agregar productos.
+                    No tienes almacenes configurados. Debes crear al menos un almacén antes de agregar productos.
+                    <a href="{{ route('my-warehouses.create') }}" class="btn btn-sm btn-warning ml-2">
+                        <i class="feather icon-plus"></i> Crear Almacén
+                    </a>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 @endif
+
                 <form action="{{ route('own-products.store') }}" method="POST" enctype="multipart/form-data" id="productForm">
                     @csrf
                     
                     <div class="row">
                         <!-- Información básica -->
                         <div class="col-lg-8">
-                            {{-- 🆕 CARD: PROVEEDOR Y ALMACÉN --}}
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Proveedor</h5>
-                                </div>
-                                <div class="card-block">
-                                    <div class="row">
-                                        <div class="col-md-6 form-group">
-                                            <label class="form-label">
-                                                Proveedor <span class="text-danger">*</span>
-                                            </label>
-                                            <select class="form-control @error('partner_id') is-invalid @enderror" 
-                                                    name="partner_id" 
-                                                    id="partner_id"
-                                                    required>
-                                                <option value="">Seleccionar proveedor</option>
-                                                @forelse($partners as $partner)
-                                                <option value="{{ $partner->id }}"
-                                                        data-type="{{ $partner->type }}"
-                                                        {{ old('partner_id') == $partner->id ? 'selected' : '' }}>
-                                                    {{ $partner->name }} ({{ $partner->type }})
-                                                </option>
-                                                @empty
-                                                <option value="" disabled>No hay proveedores elegibles</option>
-                                                @endforelse
-                                            </select>
-                                            @error('partner_id')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted" id="partner-info">
-                                                <i class="feather icon-info"></i> Selecciona el proveedor del producto
-                                            </small>
-                                        </div>
-
-                                        <div class="col-md-6 form-group" id="warehouse-group" style="display: none;">
-                                            <label class="form-label">
-                                                Almacén 
-                                                <span class="text-danger" id="warehouse-required">*</span>
-                                            </label>
-                                            <select class="form-control @error('warehouse_id') is-invalid @enderror" 
-                                                    name="warehouse_id"
-                                                    id="warehouse_id">
-                                                <option value="">Seleccionar almacén</option>
-                                            </select>
-                                            @error('warehouse_id')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted" id="warehouse-help"></small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
                             <div class="card">
                                 <div class="card-header">
@@ -182,10 +144,11 @@
                                         </div>
                                         <div class="col-md-4 form-group">
                                             <label class="form-label">Unidad por Paquete</label>
-                                            <input type="text" 
+                                            <input type="number" 
                                                    class="form-control @error('unit_package') is-invalid @enderror" 
                                                    name="unit_package" 
-                                                   value="{{ old('unit_package') }}">
+                                                   value="{{ old('unit_package') }}"
+                                                   min="1">
                                             @error('unit_package')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -194,35 +157,61 @@
 
                                     <div class="row">
                                         <div class="col-md-4 form-group">
-                                            <label class="form-label">Dimensiones</label>
+                                            <label class="form-label">Tamaño del Producto</label>
                                             <input type="text" 
-                                                   class="form-control @error('dimensions') is-invalid @enderror" 
-                                                   name="dimensions" 
-                                                   value="{{ old('dimensions') }}"
-                                                   placeholder="Largo x Ancho x Alto">
-                                            @error('dimensions')
+                                                   class="form-control @error('product_size') is-invalid @enderror" 
+                                                   name="product_size" 
+                                                   value="{{ old('product_size') }}"
+                                                   placeholder="Ej: 10x15cm">
+                                            @error('product_size')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-md-4 form-group">
-                                            <label class="form-label">Peso</label>
-                                            <input type="text" 
-                                                   class="form-control @error('weight') is-invalid @enderror" 
-                                                   name="weight" 
-                                                   value="{{ old('weight') }}"
-                                                   placeholder="Ej: 100g">
-                                            @error('weight')
+                                            <label class="form-label">Peso del Producto</label>
+                                            <input type="number" 
+                                                   class="form-control @error('product_weight') is-invalid @enderror" 
+                                                   name="product_weight" 
+                                                   value="{{ old('product_weight') }}"
+                                                   step="0.01"
+                                                   min="0"
+                                                   placeholder="En gramos">
+                                            @error('product_weight')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <div class="col-md-4 form-group">
                                             <label class="form-label">Área de Impresión</label>
                                             <input type="text" 
-                                                   class="form-control @error('print_area') is-invalid @enderror" 
-                                                   name="print_area" 
-                                                   value="{{ old('print_area') }}"
+                                                   class="form-control @error('area_print') is-invalid @enderror" 
+                                                   name="area_print" 
+                                                   value="{{ old('area_print') }}"
                                                    placeholder="Ej: 5x8cm">
-                                            @error('print_area')
+                                            @error('area_print')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Precios -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Precio <span class="text-danger">*</span></h5>
+                                </div>
+                                <div class="card-block">
+                                    <div class="row">
+                                        <div class="col-md-6 form-group">
+                                            <label class="form-label">Precio Base <span class="text-danger">*</span></label>
+                                            <input type="number" 
+                                                   class="form-control @error('price') is-invalid @enderror" 
+                                                   name="price" 
+                                                   value="{{ old('price') }}"
+                                                   step="0.01"
+                                                   min="0"
+                                                   required>
+                                            @error('price')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
@@ -247,7 +236,7 @@
                                         @error('main_image')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
-                                        <small class="form-text text-muted">JPG, PNG, GIF (max 2MB)</small>
+                                        <small class="form-text text-muted">JPG, PNG, GIF, WEBP (max 5MB)</small>
                                     </div>
                                 </div>
                             </div>
@@ -255,40 +244,80 @@
                             <!-- Categoría -->
                             <div class="card">
                                 <div class="card-header">
-                                    <h5>Categoría</h5>
+                                    <h5>Categoría <span class="text-danger">*</span></h5>
                                 </div>
                                 <div class="card-block">
                                     <div class="form-group">
-                                        <label class="form-label">Categoría</label>
+                                        <label class="form-label">Categoría del Producto <span class="text-danger">*</span></label>
                                         <select class="form-control @error('product_category_id') is-invalid @enderror" 
-                                                name="product_category_id">
+                                                name="product_category_id"
+                                                required>
                                             <option value="">Seleccionar categoría</option>
                                             @foreach($categories as $category)
                                                 <option value="{{ $category->id }}" 
                                                         {{ old('product_category_id') == $category->id ? 'selected' : '' }}>
                                                     {{ $category->name }}
+                                                    @if($category->subcategory)
+                                                        - {{ $category->subcategory }}
+                                                    @endif
                                                 </option>
                                             @endforeach
                                         </select>
                                         @error('product_category_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
+                                        @if($categories->isEmpty())
+                                            <small class="form-text text-warning">
+                                                <i class="feather icon-alert-triangle"></i> No tienes categorías. 
+                                                <a href="{{ route('my-categories.index') }}">Crear una ahora</a>
+                                            </small>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- 🆕 INVENTARIO INICIAL - Solo si NO es asociado --}}
-                            <div class="card" id="inventory-card" style="display: none;">
+                            {{-- 🆕 ALMACÉN E INVENTARIO INICIAL --}}
+                            @if($hasWarehouses)
+                            <div class="card">
                                 <div class="card-header">
-                                    <h5>Inventario Inicial</h5>
+                                    <h5>Almacén e Inventario <span class="text-danger">*</span></h5>
                                 </div>
                                 <div class="card-block">
                                     <div class="form-group">
-                                        <label class="form-label">SKU de la Variante Principal</label>
+                                        <label class="form-label">Almacén <span class="text-danger">*</span></label>
+                                        <select class="form-control @error('warehouse_id') is-invalid @enderror" 
+                                                name="warehouse_id"
+                                                id="warehouse_id"
+                                                required>
+                                            <option value="">Seleccionar almacén</option>
+                                            @foreach($warehouses as $warehouse)
+                                                <option value="{{ $warehouse->id }}" 
+                                                        {{ old('warehouse_id') == $warehouse->id ? 'selected' : '' }}>
+                                                    {{ $warehouse->name }}
+                                                    @if($warehouse->nickname)
+                                                        ({{ $warehouse->nickname }})
+                                                    @endif
+                                                    @if($warehouse->city)
+                                                        - {{ $warehouse->city->name }}
+                                                    @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('warehouse_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="form-text text-muted">
+                                            <i class="feather icon-info"></i> Selecciona dónde se almacenará el producto
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">SKU (Código único)</label>
                                         <input type="text" 
                                                class="form-control @error('sku') is-invalid @enderror" 
                                                name="sku" 
                                                value="{{ old('sku') }}"
+                                               placeholder="Opcional"
                                                style="text-transform: uppercase">
                                         @error('sku')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -306,9 +335,11 @@
                                         @error('initial_stock')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
+                                        <small class="form-text text-muted">Unidades disponibles en almacén</small>
                                     </div>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Estado -->
                             <div class="card">
@@ -367,17 +398,18 @@
                             <div class="card">
                                 <div class="card-block">
                                     <button type="submit" 
-                                        class="btn btn-primary btn-sm" 
-                                        @if(!$hasWarehouses) disabled @endif>
+                                            class="btn btn-primary btn-block" 
+                                            @if(!$hasWarehouses) disabled @endif>
                                         <i class="feather icon-save"></i> Crear Producto
                                     </button>
 
                                     @if(!$hasWarehouses)
-                                    <small class="text-danger d-block mt-2">
-                                        <i class="feather icon-info"></i> Necesitas al menos un almacén para crear productos
+                                    <small class="text-danger d-block mt-2 text-center">
+                                        <i class="feather icon-alert-triangle"></i> Necesitas al menos un almacén
                                     </small>
                                     @endif
-                                    <a href="{{ route('own-products.index') }}" class="btn btn-secondary btn-block">
+
+                                    <a href="{{ route('own-products.index') }}" class="btn btn-secondary btn-block mt-2">
                                         <i class="feather icon-x"></i> Cancelar
                                     </a>
                                 </div>
@@ -394,81 +426,12 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const partnerSelect = document.getElementById('partner_id');
-    const warehouseGroup = document.getElementById('warehouse-group');
-    const warehouseSelect = document.getElementById('warehouse_id');
-    const warehouseRequired = document.getElementById('warehouse-required');
-    const warehouseHelp = document.getElementById('warehouse-help');
-    const partnerInfo = document.getElementById('partner-info');
-    const inventoryCard = document.getElementById('inventory-card');
-
-    partnerSelect.addEventListener('change', function() {
-        const partnerId = this.value;
-        
-        // Limpiar
-        warehouseSelect.innerHTML = '<option value="">Seleccionar almacén</option>';
-        warehouseGroup.style.display = 'none';
-        warehouseSelect.removeAttribute('required');
-        partnerInfo.innerHTML = '<i class="feather icon-info"></i> Selecciona el proveedor del producto';
-        inventoryCard.style.display = 'none';
-
-        if (!partnerId) {
-            return;
-        }
-
-        // Loading
-        partnerInfo.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Cargando información del proveedor...';
-
-        // AJAX
-        fetch(`/api/partners/${partnerId}/warehouses`)
-            .then(response => {
-                if (!response.ok) throw new Error('Error al cargar');
-                return response.json();
-            })
-            .then(data => {
-                console.log('Partner data:', data);
-
-                partnerInfo.innerHTML = `<strong>${data.type_label}</strong> - ${data.type_description}`;
-
-                if (data.requires_warehouse) {
-                    // Proveedor o Mixto: REQUIERE almacén
-                    warehouseGroup.style.display = 'block';
-                    warehouseSelect.setAttribute('required', 'required');
-                    warehouseRequired.style.display = 'inline';
-                    inventoryCard.style.display = 'block';
-                    
-                    if (data.warehouses && data.warehouses.length > 0) {
-                        data.warehouses.forEach(warehouse => {
-                            const option = document.createElement('option');
-                            option.value = warehouse.id;
-                            let text = warehouse.name;
-                            if (warehouse.city) text += ` (${warehouse.city})`;
-                            option.textContent = text;
-                            warehouseSelect.appendChild(option);
-                        });
-                        warehouseHelp.innerHTML = '<i class="feather icon-check text-success"></i> Selecciona el almacén donde se encuentra el producto.';
-                    } else {
-                        warehouseHelp.innerHTML = '<strong class="text-warning"><i class="feather icon-alert-triangle"></i> Este proveedor no tiene almacenes. Crea uno primero.</strong>';
-                        warehouseSelect.innerHTML = '<option value="">No hay almacenes disponibles</option>';
-                    }
-                } else {
-                    // Asociado: NO requiere almacén
-                    warehouseGroup.style.display = 'none';
-                    warehouseSelect.removeAttribute('required');
-                    inventoryCard.style.display = 'none';
-                    partnerInfo.innerHTML += '<br><span class="text-success"><i class="feather icon-check"></i> No requiere almacén para productos propios.</span>';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                partnerInfo.innerHTML = '<span class="text-danger"><i class="feather icon-x"></i> Error al cargar información</span>';
-                alert('Error al cargar los almacenes. Intenta nuevamente.');
-            });
-    });
-
-    // Trigger si hay partner preseleccionado
-    if (partnerSelect.value) {
-        partnerSelect.dispatchEvent(new Event('change'));
+    // Convertir SKU a mayúsculas mientras se escribe
+    const skuInput = document.querySelector('input[name="sku"]');
+    if (skuInput) {
+        skuInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
     }
 });
 </script>

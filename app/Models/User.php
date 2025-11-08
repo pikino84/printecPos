@@ -28,6 +28,8 @@ class User extends Authenticatable
         'email',
         'password',
         'partner_id',
+        'is_active',
+        'must_change_password',
     ];
 
     /**
@@ -47,17 +49,19 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
+        'must_change_password' => 'boolean',
     ];
     
     protected static $logName = 'usuario';
-    protected static $logAttributes = ['name', 'email'];
+    protected static $logAttributes = ['name', 'email', 'is_active'];
     protected static $logOnlyDirty = true;
     protected static $submitEmptyLogs = false;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email'])
+            ->logOnly(['name', 'email', 'is_active'])
             ->logOnlyDirty()
             ->useLogName('usuario');
     }
@@ -77,4 +81,35 @@ class User extends Authenticatable
         return $this->hasMany(Product::class, 'created_by');
     }
 
+    /**
+     * Scope para obtener solo usuarios activos
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope para obtener solo usuarios inactivos
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Verificar si el usuario pertenece al mismo partner que otro usuario
+     */
+    public function isSamePartner(User $user)
+    {
+        return $this->partner_id === $user->partner_id;
+    }
+
+    /**
+     * Verificar si el usuario es de Printec (partner_id = 1)
+     */
+    public function isPrintec()
+    {
+        return $this->partner_id === 1;
+    }
 }

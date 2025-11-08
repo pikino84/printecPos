@@ -21,6 +21,7 @@ class Partner extends Model
         'commercial_terms',
         'comments',
         'is_active',
+        'default_entity_id',
     ];
 
     protected $casts = [
@@ -55,6 +56,13 @@ class Partner extends Model
     public function entities()
     {
         return $this->hasMany(PartnerEntity::class);
+    }
+    /**
+     * Relación con la entidad predeterminada del partner
+     */
+    public function defaultEntity()
+    {
+        return $this->belongsTo(PartnerEntity::class, 'default_entity_id');
     }
 
     /**

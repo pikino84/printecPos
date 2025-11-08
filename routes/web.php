@@ -20,6 +20,8 @@ use App\Http\Controllers\OwnProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\MyWarehouseController;
+use App\Http\Controllers\MyCategoryController;
 
 
 
@@ -94,9 +96,9 @@ Route::middleware('auth')->group(function () {
     });
 
     // Productos propios
-    Route::resource('own-products', OwnProductController::class);
     Route::get('api/own-products/search', [OwnProductController::class, 'search'])->name('own-products.search');
-    Route::post('own-products/{ownProduct}/duplicate', [OwnProductController::class, 'duplicate'])->name('own-products.duplicate');
+    Route::post('own-products/{own_product}/duplicate', [OwnProductController::class, 'duplicate'])->name('own-products.duplicate');
+    Route::resource('own-products', OwnProductController::class);
 
 
 
@@ -132,6 +134,55 @@ Route::middleware('auth')->group(function () {
         Route::get('/cuentas-bancarias/{id}/edit', [PartnerEntityBankAccountController::class, 'myEdit'])->name('my-bank-accounts.edit');
         Route::put('/cuentas-bancarias/{id}', [PartnerEntityBankAccountController::class, 'myUpdate'])->name('my-bank-accounts.update');
         Route::delete('/cuentas-bancarias/{id}', [PartnerEntityBankAccountController::class, 'myDestroy'])->name('my-bank-accounts.destroy');
+    });
+
+    // ========================================================================
+    // Usuarios para Asociados (MIS USUARIOS)
+    // ========================================================================
+    Route::middleware(['role:Asociado Administrador|Asociado Vendedor|super admin'])->group(function () {
+        // Todos los usuarios de asociados pueden ver
+        Route::get('/mis-usuarios', [UserController::class, 'myIndex'])->name('my-users.index');
+    });
+
+    Route::middleware(['role:Asociado Administrador|super admin'])->group(function () {
+        // Solo Asociado Administrador puede crear/editar/eliminar
+        Route::get('/mis-usuarios/create', [UserController::class, 'myCreate'])->name('my-users.create');
+        Route::post('/mis-usuarios', [UserController::class, 'myStore'])->name('my-users.store');
+        Route::get('/mis-usuarios/{id}/edit', [UserController::class, 'myEdit'])->name('my-users.edit');
+        Route::put('/mis-usuarios/{id}', [UserController::class, 'myUpdate'])->name('my-users.update');
+        Route::delete('/mis-usuarios/{id}', [UserController::class, 'myDestroy'])->name('my-users.destroy');
+    });
+
+    // ========================================================================
+    // Almacenes para Asociados (MIS ALMACENES) 🆕
+    // ========================================================================
+    Route::middleware(['role:Asociado Administrador|Asociado Vendedor|super admin'])->group(function () {
+        // Todos pueden ver
+        Route::get('/mis-almacenes', [MyWarehouseController::class, 'index'])->name('my-warehouses.index');
+    });
+
+    Route::middleware(['role:Asociado Administrador|super admin'])->group(function () {
+        // Solo Asociado Administrador puede crear/editar/eliminar
+        Route::get('/mis-almacenes/create', [MyWarehouseController::class, 'create'])->name('my-warehouses.create');
+        Route::post('/mis-almacenes', [MyWarehouseController::class, 'store'])->name('my-warehouses.store');
+        Route::get('/mis-almacenes/{id}/edit', [MyWarehouseController::class, 'edit'])->name('my-warehouses.edit');
+        Route::put('/mis-almacenes/{id}', [MyWarehouseController::class, 'update'])->name('my-warehouses.update');
+        Route::delete('/mis-almacenes/{id}', [MyWarehouseController::class, 'destroy'])->name('my-warehouses.destroy');
+    });
+
+    // ========================================================================
+    // Categorías para Asociados (MIS CATEGORÍAS) 🆕
+    // ========================================================================
+    Route::middleware(['role:Asociado Administrador|Asociado Vendedor|super admin'])->group(function () {
+        // Todos pueden ver
+        Route::get('/mis-categorias', [MyCategoryController::class, 'index'])->name('my-categories.index');
+    });
+
+    Route::middleware(['role:Asociado Administrador|super admin'])->group(function () {
+        // Solo Asociado Administrador puede crear/editar/eliminar
+        Route::post('/mis-categorias', [MyCategoryController::class, 'store'])->name('my-categories.store');
+        Route::put('/mis-categorias/{id}', [MyCategoryController::class, 'update'])->name('my-categories.update');
+        Route::delete('/mis-categorias/{id}', [MyCategoryController::class, 'destroy'])->name('my-categories.destroy');
     });
     
     // ========================================================================
