@@ -95,7 +95,7 @@
                                             {{ $variant->color_name ?? 'no_color' }}
                                             <div class="color-icon {{ $variant->color_name ?? 'no_color' }}" ></div>
                                         </td>
-                                        <td>${{ number_format($producto->price, 2) }}</td>
+                                        <td>${{ number_format($variant->price, 2) }}</td>
                                         <td style="min-width: 130px;">
                                             <div class="input-group quantity-selector">
                                                 <button type="button" class="btn btn-light btn-sm btn-minus" data-variant="{{ $variant->id }}">−</button>

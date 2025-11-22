@@ -79,7 +79,11 @@ class Quote extends Model
     public function calculateTotals()
     {
         $this->subtotal = $this->items->sum('subtotal');
-        $this->tax = 0; // Puedes calcular IVA aquí si lo necesitas
+        
+        // Obtener tasa de IVA desde settings
+        $taxRate = \App\Models\PricingSetting::get('tax_rate', 16) / 100;
+        $this->tax = $this->subtotal * $taxRate;
+        
         $this->total = $this->subtotal + $this->tax;
         $this->save();
     }

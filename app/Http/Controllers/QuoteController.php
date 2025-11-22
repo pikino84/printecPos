@@ -121,6 +121,12 @@ class QuoteController extends Controller
                 'sent_to_email' => $request->email,
             ]);
 
+            // Registrar compra en el sistema de pricing
+            $partner = $quote->partner;
+            if ($partner && $partner->pricing) {
+                $partner->pricing->addPurchase($quote->total);
+            }
+
             \Log::info('Estado actualizado', [
                 'quote_number' => $quote->quote_number,
                 'new_status' => $quote->fresh()->status
@@ -369,14 +375,22 @@ class QuoteController extends Controller
 
             // 3. Crear items
             foreach ($cartItems as $cartItem) {
-                $price = $cartItem->variant->price ?? $cartItem->variant->product->price;
-
+                $variant = $cartItem->variant;
+                $product = $variant->product;
+                
+                // Obtener precio base de la variante
+                $basePrice = $variant->price ?? $product->price;
+                
+                // Calcular precio usando el sistema de pricing del partner
+                $isOwnProduct = $product->is_own_product && $product->partner_id == $partnerId;
+                $finalPrice = $user->partner->calculateProductPrice($basePrice, $isOwnProduct);
+                
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'variant_id' => $cartItem->variant_id,
                     'warehouse_id' => $cartItem->warehouse_id,
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $price,
+                    'unit_price' => $finalPrice, // Precio ya con markup y descuentos aplicados
                 ]);
             }
 

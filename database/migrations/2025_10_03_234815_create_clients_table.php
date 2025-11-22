@@ -19,6 +19,12 @@ return new class extends Migration
             $table->text('direccion')->nullable();
             $table->text('notas')->nullable();
             $table->boolean('is_active')->default(true);
+        
+            $table->foreignId('acquisition_channel_id')
+                ->nullable()
+                ->constrained('acquisition_channels')
+                ->nullOnDelete();
+            
             $table->timestamps();
             
             // Índices para búsquedas rápidas

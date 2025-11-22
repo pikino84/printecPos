@@ -11,6 +11,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\SyncInnovationProducts::class,
         \App\Console\Commands\SyncInnovationStock::class,
         \App\Console\Commands\SyncDobleVelaProducts::class,
+        \App\Console\Commands\EvaluatePartnerTiers::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -63,6 +64,23 @@ class Kernel extends ConsoleKernel
             })
             ->runInBackground()
             ->withoutOverlapping(30);
+
+        // ═══════════════════════════════════════════════════════════
+        // EVALUACIÓN DE NIVELES DE PRECIO (PRICING TIERS)
+        // Se ejecuta el día 1 de cada mes a las 00:05 (CDMX)
+        // Evalúa las compras del mes anterior y asigna niveles
+        // ═══════════════════════════════════════════════════════════
+        $schedule->command('pricing:evaluate-tiers')
+            ->monthlyOn(1, '00:05')
+            ->timezone('America/Mexico_City')
+            ->runInBackground()
+            ->withoutOverlapping(60) // Evita solapamiento por 60 minutos
+            ->onSuccess(function () {
+                Log::info('✅ Evaluación mensual de niveles de precio exitosa');
+            })
+            ->onFailure(function () {
+                Log::error('❌ Evaluación mensual de niveles de precio falló');
+            });
     }
 
     protected function commands(): void

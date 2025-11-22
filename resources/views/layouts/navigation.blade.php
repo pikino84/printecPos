@@ -80,6 +80,40 @@
                             </a>
                         </li>
                         @endif
+                        {{-- 🆕 NIVELES DE PRECIO --}}
+                        @can('manage users')
+                        <li class="{{ request()->routeIs('pricing-dashboard.*') ? 'active' : '' }}">
+                            <a href="{{ route('pricing-dashboard.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Dashboard de Pricing</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('pricing-tiers.*') ? 'active' : '' }}">
+                            <a href="{{ route('pricing-tiers.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Niveles de Precio</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('partner-pricing.*') ? 'active' : '' }}">
+                            <a href="{{ route('partner-pricing.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Pricing de Partners</span>
+                            </a>
+                        </li>
+                        {{-- Reportes de Pricing --}}
+                        <li class="{{ request()->routeIs('pricing-reports.tier-history') ? 'active' : '' }}">
+                            <a href="{{ route('pricing-reports.tier-history') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Historial de Niveles</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('pricing-reports.monthly-purchases') ? 'active' : '' }}">
+                            <a href="{{ route('pricing-reports.monthly-purchases') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Compras Mensuales</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('pricing-reports.partner-evolution') ? 'active' : '' }}">
+                            <a href="{{ route('pricing-reports.partner-evolution') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Evolución por Partner</span>
+                            </a>
+                        </li>
+                        @endcan
                     </ul>
                 </li>
                 <li class="pcoded-hasmenu {{ menuActive(['my-entities.*', 'my-bank-accounts.*']) }}">

@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             PartnerSeeder::class,
             RolePermissionSeeder::class,
             NavigationRolesPermissionsSeeder::class,
+            AcquisitionChannelSeeder::class,
             UserSeeder::class,
             AssignRolesToExistingUsersSeeder::class,
             PrintecCategorySeeder::class,

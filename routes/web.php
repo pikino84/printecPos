@@ -22,6 +22,10 @@ use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\MyWarehouseController;
 use App\Http\Controllers\MyCategoryController;
+use App\Http\Controllers\PricingTierController;
+use App\Http\Controllers\PartnerPricingController;
+use App\Http\Controllers\PricingDashboardController;
+use App\Http\Controllers\PricingReportController;
 
 
 
@@ -117,6 +121,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/razones-sociales/{id}/edit', [PartnerEntityController::class, 'myEdit'])->name('my-entities.edit');
         Route::put('/razones-sociales/{id}', [PartnerEntityController::class, 'myUpdate'])->name('my-entities.update');
         Route::delete('/razones-sociales/{id}', [PartnerEntityController::class, 'myDestroy'])->name('my-entities.destroy');
+        Route::resource('pricing-tiers', PricingTierController::class);
+        Route::get('partner-pricing', [PartnerPricingController::class, 'index'])->name('partner-pricing.index');
+        Route::get('partner-pricing/{partner}/edit', [PartnerPricingController::class, 'edit'])->name('partner-pricing.edit');
+        Route::put('partner-pricing/{partner}', [PartnerPricingController::class, 'update'])->name('partner-pricing.update');
+        Route::get('partner-pricing/{partner}/history', [PartnerPricingController::class, 'history'])->name('partner-pricing.history');
+        Route::post('partner-pricing/{partner}/reset-purchases', [PartnerPricingController::class, 'resetPurchases'])->name('partner-pricing.reset-purchases');
+        Route::get('pricing-dashboard', [PricingDashboardController::class, 'index'])->name('pricing-dashboard.index');
+        Route::get('pricing-reports/tier-history', [PricingReportController::class, 'tierHistory'])->name('pricing-reports.tier-history');
+        Route::get('pricing-reports/monthly-purchases', [PricingReportController::class, 'monthlyPurchases'])->name('pricing-reports.monthly-purchases');
+        Route::get('pricing-reports/partner-evolution', [PricingReportController::class, 'partnerEvolution'])->name('pricing-reports.partner-evolution');
+        Route::get('pricing-reports/export-tier-history', [PricingReportController::class, 'exportTierHistory'])->name('pricing-reports.export-tier-history');
     });
 
     // ========================================================================

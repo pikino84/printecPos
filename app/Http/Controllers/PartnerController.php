@@ -42,6 +42,18 @@ class PartnerController extends Controller
         Partner::create($data);
         return redirect()->route('partners.index')->with('success', 'Partner creado.');
     }
+    
+    /**
+     * Display the specified resource.
+     */
+    public function show(Partner $partner)
+    {
+        $partner->load(['users', 'entities', 'warehouses', 'products', 'pricing.currentTier']);
+        
+        $stats = $partner->getStats();
+        
+        return view('partners.show', compact('partner', 'stats'));
+    }
 
     public function edit(Partner $partner)
     {

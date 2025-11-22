@@ -14,6 +14,12 @@ return new class extends Migration
             $table->foreignId('partner_id')->constrained('partners')->onDelete('cascade');
             $table->timestamp('first_contact_at')->nullable();
             $table->text('notes')->nullable();
+            
+            $table->foreignId('acquisition_channel_id')
+                ->nullable()
+                ->constrained('acquisition_channels')
+                ->nullOnDelete();
+            
             $table->timestamps();
             
             // Un cliente solo puede tener una relación con cada partner

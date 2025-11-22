@@ -145,6 +145,7 @@ class DobleVelaSeeder extends Seeder
                             'code_name'  => $sku,
                             'color_name' => $colorName ?: null,
                             'image'      => $variantLocalPath,
+                            'price'      => (float) ($row['Price'] ?? $product->price),
                         ]
                     );
                     $variants++;

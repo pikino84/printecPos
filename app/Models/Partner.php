@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\PartnerPricing;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+
 
 class Partner extends Model
 {
@@ -70,7 +72,7 @@ class Partner extends Model
      */
     public function products()
     {
-        return $this->hasMany(PartnerProduct::class);
+        return $this->hasMany(Product::class);
     }
 
     /**
@@ -87,6 +89,14 @@ class Partner extends Model
     public function quotes()
     {
         return $this->hasMany(Quote::class);
+    }
+
+    /**
+     * Relación con configuración de precios del partner
+     */
+    public function pricing()
+    {
+        return $this->hasOne(PartnerPricing::class);
     }
 
     // ========================================================================
@@ -355,5 +365,43 @@ class Partner extends Model
         ];
         
         return $descriptions[$this->type] ?? '';
+    }
+
+    /**
+     * Obtener o crear la configuración de pricing
+     */
+    public function getPricingConfig()
+    {
+        // Asegurarnos de que el partner tiene un ID
+        if (!$this->id) {
+            throw new \Exception('El partner debe estar guardado antes de obtener su configuración de pricing');
+        }
+        
+        // Buscar o crear usando el método estático directamente
+        $pricing = PartnerPricing::where('partner_id', $this->id)->first();
+        
+        if (!$pricing) {
+            $pricing = PartnerPricing::create([
+                'partner_id' => $this->id,
+                'markup_percentage' => 0,
+                'current_tier_id' => null,
+                'last_month_purchases' => 0,
+                'current_month_purchases' => 0,
+                'manual_tier_override' => false,
+            ]);
+        }
+        
+        return $pricing;
+    }
+
+    /**
+     * Calcular precio final para un producto
+     */
+    public function calculateProductPrice($basePrice, $isOwnProduct = false)
+    {
+        $pricing = $this->getPricingConfig();
+        
+        // isPrintecProduct = true cuando NO es producto propio del partner
+        return $pricing->calculatePrice($basePrice, !$isOwnProduct);
     }
 }
