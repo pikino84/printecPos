@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('variant_id')->constrained('product_variants')->cascadeOnDelete();
             $table->foreignId('warehouse_id')->nullable()->constrained('product_warehouses')->nullOnDelete();
             $table->integer('quantity')->default(1);
+            $table->decimal('unit_price', 12, 2)->nullable(); // Precio calculado según tier del partner
             $table->timestamps();
 
             // Un usuario solo puede tener una entrada por variante+warehouse

@@ -106,9 +106,6 @@ class QuoteController extends Controller
                     ]);
             });
 
-            // ELIMINAR LA VERIFICACIÓN DE Mail::failures()
-            // Mail::send() lanza excepción automáticamente si falla
-
             \Log::info('Cotización enviada exitosamente', [
                 'quote_number' => $quote->quote_number,
                 'to_email' => $request->email
@@ -192,8 +189,8 @@ class QuoteController extends Controller
     }
 
     /**
-    * Clonar cotización al carrito
-    */
+     * Clonar cotización al carrito (mantiene precios originales)
+     */
     public function cloneToCart(Quote $quote)
     {
         // Verificar permisos
@@ -204,16 +201,17 @@ class QuoteController extends Controller
         try {
             DB::beginTransaction();
 
-            // Limpiar carrito actual (opcional - puedes comentar esta línea si quieres agregar en lugar de reemplazar)
+            // Limpiar carrito actual
             CartSession::where('user_id', Auth::id())->delete();
 
-            // Clonar items de la cotización al carrito
+            // Clonar items de la cotización al carrito CON el precio original
             foreach ($quote->items as $item) {
                 CartSession::create([
                     'user_id' => Auth::id(),
                     'variant_id' => $item->variant_id,
                     'warehouse_id' => $item->warehouse_id,
                     'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price, // Mantener precio original de la cotización
                 ]);
             }
 
@@ -255,13 +253,14 @@ class QuoteController extends Controller
             // Limpiar carrito actual
             CartSession::where('user_id', Auth::id())->delete();
 
-            // Mover items al carrito
+            // Mover items al carrito CON el precio original
             foreach ($quote->items as $item) {
                 CartSession::create([
                     'user_id' => Auth::id(),
                     'variant_id' => $item->variant_id,
                     'warehouse_id' => $item->warehouse_id,
                     'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price, // Mantener precio original de la cotización
                 ]);
             }
 
@@ -286,6 +285,9 @@ class QuoteController extends Controller
         }
     }
 
+    /**
+     * Crear cotización desde el carrito
+     */
     public function createFromCart(Request $request)
     {
         $request->validate([
@@ -373,24 +375,14 @@ class QuoteController extends Controller
                 'valid_until' => now()->addDays($request->valid_days ?? 15),
             ]);
 
-            // 3. Crear items
+            // 3. Crear items usando el precio del carrito (ya calculado según tier)
             foreach ($cartItems as $cartItem) {
-                $variant = $cartItem->variant;
-                $product = $variant->product;
-                
-                // Obtener precio base de la variante
-                $basePrice = $variant->price ?? $product->price;
-                
-                // Calcular precio usando el sistema de pricing del partner
-                $isOwnProduct = $product->is_own_product && $product->partner_id == $partnerId;
-                $finalPrice = $user->partner->calculateProductPrice($basePrice, $isOwnProduct);
-                
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'variant_id' => $cartItem->variant_id,
                     'warehouse_id' => $cartItem->warehouse_id,
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $finalPrice, // Precio ya con markup y descuentos aplicados
+                    'unit_price' => $cartItem->effective_price, // Usar precio del carrito (ya tiene tier aplicado)
                 ]);
             }
 

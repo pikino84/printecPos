@@ -112,7 +112,7 @@
             });
 
             // Función global para agregar al carrito desde cualquier página
-            window.addToCart = function(variantId, quantity, warehouseId = null) {
+            window.addToCart = function(variantId, quantity, warehouseId = null, unitPrice = null) {
                 $.ajax({
                     url: '{{ route("cart.add") }}',
                     type: 'POST',
@@ -122,7 +122,8 @@
                     data: {
                         variant_id: variantId,
                         quantity: quantity,
-                        warehouse_id: warehouseId
+                        warehouse_id: warehouseId,
+                        unit_price: unitPrice
                     },
                     success: function(response) {
                         // Actualizar badge con animación
@@ -152,7 +153,6 @@
                     }
                 });
             };
-            </script>
-
+        </script>
     </body>
 </html>

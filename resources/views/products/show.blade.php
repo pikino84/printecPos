@@ -46,11 +46,20 @@
                     <li class="list-group-item">
                         <strong>Proveedor:</strong> 
                             {{ $producto->partner->name ?? 'N/A' }}
-                        </li>
+                    </li>
                     <li class="list-group-item">
                         <strong>Modelo:</strong> 
                         {{ $producto->model_code ?? 'N/A' }}
                     </li>
+                    @if($partnerPricing && $partnerPricing->getEffectiveTier())
+                    <li class="list-group-item">
+                        <strong>Tu Nivel:</strong> 
+                        <span class="badge bg-primary">{{ $partnerPricing->getEffectiveTier()->name }}</span>
+                        @if($partnerPricing->getEffectiveTier()->discount_percentage > 0)
+                            <small class="text-success">(-{{ number_format($partnerPricing->getEffectiveTier()->discount_percentage, 0) }}% descuento)</small>
+                        @endif
+                    </li>
+                    @endif
                 </ul>
             </div>
         </div>
@@ -73,12 +82,16 @@
                                     @foreach($almacenesUnicos as $warehouse)
                                     <th>{{ $warehouse->nickname ?? 'Almacén' }}</th>
                                     @endforeach
-                                    
-                                    
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($producto->variants as $variant)
+                                    @php
+                                        // Calcular precio según tier del partner
+                                        $precioCalculado = $partnerPricing 
+                                            ? $partnerPricing->calculateCostPrice($variant->price, $isPrintecProduct)
+                                            : $variant->price;
+                                    @endphp
                                     <tr>
                                         <td class="col_sku">{{ $variant->sku }}</td>
                                         <td class="col_img">
@@ -95,7 +108,9 @@
                                             {{ $variant->color_name ?? 'no_color' }}
                                             <div class="color-icon {{ $variant->color_name ?? 'no_color' }}" ></div>
                                         </td>
-                                        <td>${{ number_format($variant->price, 2) }}</td>
+                                        <td>
+                                            ${{ number_format($precioCalculado, 2) }}
+                                        </td>
                                         <td style="min-width: 130px;">
                                             <div class="input-group quantity-selector">
                                                 <button type="button" class="btn btn-light btn-sm btn-minus" data-variant="{{ $variant->id }}">−</button>
@@ -114,7 +129,8 @@
                                         <td>
                                             <button class="btn btn-primary btn-sm btn-add-to-cart" 
                                                     data-variant="{{ $variant->id }}"
-                                                    data-warehouse="{{ $stock->warehouse_id ?? '' }}">
+                                                    data-warehouse="{{ $stock->warehouse_id ?? '' }}"
+                                                    data-price="{{ $precioCalculado }}">
                                                 <i class="feather icon-shopping-cart"></i> Agregar
                                             </button>
                                         </td>
@@ -127,9 +143,6 @@
                                                 @endif
                                             </td>
                                         @endforeach
-                                        
-                                        
-                                        
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -139,94 +152,9 @@
             </div>
         </div>
     </div>
-    {{--
-    <!-- Precios por volumen -->
-    @if($producto->priceScales->count())
-        <div class="mt-4">
-            <h4>Precios por volumen</h4>
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>Desde</th>
-                        <th>Precio unitario</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($producto->priceScales as $scale)
-                        <tr>
-                            <td>{{ $scale->min_quantity }} piezas</td>
-                            <td>${{ number_format($scale->price, 2) }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
-
-    <!-- Técnicas de impresión -->
-    @if($producto->techniques->count())
-        <div class="mt-4">
-            <h4>Técnicas de impresión</h4>
-            <ul class="list-group">
-                @foreach($producto->techniques as $technique)
-                    <li class="list-group-item">{{ $technique->name }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <!-- Variantes -->
-    @if($producto->variants->count())
-        <div class="mt-4">
-            <h4>Variantes disponibles</h4>
-            <table class="table table-hover table-bordered">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>SKU</th>
-                        <th>Color</th>
-                        <th>Talla</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($producto->variants as $variant)
-                        <tr>
-                            <td>{{ $variant->variant_name }}</td>
-                            <td>{{ $variant->sku }}</td>
-                            <td>{{ $variant->color ?? 'N/A' }}</td>
-                            <td>{{ $variant->size ?? 'N/A' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
-
-    <!-- Stock por almacén -->
-    @if($producto->stockByWarehouse->count())
-        <div class="mt-4">
-            <h4>Stock por almacén</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Almacén</th>
-                        <th>Cantidad</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($producto->stockByWarehouse as $stock)
-                        <tr>
-                            <td>{{ $stock->warehouse->name }}</td>
-                            <td>{{ $stock->quantity }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
-    --}}
 </div>
 @endsection
+
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -259,12 +187,13 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', function () {
             const variantId = this.getAttribute('data-variant');
             const warehouseId = this.getAttribute('data-warehouse') || null;
+            const price = this.getAttribute('data-price');
             const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
             const quantity = parseInt(input.value);
 
             // Usar la función global
             if (typeof addToCart === 'function') {
-                addToCart(variantId, quantity, warehouseId);
+                addToCart(variantId, quantity, warehouseId, price);
             }
         });
     });

@@ -62,10 +62,6 @@
                                 </thead>
                                 <tbody>
                                     @foreach($cartItems as $item)
-                                        @php
-                                            $price = $item->variant->price ?? $item->product->price;
-                                            $itemTotal = $item->quantity * $price;
-                                        @endphp
                                         <tr data-item-id="{{ $item->id }}">
                                             <td>
                                                 <img src="{{ asset('storage/' . ($item->variant->image ?? $item->product->main_image)) }}" 
@@ -90,7 +86,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                ${{ number_format($price, 2) }}
+                                                ${{ number_format($item->effective_price, 2) }}
                                             </td>
                                             <td>
                                                 <div class="input-group input-group-sm">
@@ -107,7 +103,7 @@
                                                 </div>
                                             </td>
                                             <td class="item-subtotal">
-                                                ${{ number_format($itemTotal, 2) }}
+                                                ${{ number_format($item->item_total, 2) }}
                                             </td>
                                             <td>
                                                 <button type="button" 
@@ -168,106 +164,66 @@
                                 {{-- Email del cliente (requerido) --}}
                                 <div class="form-group mb-2">
                                     <label>Email del Cliente <span class="text-danger">*</span></label>
-                                    <input 
-                                        type="email" 
-                                        class="form-control form-control-sm" 
-                                        id="client_email" 
-                                        name="client_email"
-                                        placeholder="cliente@ejemplo.com"
-                                        required
-                                    >
-                                    <small class="text-muted">Al ingresar el email verificaremos si ya está registrado</small>
+                                    <input type="email" 
+                                           id="client_email" 
+                                           name="client_email" 
+                                           class="form-control form-control-sm" 
+                                           placeholder="cliente@ejemplo.com">
                                 </div>
 
-                                {{-- Div para mostrar info del cliente --}}
-                                <div id="client_info" class="mb-2"></div>
+                                {{-- Contenedor de info del cliente --}}
+                                <div id="client_info"></div>
 
-                                {{-- Campos adicionales (se muestran si no existe el cliente) --}}
+                                {{-- Campos adicionales para cliente nuevo --}}
                                 <div id="manual_client_fields" style="display: none;">
                                     <div class="form-group mb-2">
-                                        <label>Nombre Completo</label>
-                                        <input 
-                                            type="text" 
-                                            class="form-control form-control-sm" 
-                                            id="client_name" 
-                                            name="client_name"
-                                            placeholder="Juan Pérez García"
-                                        >
+                                        <label>Nombre del Cliente <span class="text-danger">*</span></label>
+                                        <input type="text" 
+                                               id="client_name" 
+                                               name="client_name" 
+                                               class="form-control form-control-sm" 
+                                               placeholder="Nombre completo">
                                     </div>
 
                                     <div class="form-group mb-2">
                                         <label>RFC</label>
-                                        <input 
-                                            type="text" 
-                                            class="form-control form-control-sm" 
-                                            id="client_rfc" 
-                                            name="client_rfc"
-                                            placeholder="XAXX010101000"
-                                            maxlength="13"
-                                        >
+                                        <input type="text" 
+                                               id="client_rfc" 
+                                               name="client_rfc" 
+                                               class="form-control form-control-sm" 
+                                               placeholder="RFC (opcional)">
                                     </div>
 
                                     <div class="form-group mb-2">
                                         <label>Razón Social</label>
-                                        <input 
-                                            type="text" 
-                                            class="form-control form-control-sm" 
-                                            id="client_razon_social" 
-                                            name="client_razon_social"
-                                            placeholder="Empresa S.A. de C.V."
-                                        >
+                                        <input type="text" 
+                                               id="client_razon_social" 
+                                               name="client_razon_social" 
+                                               class="form-control form-control-sm" 
+                                               placeholder="Razón social (opcional)">
                                     </div>
                                 </div>
                             </div>
 
-                            <hr>
-
-                            <div class="form-group">
-                                <label>Descripción corta (opcional)</label>
-                                <input type="text" 
-                                    name="short_description" 
-                                    class="form-control form-control-sm" 
-                                    maxlength="255"
-                                    placeholder="Ej: Campaña Navidad 2025">
-                                <small class="text-muted">Máximo 255 caracteres</small>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Notas internas (opcional)</label>
+                            {{-- Notas opcionales --}}
+                            <div class="form-group mb-3">
+                                <label>Notas para la cotización</label>
                                 <textarea name="notes" 
-                                        class="form-control form-control-sm" 
-                                        rows="2"
-                                        placeholder="Notas para uso interno..."></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Comentarios para el cliente (opcional)</label>
-                                <textarea name="customer_notes" 
-                                        class="form-control form-control-sm" 
-                                        rows="2"
-                                        placeholder="Comentarios que verá el cliente..."></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Válida por (días)</label>
-                                <input type="number" 
-                                    name="valid_days" 
-                                    class="form-control form-control-sm" 
-                                    value="15"
-                                    min="1"
-                                    max="90">
+                                          class="form-control form-control-sm" 
+                                          rows="2"
+                                          placeholder="Notas o comentarios opcionales"></textarea>
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-block">
                                 <i class="feather icon-file-text"></i> Generar Cotización
                             </button>
                         </form>
-
-                        <a href="{{ route('catalogo.index') }}" class="btn btn-outline-secondary btn-block mt-2">
-                            <i class="feather icon-arrow-left"></i> Continuar Comprando
-                        </a>
                     </div>
                 </div>
+
+                <a href="{{ route('catalogo.index') }}" class="btn btn-outline-secondary btn-block mt-3">
+                    <i class="feather icon-arrow-left"></i> Seguir Comprando
+                </a>
             </div>
         </div>
     @endif
@@ -277,27 +233,30 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    // Actualizar cantidad
-    $('.btn-plus, .btn-minus').on('click', function() {
+    // Botones +/-
+    $('.btn-minus').on('click', function() {
         const itemId = $(this).data('item');
         const input = $(`.quantity-input[data-item="${itemId}"]`);
-        let quantity = parseInt(input.val());
-        
-        if ($(this).hasClass('btn-plus')) {
-            quantity++;
-        } else if (quantity > 1) {
-            quantity--;
-        }
-        
+        let quantity = parseInt(input.val()) - 1;
+        if (quantity < 1) quantity = 1;
         input.val(quantity);
         updateCartItem(itemId, quantity);
     });
 
+    $('.btn-plus').on('click', function() {
+        const itemId = $(this).data('item');
+        const input = $(`.quantity-input[data-item="${itemId}"]`);
+        let quantity = parseInt(input.val()) + 1;
+        input.val(quantity);
+        updateCartItem(itemId, quantity);
+    });
+
+    // Input manual
     $('.quantity-input').on('change', function() {
         const itemId = $(this).data('item');
-        const quantity = parseInt($(this).val());
+        let quantity = parseInt($(this).val());
         
-        if (quantity < 1) {
+        if (isNaN(quantity) || quantity < 1) {
             $(this).val(1);
             return;
         }

@@ -48,12 +48,24 @@ class PartnerPricing extends Model
     // ========================================================================
 
     /**
+     * Obtener el tier actual o el tier por defecto (Junior)
+     */
+    public function getEffectiveTier()
+    {
+        if ($this->currentTier) {
+            return $this->currentTier;
+        }
+
+        // Si no tiene tier asignado, usar Junior (el primero por orden)
+        return PricingTier::active()->ordered()->first();
+    }
+
+    /**
      * Aplicar markup del partner a un precio
      */
     public function applyMarkup($price)
     {
-        $markup = ($price * $this->markup_percentage) / 100;
-        return $price + $markup;
+        return $price * (1 + $this->markup_percentage / 100);
     }
 
     /**
@@ -66,31 +78,92 @@ class PartnerPricing extends Model
     }
 
     /**
-     * Calcular precio final para este partner (sin IVA)
+     * Calcular precio de costo para el partner (sin IVA, sin markup del partner)
+     * Este es el precio que el partner paga a Printec
+     * Fórmula: (Price + Markup del Tier) - Descuento del Tier
      */
-    public function calculatePrice($basePrice, $isPrintecProduct = true)
+    public function calculateCostPrice($basePrice, $isPrintecProduct = true)
     {
-        // Si es producto propio del partner, solo aplicar su markup
+        // Si es producto propio del partner, el costo es el precio base
         if (!$isPrintecProduct) {
-            return $this->applyMarkup($basePrice);
+            return $basePrice;
         }
 
-        // Producto de Printec o proveedores
-        $printecMarkup = PricingSetting::get('printec_markup', 52);
+        // Producto de Printec o proveedores: aplicar tier
+        $tier = $this->getEffectiveTier();
         
-        // 1. Aplicar markup de Printec
-        $priceWithPrintecMarkup = $basePrice + ($basePrice * $printecMarkup / 100);
-        
-        // 2. Aplicar descuento por tier
-        $priceAfterDiscount = $priceWithPrintecMarkup;
-        if ($this->currentTier) {
-            $priceAfterDiscount = $this->currentTier->applyDiscount($priceWithPrintecMarkup);
+        if (!$tier) {
+            // Fallback: si no hay tiers configurados, usar markup 52%
+            return $basePrice * 1.52;
         }
+
+        // Aplicar markup y descuento del tier
+        return $tier->calculatePrice($basePrice);
+    }
+
+    /**
+     * Calcular precio de venta sugerido (con markup del partner, sin IVA)
+     * Este es el precio que el partner puede cobrar a su cliente
+     */
+    public function calculateSalePrice($basePrice, $isPrintecProduct = true)
+    {
+        $costPrice = $this->calculateCostPrice($basePrice, $isPrintecProduct);
+        return $this->applyMarkup($costPrice);
+    }
+
+    /**
+     * Calcular precio de costo con IVA
+     */
+    public function calculateCostPriceWithTax($basePrice, $isPrintecProduct = true, $taxRate = 16)
+    {
+        $costPrice = $this->calculateCostPrice($basePrice, $isPrintecProduct);
+        return $costPrice * (1 + $taxRate / 100);
+    }
+
+    /**
+     * Calcular precio de venta con IVA
+     */
+    public function calculateSalePriceWithTax($basePrice, $isPrintecProduct = true, $taxRate = 16)
+    {
+        $salePrice = $this->calculateSalePrice($basePrice, $isPrintecProduct);
+        return $salePrice * (1 + $taxRate / 100);
+    }
+
+    /**
+     * Obtener el desglose de precios para mostrar en UI
+     */
+    public function getPriceBreakdown($basePrice, $isPrintecProduct = true)
+    {
+        $tier = $this->getEffectiveTier();
         
-        // 3. Aplicar markup del partner
-        $finalPrice = $this->applyMarkup($priceAfterDiscount);
-        
-        return $finalPrice;
+        if (!$isPrintecProduct || !$tier) {
+            return [
+                'base_price' => $basePrice,
+                'tier_name' => null,
+                'markup_percentage' => 0,
+                'discount_percentage' => 0,
+                'after_markup' => $basePrice,
+                'after_discount' => $basePrice,
+                'cost_price' => $basePrice,
+                'partner_markup' => $this->markup_percentage,
+                'sale_price' => $this->applyMarkup($basePrice),
+            ];
+        }
+
+        $afterMarkup = $tier->applyMarkup($basePrice);
+        $afterDiscount = $tier->applyDiscount($afterMarkup);
+
+        return [
+            'base_price' => $basePrice,
+            'tier_name' => $tier->name,
+            'markup_percentage' => $tier->markup_percentage,
+            'discount_percentage' => $tier->discount_percentage,
+            'after_markup' => $afterMarkup,
+            'after_discount' => $afterDiscount,
+            'cost_price' => $afterDiscount,
+            'partner_markup' => $this->markup_percentage,
+            'sale_price' => $this->applyMarkup($afterDiscount),
+        ];
     }
 
     /**
@@ -102,5 +175,18 @@ class PartnerPricing extends Model
             ['partner_id' => $partnerId],
             ['markup_percentage' => 0]
         );
+    }
+
+    // ========================================================================
+    // MÉTODOS LEGACY (mantener compatibilidad)
+    // ========================================================================
+
+    /**
+     * @deprecated Usar calculateCostPrice() o calculateSalePrice()
+     */
+    public function calculatePrice($basePrice, $isPrintecProduct = true)
+    {
+        // Mantener compatibilidad: retorna precio de venta con markup del partner
+        return $this->calculateSalePrice($basePrice, $isPrintecProduct);
     }
 }

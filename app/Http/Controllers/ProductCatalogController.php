@@ -166,7 +166,21 @@ class ProductCatalogController extends Controller
                 $almacenesUnicos->put($stock->warehouse_id, $stock->warehouse);
             }
         }
-        return view('products.show', compact('producto', 'images', 'almacenesUnicos'));
+
+        // 🆕 Obtener pricing del partner para calcular precios
+        $partner = Partner::find($userPartnerId);
+        $partnerPricing = $partner ? $partner->getPricingConfig() : null;
+        
+        // Determinar si es producto de Printec/proveedor o producto propio
+        $isPrintecProduct = !$producto->is_own_product || $producto->partner_id != $userPartnerId;
+
+        return view('products.show', compact(
+            'producto', 
+            'images', 
+            'almacenesUnicos',
+            'partnerPricing',
+            'isPrintecProduct'
+        ));
     }
 
     /**
