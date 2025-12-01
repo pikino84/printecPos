@@ -47,16 +47,7 @@ class PartnerSeeder extends Seeder
                 'contact_email' => null,
                 'direccion' => null,
                 'type' => 'proveedor',
-            ],
-            [
-                'slug' => 'beta-industrial',
-                'name' => 'Beta Industrial',
-                'contact_name' => 'Beta Industrial S.A. de C.V.',
-                'contact_phone' => '555-987-6543',
-                'contact_email' => 'ventas@beta.com',
-                'direccion' => 'Avenida Imaginaria 456, Guadalajara',
-                'type' => 'asociado',
-            ],
+            ]
         ];
 
         foreach ($partners as $p) {

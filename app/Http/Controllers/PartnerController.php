@@ -64,7 +64,6 @@ class PartnerController extends Controller
     {
         // Guardar estado anterior para detectar activación
         $wasInactive = !$partner->is_active;
-
         $data = $request->validate([
             'name' => 'required|unique:partners,name,' . $partner->id,
             'contact_name' => 'nullable',
@@ -78,8 +77,8 @@ class PartnerController extends Controller
         ]);
 
         $data['slug'] = Str::slug($data['name']);
-        $data['is_active'] = $request->has('is_active');
-
+        $data['is_active'] = $request->boolean('is_active');
+        
         $partner->update($data);
 
         // Si el partner fue activado, activar también sus usuarios y enviar email
