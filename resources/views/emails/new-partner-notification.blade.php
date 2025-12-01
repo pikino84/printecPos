@@ -6,7 +6,7 @@
     <title>Nuevo Partner</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <div style="background: #2457aa; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Nuevo Partner Registrado</h1>
     </div>
     
@@ -15,8 +15,8 @@
         
         <p>Se ha registrado un nuevo partner en el sistema y está pendiente de activación.</p>
         
-        <div style="background: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f5576c;">
-            <h3 style="margin-top: 0; color: #f5576c;">Datos del nuevo partner:</h3>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2457aa;">
+            <h3 style="margin-top: 0; color: #2457aa;">Datos del nuevo partner:</h3>
             <p style="margin: 5px 0;"><strong>Empresa:</strong> {{ $partner->name }}</p>
             <p style="margin: 5px 0;"><strong>Contacto:</strong> {{ $user->name }}</p>
             <p style="margin: 5px 0;"><strong>Email:</strong> {{ $user->email }}</p>
@@ -25,7 +25,7 @@
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="https://posprintec.com/partners/{{ $partner->id }}/edit" 
-               style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+               style="background: #2457aa; 
                       color: white; 
                       padding: 15px 30px; 
                       text-decoration: none; 
@@ -38,7 +38,7 @@
         
         <p style="color: #888; font-size: 14px;">
             Para activar este partner, haz clic en el botón de arriba o ve directamente a:<br>
-            <a href="https://posprintec.com/partners/{{ $partner->id }}/edit">https://posprintec.com/partners/{{ $partner->id }}/edit</a>
+            <a href="https://posprintec.com/partners/{{ $partner->id }}/edit" style="color: #2457aa;">https://posprintec.com/partners/{{ $partner->id }}/edit</a>
         </p>
     </div>
     

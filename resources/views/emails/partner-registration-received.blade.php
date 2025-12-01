@@ -6,7 +6,7 @@
     <title>Registro Recibido</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <div style="background: #2457aa; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">¡Bienvenido a Printec!</h1>
     </div>
     
@@ -15,8 +15,8 @@
         
         <p>¡Gracias por registrarte como partner de Printec! Hemos recibido tu solicitud y estamos emocionados de que quieras formar parte de nuestra red.</p>
         
-        <div style="background: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
-            <h3 style="margin-top: 0; color: #667eea;">Datos de tu registro:</h3>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2457aa;">
+            <h3 style="margin-top: 0; color: #2457aa;">Datos de tu registro:</h3>
             <p style="margin: 5px 0;"><strong>Empresa:</strong> {{ $partner->name }}</p>
             <p style="margin: 5px 0;"><strong>Email:</strong> {{ $user->email }}</p>
             <p style="margin: 5px 0;"><strong>Fecha:</strong> {{ $partner->created_at->format('d/m/Y H:i') }}</p>
