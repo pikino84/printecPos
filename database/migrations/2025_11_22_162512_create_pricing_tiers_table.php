@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('pricing_tiers', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Junior, Distribuidor, Básico A, etc.
+            $table->string('name')->unique();
             $table->string('slug')->unique();
-            $table->decimal('min_monthly_purchases', 12, 2)->default(0); // Mínimo de compras mensuales
-            $table->decimal('max_monthly_purchases', 12, 2)->nullable(); // Máximo (null = sin límite)
-            $table->decimal('discount_percentage', 5, 2)->default(0); // Porcentaje de descuento
+            $table->decimal('min_monthly_purchases', 12, 2)->default(0);
+            $table->decimal('max_monthly_purchases', 12, 2)->nullable();
+            $table->decimal('markup_percentage', 5, 2)->default(16);
+            $table->decimal('discount_percentage', 5, 2)->default(0);
             $table->text('description')->nullable();
-            $table->integer('order')->default(0); // Orden de visualización
+            $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             

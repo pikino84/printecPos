@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             AssignRolesToExistingUsersSeeder::class,
             PrintecCategorySeeder::class,
+            PricingTierSeeder::class,
             ProductWarehouseCitiesSeeder::class,
             ProductWarehouseSeeder::class,
             ProductWarehouseDobleVelaSeeder::class,

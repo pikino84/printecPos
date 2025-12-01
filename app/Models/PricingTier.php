@@ -15,6 +15,7 @@ class PricingTier extends Model
         'min_monthly_purchases',
         'max_monthly_purchases',
         'discount_percentage',
+        'markup_percentage',
         'description',
         'order',
         'is_active',
@@ -24,6 +25,7 @@ class PricingTier extends Model
         'min_monthly_purchases' => 'decimal:2',
         'max_monthly_purchases' => 'decimal:2',
         'discount_percentage' => 'decimal:2',
+        'markup_percentage' => 'decimal:2',
         'order' => 'integer',
         'is_active' => 'boolean',
     ];
@@ -98,11 +100,52 @@ class PricingTier extends Model
     }
 
     /**
-     * Calcular precio con descuento de este tier
+     * Aplicar markup del tier al precio base
+     */
+    public function applyMarkup($price)
+    {
+        return $price * (1 + $this->markup_percentage / 100);
+    }
+
+    /**
+     * Aplicar descuento del tier
      */
     public function applyDiscount($price)
     {
-        $discount = ($price * $this->discount_percentage) / 100;
-        return $price - $discount;
+        return $price * (1 - $this->discount_percentage / 100);
+    }
+
+    /**
+     * Calcular precio final con markup y descuento (sin IVA)
+     * Fórmula: (Price + Markup%) - Descuento%
+     */
+    public function calculatePrice($basePrice)
+    {
+        $withMarkup = $this->applyMarkup($basePrice);
+        $afterDiscount = $this->applyDiscount($withMarkup);
+        
+        return $afterDiscount;
+    }
+
+    /**
+     * Calcular precio final con markup, descuento e IVA
+     */
+    public function calculatePriceWithTax($basePrice, $taxRate = 16)
+    {
+        $priceBeforeTax = $this->calculatePrice($basePrice);
+        
+        return $priceBeforeTax * (1 + $taxRate / 100);
+    }
+
+    /**
+     * Obtener la fórmula legible del tier
+     */
+    public function getFormulaAttribute()
+    {
+        if ($this->discount_percentage > 0) {
+            return "(Price +{$this->markup_percentage}%) - {$this->discount_percentage}% + IVA";
+        }
+        
+        return "Price + {$this->markup_percentage}% + IVA";
     }
 }

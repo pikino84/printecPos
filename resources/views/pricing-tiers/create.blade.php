@@ -52,7 +52,7 @@
 
             <div class="row">
                 <!-- Compras Mínimas -->
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="min_monthly_purchases" class="form-label">Compras Mínimas Mensuales <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
@@ -71,7 +71,7 @@
                 </div>
 
                 <!-- Compras Máximas -->
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="max_monthly_purchases" class="form-label">Compras Máximas Mensuales</label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
@@ -88,11 +88,36 @@
                     </div>
                     <small class="form-text text-muted">Dejar vacío para "sin límite"</small>
                 </div>
+            </div>
+
+            <div class="row">
+                <!-- Markup -->
+                <div class="col-md-6 mb-3">
+                    <label for="markup_percentage" class="form-label">Porcentaje de Markup <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">+</span>
+                        <input type="number" 
+                               class="form-control @error('markup_percentage') is-invalid @enderror" 
+                               id="markup_percentage" 
+                               name="markup_percentage" 
+                               value="{{ old('markup_percentage', 16) }}" 
+                               step="0.01"
+                               min="0"
+                               max="100"
+                               required>
+                        <span class="input-group-text">%</span>
+                        @error('markup_percentage')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <small class="form-text text-muted">Junior = 52%, resto = 16%</small>
+                </div>
 
                 <!-- Descuento -->
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="discount_percentage" class="form-label">Porcentaje de Descuento <span class="text-danger">*</span></label>
                     <div class="input-group">
+                        <span class="input-group-text">-</span>
                         <input type="number" 
                                class="form-control @error('discount_percentage') is-invalid @enderror" 
                                id="discount_percentage" 
@@ -107,6 +132,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    <small class="form-text text-muted">0%, 2%, 4%... hasta 12%</small>
                 </div>
             </div>
 
@@ -143,6 +169,19 @@
                 </div>
             </div>
 
+            <!-- Vista previa de fórmula -->
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <div class="alert alert-info mb-0">
+                        <strong>📊 Fórmula:</strong> 
+                        <code id="formula-preview">Price + 16% + IVA</code>
+                        <span class="float-right">
+                            Precio ejemplo ($100): <strong id="price-preview">$134.56</strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
             <hr class="my-4">
 
             <div class="row">
@@ -167,7 +206,8 @@
             <li><strong>Orden:</strong> Usa números como 10, 20, 30... para poder insertar niveles intermedios después</li>
             <li><strong>Rangos:</strong> Asegúrate de que los rangos no se solapen entre diferentes niveles</li>
             <li><strong>Máximo sin límite:</strong> Deja el campo de compras máximas vacío para el nivel más alto</li>
-            <li><strong>Ejemplo:</strong> Nivel "Oro A" con $400,001 - $600,000 y 12% de descuento</li>
+            <li><strong>Markup:</strong> Junior usa 52%, el resto de niveles usa 16%</li>
+            <li><strong>Ejemplo:</strong> Nivel "Oro A" con $400,001 - $600,000, markup 16% y descuento 12%</li>
         </ul>
     </div>
 </div>
@@ -175,11 +215,15 @@
 
 @section('scripts')
 <script>
-// Validación en tiempo real
 document.addEventListener('DOMContentLoaded', function() {
     const minInput = document.getElementById('min_monthly_purchases');
     const maxInput = document.getElementById('max_monthly_purchases');
+    const markupInput = document.getElementById('markup_percentage');
+    const discountInput = document.getElementById('discount_percentage');
+    const formulaPreview = document.getElementById('formula-preview');
+    const pricePreview = document.getElementById('price-preview');
     
+    // Validación min/max
     maxInput.addEventListener('input', function() {
         const min = parseFloat(minInput.value) || 0;
         const max = parseFloat(maxInput.value) || 0;
@@ -190,6 +234,33 @@ document.addEventListener('DOMContentLoaded', function() {
             maxInput.setCustomValidity('');
         }
     });
+    
+    // Actualizar fórmula en tiempo real
+    function updateFormula() {
+        const markup = parseFloat(markupInput.value) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        
+        let formula = '';
+        if (discount > 0) {
+            formula = `(Price + ${markup}%) - ${discount}% + IVA`;
+        } else {
+            formula = `Price + ${markup}% + IVA`;
+        }
+        formulaPreview.textContent = formula;
+        
+        // Calcular precio ejemplo
+        const basePrice = 100;
+        const withMarkup = basePrice * (1 + markup / 100);
+        const afterDiscount = withMarkup * (1 - discount / 100);
+        const withTax = afterDiscount * 1.16;
+        pricePreview.textContent = '$' + withTax.toFixed(2);
+    }
+    
+    markupInput.addEventListener('input', updateFormula);
+    discountInput.addEventListener('input', updateFormula);
+    
+    // Inicializar
+    updateFormula();
 });
 </script>
 @endsection

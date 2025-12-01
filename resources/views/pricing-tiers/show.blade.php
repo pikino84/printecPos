@@ -81,12 +81,24 @@
                         </td>
                     </tr>
                     <tr>
+                        <th>Markup:</th>
+                        <td>
+                            <span class="badge bg-primary" style="font-size: 14px;">
+                                +{{ number_format($pricingTier->markup_percentage, 2) }}%
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
                         <th>Descuento:</th>
                         <td>
                             <span class="badge bg-success" style="font-size: 14px;">
-                                {{ number_format($pricingTier->discount_percentage, 2) }}%
+                                -{{ number_format($pricingTier->discount_percentage, 2) }}%
                             </span>
                         </td>
+                    </tr>
+                    <tr>
+                        <th>Fórmula:</th>
+                        <td><code>{{ $pricingTier->formula }}</code></td>
                     </tr>
                     <tr>
                         <th>Partners Asignados:</th>
@@ -116,11 +128,10 @@
                     <h6 class="mb-3">Flujo de Precio (sin markup de partner)</h6>
                     @php
                         $basePrice = 100;
-                        $printecMarkup = \App\Models\PricingSetting::get('printec_markup', 52);
-                        $taxRate = \App\Models\PricingSetting::get('tax_rate', 16);
+                        $taxRate = 16;
                         
-                        $withPrintecMarkup = $basePrice + ($basePrice * $printecMarkup / 100);
-                        $afterDiscount = $pricingTier->applyDiscount($withPrintecMarkup);
+                        $withMarkup = $pricingTier->applyMarkup($basePrice);
+                        $afterDiscount = $pricingTier->applyDiscount($withMarkup);
                         $withTax = $afterDiscount * (1 + $taxRate / 100);
                     @endphp
                     
@@ -130,16 +141,18 @@
                             <td class="text-right"><strong>${{ number_format($basePrice, 2) }}</strong></td>
                         </tr>
                         <tr>
-                            <td>+ Markup Printec ({{ $printecMarkup }}%):</td>
-                            <td class="text-right">${{ number_format($withPrintecMarkup, 2) }}</td>
+                            <td>+ Markup ({{ $pricingTier->markup_percentage }}%):</td>
+                            <td class="text-right">${{ number_format($withMarkup, 2) }}</td>
                         </tr>
+                        @if($pricingTier->discount_percentage > 0)
                         <tr class="table-success">
-                            <td>- Descuento Tier ({{ $pricingTier->discount_percentage }}%):</td>
+                            <td>- Descuento ({{ $pricingTier->discount_percentage }}%):</td>
                             <td class="text-right"><strong>${{ number_format($afterDiscount, 2) }}</strong></td>
                         </tr>
+                        @endif
                         <tr>
                             <td>+ IVA ({{ $taxRate }}%):</td>
-                            <td class="text-right">${{ number_format($withTax, 2) }}</td>
+                            <td class="text-right"><strong class="text-success">${{ number_format($withTax, 2) }}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -150,7 +163,7 @@
                     <h6 class="mb-3">Con Markup de Partner (20%)</h6>
                     @php
                         $partnerMarkup = 20;
-                        $withPartnerMarkup = $afterDiscount + ($afterDiscount * $partnerMarkup / 100);
+                        $withPartnerMarkup = $afterDiscount * (1 + $partnerMarkup / 100);
                         $finalWithTax = $withPartnerMarkup * (1 + $taxRate / 100);
                     @endphp
                     
@@ -160,13 +173,15 @@
                             <td class="text-right"><strong>${{ number_format($basePrice, 2) }}</strong></td>
                         </tr>
                         <tr>
-                            <td>+ Markup Printec ({{ $printecMarkup }}%):</td>
-                            <td class="text-right">${{ number_format($withPrintecMarkup, 2) }}</td>
+                            <td>+ Markup ({{ $pricingTier->markup_percentage }}%):</td>
+                            <td class="text-right">${{ number_format($withMarkup, 2) }}</td>
                         </tr>
+                        @if($pricingTier->discount_percentage > 0)
                         <tr class="table-success">
-                            <td>- Descuento Tier ({{ $pricingTier->discount_percentage }}%):</td>
+                            <td>- Descuento ({{ $pricingTier->discount_percentage }}%):</td>
                             <td class="text-right">${{ number_format($afterDiscount, 2) }}</td>
                         </tr>
+                        @endif
                         <tr>
                             <td>+ Markup Partner ({{ $partnerMarkup }}%):</td>
                             <td class="text-right"><strong>${{ number_format($withPartnerMarkup, 2) }}</strong></td>
