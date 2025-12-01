@@ -61,6 +61,15 @@
                     @endforeach
                 </select>
             </div>
+            {{-- Solo Printec puede establecer el estado activo --}}
+            @if (auth()->user()->partner_id === 1)
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" name="is_active" class="form-check-input" id="is_active" value="1" checked>
+                        <label class="form-check-label" for="is_active">Usuario Activo</label>
+                    </div>
+                </div>
+            @endif
 
             <button type="submit" class="btn btn-primary">Crear</button>
             <a href="{{ route('users.index') }}" class="btn btn-secondary">Cancelar</a>

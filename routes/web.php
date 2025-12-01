@@ -26,6 +26,7 @@ use App\Http\Controllers\PricingTierController;
 use App\Http\Controllers\PartnerPricingController;
 use App\Http\Controllers\PricingDashboardController;
 use App\Http\Controllers\PricingReportController;
+use App\Http\Controllers\PartnerRegistrationController;
 
 
 
@@ -244,5 +245,12 @@ Route::middleware('auth')->group(function () {
 
 
 });
-
+// ========================================================================
+// REGISTRO PÚBLICO DE PARTNERS
+// ========================================================================
+Route::middleware('guest')->group(function () {
+    Route::get('/registro', [PartnerRegistrationController::class, 'showRegistrationForm'])->name('partner.registration.form');
+    Route::post('/registro', [PartnerRegistrationController::class, 'register'])->name('partner.registration.submit');
+    Route::get('/registro-exitoso', [PartnerRegistrationController::class, 'success'])->name('partner.registration.success');
+});
 require __DIR__.'/auth.php';

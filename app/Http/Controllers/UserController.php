@@ -245,7 +245,7 @@ class UserController extends Controller
             'password'             => Hash::make($request->password),
             'partner_id'           => $user->partner_id,
             'must_change_password' => $request->boolean('must_change_password', true),
-            'is_active'            => true,
+            'is_active'            => $request->boolean('is_active', true),
         ]);
 
         $newUser->assignRole($request->role);

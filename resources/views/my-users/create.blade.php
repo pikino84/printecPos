@@ -116,7 +116,16 @@
                     </div>
                 </div>
             </div>
-
+            <div class="row">
+                <!-- Estado Activo -->
+                <div class="col-md-6 mb-3">
+                    <label for="is_active" class="form-label">Estado</label>
+                    <select class="form-control" id="is_active" name="is_active">
+                        <option value="1" selected>Activo</option>
+                        <option value="0">Inactivo</option>
+                    </select>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-12">
                     <hr class="my-3">

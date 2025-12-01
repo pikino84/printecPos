@@ -5,16 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\Partner;
+use App\Models\User;
+use App\Mail\PartnerActivated;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-
 
 class PartnerController extends Controller
 {
     public function index()
     {
         $this->authorize('partners_index');
-        // Si el modelo Partner tiene la relación entities(), usa withCount
-        // Si no, simplemente obtén los partners sin el conteo
         $partners = Partner::all();
         return view('partners.index', compact('partners'));
     }
@@ -62,6 +62,9 @@ class PartnerController extends Controller
 
     public function update(Request $request, Partner $partner)
     {
+        // Guardar estado anterior para detectar activación
+        $wasInactive = !$partner->is_active;
+
         $data = $request->validate([
             'name' => 'required|unique:partners,name,' . $partner->id,
             'contact_name' => 'nullable',
@@ -75,8 +78,19 @@ class PartnerController extends Controller
         ]);
 
         $data['slug'] = Str::slug($data['name']);
+        $data['is_active'] = $request->has('is_active');
 
         $partner->update($data);
+
+        // Si el partner fue activado, activar también sus usuarios y enviar email
+        if ($wasInactive && $partner->is_active) {
+            $this->activatePartnerUsers($partner);
+        }
+        
+        // Si el partner fue desactivado, desactivar también sus usuarios
+        if (!$wasInactive && !$partner->is_active) {
+            $this->deactivatePartnerUsers($partner);
+        }
 
         return redirect()->route('partners.index')->with('success', 'Partner actualizado.');
     }
@@ -85,5 +99,30 @@ class PartnerController extends Controller
     {
         $partner->delete();
         return redirect()->route('partners.index')->with('success', 'Partner eliminado.');
+    }
+
+    /**
+     * Activar usuarios del partner y enviar email de bienvenida
+     */
+    private function activatePartnerUsers(Partner $partner): void
+    {
+        // Obtener usuarios del partner
+        $users = User::where('partner_id', $partner->id)->get();
+
+        foreach ($users as $user) {
+            // Activar usuario
+            $user->update(['is_active' => true]);
+
+            // Enviar email de activación (en cola)
+            Mail::to($user->email)->queue(new PartnerActivated($partner, $user));
+        }
+    }
+
+    /**
+     * Desactivar usuarios del partner
+     */
+    private function deactivatePartnerUsers(Partner $partner): void
+    {
+        User::where('partner_id', $partner->id)->update(['is_active' => false]);
     }
 }
