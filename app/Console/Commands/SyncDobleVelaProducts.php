@@ -195,9 +195,12 @@ class SyncDobleVelaProducts extends Command
         // Debug: mostrar estructura de respuesta
         $this->line('🔍 Analizando estructura de respuesta...');
         
-        // Si ya es array, retornarlo
+        // Si ya es array, verificar si tiene Resultado
         if (is_array($response)) {
-            $this->line('   → Respuesta es array directo');
+            if (isset($response['Resultado']) && is_array($response['Resultado'])) {
+                $this->line('   → Encontrado array Resultado directo');
+                return $response['Resultado'];
+            }
             return $response;
         }
         
@@ -217,13 +220,29 @@ class SyncDobleVelaProducts extends Command
                 if (is_string($result)) {
                     $decoded = json_decode($result, true);
                     if (json_last_error() === JSON_ERROR_NONE) {
+                        // Verificar si tiene estructura con Resultado
+                        if (isset($decoded['Resultado']) && is_array($decoded['Resultado'])) {
+                            $this->line('   → Extrayendo array Resultado (' . count($decoded['Resultado']) . ' items)');
+                            return $decoded['Resultado'];
+                        }
                         return $decoded;
                     }
                 }
                 
                 if (is_array($result)) {
+                    // Verificar si tiene estructura con Resultado
+                    if (isset($result['Resultado']) && is_array($result['Resultado'])) {
+                        $this->line('   → Extrayendo array Resultado (' . count($result['Resultado']) . ' items)');
+                        return $result['Resultado'];
+                    }
                     return $result;
                 }
+            }
+            
+            // Buscar Resultado directamente
+            if (isset($responseArray['Resultado']) && is_array($responseArray['Resultado'])) {
+                $this->line('   → Encontrado Resultado directo (' . count($responseArray['Resultado']) . ' items)');
+                return $responseArray['Resultado'];
             }
             
             // Buscar otras estructuras comunes
@@ -236,28 +255,18 @@ class SyncDobleVelaProducts extends Command
                     if (is_string($data)) {
                         $decoded = json_decode($data, true);
                         if (json_last_error() === JSON_ERROR_NONE) {
+                            if (isset($decoded['Resultado'])) {
+                                return $decoded['Resultado'];
+                            }
                             return $decoded;
                         }
                     }
                     
                     if (is_array($data)) {
+                        if (isset($data['Resultado'])) {
+                            return $data['Resultado'];
+                        }
                         return $data;
-                    }
-                }
-            }
-            
-            // Si la respuesta tiene un solo key con array grande
-            foreach ($responseArray as $key => $value) {
-                if (is_array($value) && count($value) > 5) {
-                    $this->line("   → Usando array grande en key: {$key} (" . count($value) . " items)");
-                    return $value;
-                }
-                // Si es string, intentar decodificar JSON
-                if (is_string($value) && strlen($value) > 100) {
-                    $decoded = json_decode($value, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                        $this->line("   → Decodificado JSON de key: {$key} (" . count($decoded) . " items)");
-                        return $decoded;
                     }
                 }
             }
