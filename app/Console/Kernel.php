@@ -18,53 +18,52 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // ═══════════════════════════════════════════════════════
-        // SINCRONIZACIÓN PRINCIPAL: 5:00 AM Cancún (4:00 AM CDMX)
+        // SINCRONIZACIÓN DOBLE VELA
+        // Horarios disponibles API (CDMX): 
+        //   09:00-10:00, 13:00-14:00, 17:00-18:00
         // ═══════════════════════════════════════════════════════
+        
+        // Ventana 1: 09:05 CDMX (10:05 Cancún)
         $schedule->command('sync:doblevela-products')
-            ->dailyAt('05:00')
-            ->weekdays() // Lunes a viernes
-            ->timezone('America/Cancun')
+            ->dailyAt('09:05')
+            ->weekdays()
+            ->timezone('America/Mexico_City')
             ->runInBackground()
             ->withoutOverlapping(30)
             ->onSuccess(function () {
-                Log::info('✅ Sync Doble Vela 5AM (Cancún) exitoso');
+                Log::info('✅ Sync Doble Vela 09:05 CDMX exitoso');
             })
             ->onFailure(function () {
-                Log::error('❌ Sync Doble Vela 5AM (Cancún) falló');
+                Log::error('❌ Sync Doble Vela 09:05 CDMX falló');
             });
         
-        // ═══════════════════════════════════════════════════════
-        // SINCRONIZACIÓN NOCTURNA: 8:30 PM Cancún (7:30 PM CDMX)
-        // Captura todos los cambios del día
-        // ═══════════════════════════════════════════════════════
+        // Ventana 2: 13:05 CDMX (14:05 Cancún)
         $schedule->command('sync:doblevela-products')
-            ->dailyAt('20:30')
+            ->dailyAt('13:05')
             ->weekdays()
-            ->timezone('America/Cancun')
+            ->timezone('America/Mexico_City')
             ->runInBackground()
             ->withoutOverlapping(30)
             ->onSuccess(function () {
-                Log::info('✅ Sync Doble Vela 8:30PM (Cancún) exitoso');
+                Log::info('✅ Sync Doble Vela 13:05 CDMX exitoso');
             })
             ->onFailure(function () {
-                Log::error('❌ Sync Doble Vela 8:30PM (Cancún) falló');
+                Log::error('❌ Sync Doble Vela 13:05 CDMX falló');
             });
         
-        // ═══════════════════════════════════════════════════════
-        // RETRY automático si falla la de 5AM
-        // Se ejecuta a las 7:30 AM Cancún (6:30 AM CDMX)
-        // ═══════════════════════════════════════════════════════
+        // Ventana 3: 17:05 CDMX (18:05 Cancún)
         $schedule->command('sync:doblevela-products')
-            ->dailyAt('07:30')
+            ->dailyAt('17:05')
             ->weekdays()
-            ->timezone('America/Cancun')
-            ->when(function () {
-                // Solo ejecutar si la de 5AM falló
-                $lastSync = \Illuminate\Support\Facades\Storage::get('doblevela_last_sync.txt') ?? '';
-                return str_contains($lastSync, 'FAILED');
-            })
+            ->timezone('America/Mexico_City')
             ->runInBackground()
-            ->withoutOverlapping(30);
+            ->withoutOverlapping(30)
+            ->onSuccess(function () {
+                Log::info('✅ Sync Doble Vela 17:05 CDMX exitoso');
+            })
+            ->onFailure(function () {
+                Log::error('❌ Sync Doble Vela 17:05 CDMX falló');
+            });
 
         // ═══════════════════════════════════════════════════════════
         // EVALUACIÓN DE NIVELES DE PRECIO (PRICING TIERS)
@@ -75,7 +74,7 @@ class Kernel extends ConsoleKernel
             ->monthlyOn(1, '00:05')
             ->timezone('America/Mexico_City')
             ->runInBackground()
-            ->withoutOverlapping(60) // Evita solapamiento por 60 minutos
+            ->withoutOverlapping(60)
             ->onSuccess(function () {
                 Log::info('✅ Evaluación mensual de niveles de precio exitosa');
             })

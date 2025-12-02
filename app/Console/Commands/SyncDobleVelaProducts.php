@@ -130,10 +130,50 @@ class SyncDobleVelaProducts extends Command
             
             // Llamar al método GetExistenciaAll
             $this->info('📡 Solicitando productos con GetExistenciaAll...');
+            $this->line("   → Key: " . substr($key, 0, 5) . '***' . substr($key, -5));
             
-            $response = $client->GetExistenciaAll([
-                'key' => $key
-            ]);
+            // Probar diferentes nombres de parámetro
+            $paramNames = ['strKey', 'Key', 'key', 'sKey', 'APIKey'];
+            $response = null;
+            $lastError = null;
+            
+            foreach ($paramNames as $paramName) {
+                try {
+                    $this->line("   → Probando parámetro: {$paramName}");
+                    $response = $client->GetExistenciaAll([
+                        $paramName => $key
+                    ]);
+                    
+                    // Verificar si la respuesta tiene error de key
+                    $responseArray = json_decode(json_encode($response), true);
+                    if (isset($responseArray['GetExistenciaAllResult'])) {
+                        $result = $responseArray['GetExistenciaAllResult'];
+                        if (is_string($result)) {
+                            $decoded = json_decode($result, true);
+                            if (isset($decoded['strMensaje']) && stripos($decoded['strMensaje'], 'key') !== false) {
+                                $this->warn("   ⚠️ {$paramName}: {$decoded['strMensaje']}");
+                                continue; // Probar siguiente nombre
+                            }
+                            if (isset($decoded['Resultado']) && !empty($decoded['Resultado'])) {
+                                $this->info("   ✅ Parámetro correcto: {$paramName}");
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Si llegamos aquí sin error, usar esta respuesta
+                    $this->info("   ✅ Parámetro correcto: {$paramName}");
+                    break;
+                    
+                } catch (\Exception $e) {
+                    $lastError = $e->getMessage();
+                    $this->warn("   ⚠️ {$paramName} falló: " . substr($lastError, 0, 50));
+                }
+            }
+            
+            if ($response === null) {
+                throw new \Exception('No se pudo conectar con ningún nombre de parámetro. Último error: ' . $lastError);
+            }
             
             $this->info('✅ Respuesta recibida del API');
             
@@ -244,27 +284,50 @@ class SyncDobleVelaProducts extends Command
     
     /**
      * Verificar si la API está disponible
-     * API bloqueada: 9AM-7PM CDMX (horario laboral)
-     * API disponible: 7PM-9AM CDMX
+     * Horarios DISPONIBLES (CDMX):
+     * - 09:00 - 10:00
+     * - 13:00 - 14:00  
+     * - 17:00 - 18:00
      */
     private function isApiAvailable(): bool
     {
         // Obtener hora actual en CDMX
         $cdmxNow = Carbon::now('America/Mexico_City');
         $cdmxHour = $cdmxNow->hour;
+        $cdmxMinute = $cdmxNow->minute;
         
-        // API bloqueada de 9:00 a 18:59 CDMX
-        $isBlocked = ($cdmxHour >= 9 && $cdmxHour < 19);
+        // Ventanas de disponibilidad (hora inicio, hora fin)
+        $availableWindows = [
+            [9, 10],   // 09:00 - 10:00
+            [13, 14],  // 13:00 - 14:00
+            [17, 18],  // 17:00 - 18:00
+        ];
         
-        if ($isBlocked) {
-            $cancunNow = Carbon::now('America/Cancun');
+        $isAvailable = false;
+        foreach ($availableWindows as [$start, $end]) {
+            if ($cdmxHour >= $start && $cdmxHour < $end) {
+                $isAvailable = true;
+                break;
+            }
+        }
+        
+        $cancunNow = Carbon::now('America/Cancun');
+        
+        if (!$isAvailable) {
             $this->warn(sprintf(
-                '⏰ API bloqueada - Hora actual: %s Cancún (%s CDMX)',
+                '⏰ API no disponible - Hora actual: %s Cancún (%s CDMX)',
+                $cancunNow->format('H:i'),
+                $cdmxNow->format('H:i')
+            ));
+            $this->line('   Horarios disponibles (CDMX): 09:00-10:00, 13:00-14:00, 17:00-18:00');
+        } else {
+            $this->info(sprintf(
+                '✅ API disponible - Hora actual: %s Cancún (%s CDMX)',
                 $cancunNow->format('H:i'),
                 $cdmxNow->format('H:i')
             ));
         }
         
-        return !$isBlocked;
+        return $isAvailable;
     }
 }
