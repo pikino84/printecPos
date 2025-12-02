@@ -17,11 +17,20 @@ use App\Models\ProductStock;
 
 class DobleVelaSeeder extends Seeder
 {
+    // Contadores para reporte
+    private int $productsCreated = 0;
+    private int $productsUpdated = 0;
+    private int $productsDeactivated = 0;
+    private int $variantsCreated = 0;
+    private int $variantsUpdated = 0;
+    private int $variantsDeactivated = 0;
+    private int $stocksUpdated = 0;
+
     public function run(): void
     {
         // Dueño/publicador (Printec) y proveedor (Doble Vela)
-        $publisher = Partner::where('slug', 'printec')->firstOrFail();   // owner_id = 1 (público)
-        $provider  = Partner::where('slug', 'doble-vela')->firstOrFail(); // partner_id = proveedor
+        $publisher = Partner::where('slug', 'printec')->firstOrFail();
+        $provider  = Partner::where('slug', 'doble-vela')->firstOrFail();
 
         // Usuario creador (fallback a 1)
         $createdBy = User::where('email', 'ebutron@printec.mx')->value('id')
@@ -39,40 +48,73 @@ class DobleVelaSeeder extends Seeder
             return;
         }
 
-        // Almacenes del proveedor (códigos normalizados: "7","8","9","10","20","24")
+        // Almacenes del proveedor
         $dvWarehouses = ProductWarehouse::where('partner_id', $provider->id)->get()
             ->keyBy(fn ($w) => (string) $w->codigo);
 
         // Agrupar por MODELO
         $grouped = collect($rows)->groupBy(fn ($r) => trim($r['MODELO'] ?? ''));
 
-        $created = 0; $updated = 0; $variants = 0; $stocks = 0;
+        // Recolectar SKUs y slugs que vienen en el JSON (para detectar eliminados)
+        $jsonSlugs = [];
+        $jsonSkus = [];
 
         foreach ($grouped as $model => $items) {
             if (!$model) continue;
 
+            $slug = 'dv-' . Str::slug($model);
+            $jsonSlugs[] = $slug;
+
+            foreach ($items as $row) {
+                $sku = trim($row['CLAVE'] ?? '');
+                if ($sku !== '') {
+                    $jsonSkus[] = $sku;
+                }
+            }
+        }
+
+        // Procesar productos
+        foreach ($grouped as $model => $items) {
+            if (!$model) continue;
+
             DB::transaction(function () use (
-                $model, $items, $provider, $publisher, $createdBy, $dvWarehouses,
-                &$created, &$updated, &$variants, &$stocks
+                $model, $items, $provider, $publisher, $createdBy, $dvWarehouses
             ) {
                 $first = collect($items)->first();
-
-                // ===== Categoría (del proveedor)
-                $familia = trim($first['Familia'] ?? 'Sin familia');
-                $subfam  = trim($first['SubFamilia'] ?? null);
-                $catSlug = Str::slug($familia);
-
-                $productCategory = ProductCategory::firstOrCreate(
-                    ['slug' => $catSlug, 'partner_id' => $provider->id],
-                    ['name' => $familia, 'subcategory' => $subfam]
-                );
-
-                // ===== Producto (owner=Printec, partner=DV)
                 $slug = 'dv-' . Str::slug($model);
 
-                $product = Product::updateOrCreate(
-                    ['slug' => $slug, 'partner_id' => $provider->id],
-                    [
+                // Buscar si el producto ya existe
+                $existingProduct = Product::where('slug', $slug)
+                    ->where('partner_id', $provider->id)
+                    ->first();
+
+                if ($existingProduct) {
+                    // ════════════════════════════════════════════════════════
+                    // PRODUCTO EXISTENTE: Solo actualizar precio
+                    // ════════════════════════════════════════════════════════
+                    $existingProduct->update([
+                        'price' => (float) ($first['Price'] ?? $existingProduct->price),
+                    ]);
+                    
+                    $product = $existingProduct;
+                    $this->productsUpdated++;
+                    
+                } else {
+                    // ════════════════════════════════════════════════════════
+                    // PRODUCTO NUEVO: Crear con todos los datos
+                    // ════════════════════════════════════════════════════════
+                    $familia = trim($first['Familia'] ?? 'Sin familia');
+                    $subfam  = trim($first['SubFamilia'] ?? null);
+                    $catSlug = Str::slug($familia);
+
+                    $productCategory = ProductCategory::firstOrCreate(
+                        ['slug' => $catSlug, 'partner_id' => $provider->id],
+                        ['name' => $familia, 'subcategory' => $subfam]
+                    );
+
+                    $product = Product::create([
+                        'slug'               => $slug,
+                        'partner_id'         => $provider->id,
                         'owner_id'           => $publisher->id,
                         'model_code'         => $model,
                         'name'               => $first['Nombre Corto'] ?? ($first['NOMBRE'] ?? $model),
@@ -91,66 +133,72 @@ class DobleVelaSeeder extends Seeder
                         'featured'           => false,
                         'new'                => false,
                         'product_category_id'=> $productCategory->id,
-                        'partner_id'         => $provider->id,
-                        'owner_id'           => $publisher->id,
                         'created_by'         => $createdBy,
                         'is_active'          => true,
-                        // NUEVOS CAMPOS
-                        'is_own_product'     => false, // Es producto de proveedor
-                        'is_public'          => true,  // Visible para todos
-                    ]
-                );
+                        'is_own_product'     => false,
+                        'is_public'          => true,
+                    ]);
 
-                $product->wasRecentlyCreated ? $created++ : $updated++;
+                    $this->productsCreated++;
 
-                // ===== Imagen principal del producto
-                $mainImageName = "{$model}_lrg.jpg";
-                $mainLocalPath = "products/doblevela/{$mainImageName}";
-                $this->downloadImageIfNeeded(
-                    "https://www.doblevela.com/images/large/" . rawurlencode($mainImageName),
-                    storage_path("app/public/{$mainLocalPath}")
-                );
-                if ($product->main_image !== $mainLocalPath) {
-                    $product->main_image = $mainLocalPath;
-                    $product->save();
+                    // Imagen principal solo para productos nuevos
+                    $mainImageName = "{$model}_lrg.jpg";
+                    $mainLocalPath = "products/doblevela/{$mainImageName}";
+                    $this->downloadImageIfNeeded(
+                        "https://www.doblevela.com/images/large/" . rawurlencode($mainImageName),
+                        storage_path("app/public/{$mainLocalPath}")
+                    );
+                    $product->update(['main_image' => $mainLocalPath]);
+
+                    // Técnicas de impresión solo para productos nuevos
+                    $this->upsertImpressionTechniques($product->id, trim($first['Tipo Impresion'] ?? ''));
                 }
 
-                // ===== Técnicas de impresión (si existe la tabla)
-                $this->upsertImpressionTechniques($product->id, trim($first['Tipo Impresion'] ?? ''));
-
-                // ===== Variantes + stock por almacén del proveedor
+                // ════════════════════════════════════════════════════════
+                // VARIANTES: Actualizar precio y stock (existentes y nuevas)
+                // ════════════════════════════════════════════════════════
                 foreach ($items as $row) {
                     $sku = trim($row['CLAVE'] ?? '');
                     if ($sku === '') continue;
 
-                    // Color: "04 - ROJO" => "ROJO"
                     $colorName = trim(preg_replace('/^\d+\s*-\s*/', '', (string)($row['COLOR'] ?? '')));
-                    $colorName  = Str::of($colorName)->lower();
+                    $colorName = Str::of($colorName)->lower()->toString();
                     $colorKey  = Str::of($colorName)->lower()->replace(' ', '')->toString();
 
-                    // Imagen variante
-                    $variantImageName  = Str::of($model)->replace(' ', '')->append('_', $colorKey, '_lrg.jpg')->toString();
-                    $variantLocalPath  = "products/doblevela/{$variantImageName}";
-                    $this->downloadImageIfNeeded(
-                        "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName),
-                        storage_path("app/public/{$variantLocalPath}")
-                    );
+                    // Buscar variante existente
+                    $existingVariant = ProductVariant::where('sku', $sku)->first();
 
-                    // Upsert variante
-                    $variant = ProductVariant::updateOrCreate(
-                        ['sku' => $sku],
-                        [
+                    if ($existingVariant) {
+                        // Variante existente: solo actualizar precio
+                        $existingVariant->update([
+                            'price' => (float) ($row['Price'] ?? $existingVariant->price),
+                        ]);
+                        $variant = $existingVariant;
+                        $this->variantsUpdated++;
+                    } else {
+                        // Variante nueva: crear con todos los datos
+                        $variantImageName = Str::of($model)->replace(' ', '')->append('_', $colorKey, '_lrg.jpg')->toString();
+                        $variantLocalPath = "products/doblevela/{$variantImageName}";
+                        $this->downloadImageIfNeeded(
+                            "https://www.doblevela.com/images/large/" . rawurlencode($variantImageName),
+                            storage_path("app/public/{$variantLocalPath}")
+                        );
+
+                        $variant = ProductVariant::create([
+                            'sku'        => $sku,
                             'product_id' => $product->id,
                             'slug'       => Str::slug($sku),
                             'code_name'  => $sku,
                             'color_name' => $colorName ?: null,
                             'image'      => $variantLocalPath,
                             'price'      => (float) ($row['Price'] ?? $product->price),
-                        ]
-                    );
-                    $variants++;
+                        ]);
+                        $this->variantsCreated++;
+                    }
 
-                    // Stock por almacén (Disponible - Comprometido)
+                    // ════════════════════════════════════════════════════════
+                    // STOCK: Siempre actualizar (Disponible - Comprometido)
+                    // ════════════════════════════════════════════════════════
                     foreach ($dvWarehouses as $code => $warehouse) {
                         $dispKey = "Disponible Almacen {$code}";
                         $compKey = "Comprometido Almacen {$code}";
@@ -162,13 +210,68 @@ class DobleVelaSeeder extends Seeder
                             ['variant_id' => $variant->id, 'warehouse_id' => $warehouse->id],
                             ['stock' => $qty]
                         );
-                        $stocks++;
+                        $this->stocksUpdated++;
                     }
                 }
             });
         }
 
-        $this->command?->info("Doble Vela → productos creados/act: {$created}/{$updated}, variantes: {$variants}, stocks: {$stocks}.");
+        // ════════════════════════════════════════════════════════
+        // DESACTIVAR productos y variantes que ya no existen en JSON
+        // ════════════════════════════════════════════════════════
+        $this->deactivateRemovedItems($provider->id, $jsonSlugs, $jsonSkus);
+
+        // Reporte final
+        $this->command?->info("═══════════════════════════════════════════════════════");
+        $this->command?->info("📦 Doble Vela - Sincronización completada:");
+        $this->command?->info("   Productos creados:      {$this->productsCreated}");
+        $this->command?->info("   Productos actualizados: {$this->productsUpdated}");
+        $this->command?->info("   Productos desactivados: {$this->productsDeactivated}");
+        $this->command?->info("   Variantes creadas:      {$this->variantsCreated}");
+        $this->command?->info("   Variantes actualizadas: {$this->variantsUpdated}");
+        $this->command?->info("   Variantes desactivadas: {$this->variantsDeactivated}");
+        $this->command?->info("   Stocks actualizados:    {$this->stocksUpdated}");
+        $this->command?->info("═══════════════════════════════════════════════════════");
+    }
+
+    /**
+     * Desactivar productos y variantes que ya no vienen en el JSON
+     */
+    private function deactivateRemovedItems(int $providerId, array $jsonSlugs, array $jsonSkus): void
+    {
+        // Desactivar productos que ya no existen en JSON
+        $deactivatedProducts = Product::where('partner_id', $providerId)
+            ->where('is_own_product', false)
+            ->where('is_active', true)
+            ->whereNotIn('slug', $jsonSlugs)
+            ->update(['is_active' => false]);
+        
+        $this->productsDeactivated = $deactivatedProducts;
+
+        if ($deactivatedProducts > 0) {
+            $this->command?->warn("⚠️  {$deactivatedProducts} productos desactivados (ya no existen en API)");
+        }
+
+        // Desactivar variantes que ya no existen en JSON
+        // Primero obtener IDs de productos de Doble Vela
+        $dvProductIds = Product::where('partner_id', $providerId)
+            ->where('is_own_product', false)
+            ->pluck('id');
+
+        // Poner stock en 0 para variantes que ya no existen
+        $removedVariants = ProductVariant::whereIn('product_id', $dvProductIds)
+            ->whereNotIn('sku', $jsonSkus)
+            ->get();
+
+        foreach ($removedVariants as $variant) {
+            // Poner todo el stock en 0
+            ProductStock::where('variant_id', $variant->id)->update(['stock' => 0]);
+            $this->variantsDeactivated++;
+        }
+
+        if ($this->variantsDeactivated > 0) {
+            $this->command?->warn("⚠️  {$this->variantsDeactivated} variantes con stock en 0 (ya no existen en API)");
+        }
     }
 
     private function upsertImpressionTechniques(int $productId, string $codes): void
@@ -196,18 +299,6 @@ class DobleVelaSeeder extends Seeder
                 ['name' => $map[$code] ?? $code, 'updated_at' => now(), 'created_at' => now()]
             );
         }
-
-        // (Opcional) Sync: eliminar técnicas que ya no aparecen
-        $existing = DB::table('product_impression_technique')
-            ->where('product_id', $productId)->pluck('code')->toArray();
-
-        $toDelete = array_diff($existing, $tokens->all());
-        if ($toDelete) {
-            DB::table('product_impression_technique')
-                ->where('product_id', $productId)
-                ->whereIn('code', $toDelete)
-                ->delete();
-        }
     }
 
     private function downloadImageIfNeeded(string $url, string $destPath): void
@@ -231,11 +322,9 @@ class DobleVelaSeeder extends Seeder
 
             if ($img !== false && strlen($img) > 0) {
                 file_put_contents($destPath, $img);
-            } else {
-                $this->command?->warn("No se pudo descargar imagen: {$url}");
             }
         } catch (\Throwable $e) {
-            $this->command?->warn("Error descargando imagen {$url}: {$e->getMessage()}");
+            // Silenciar errores de imágenes
         }
     }
 }
