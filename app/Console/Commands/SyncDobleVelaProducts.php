@@ -117,7 +117,8 @@ class SyncDobleVelaProducts extends Command
                     'allow_self_signed' => true
                 ]
             ]),
-            'connection_timeout' => 30,
+            'connection_timeout' => 60,
+            'default_socket_timeout' => 300,
         ];
         
         try {
@@ -127,54 +128,14 @@ class SyncDobleVelaProducts extends Command
             $functions = $client->__getFunctions();
             $this->line('📋 Métodos SOAP disponibles: ' . count($functions));
             
-            // Llamar al método para obtener productos
-            // NOTA: Ajusta el nombre del método según la documentación de Doble Vela
-            // Posibles nombres: GetProductos, ObtenerProductos, getProducts, etc.
-            $this->info('📡 Solicitando productos...');
+            // Llamar al método GetExistenciaAll
+            $this->info('📡 Solicitando productos con GetExistenciaAll...');
             
-            // Intenta con diferentes nombres de método comunes
-            $response = null;
-            $methodsToTry = ['GetProductos', 'ObtenerProductos', 'getProducts', 'Productos', 'ListaProductos'];
+            $response = $client->GetExistenciaAll([
+                'key' => $key
+            ]);
             
-            foreach ($methodsToTry as $method) {
-                if (in_array($method, array_map(function($f) {
-                    preg_match('/^\w+\s+(\w+)\(/', $f, $m);
-                    return $m[1] ?? '';
-                }, $functions))) {
-                    $this->line("🔄 Intentando método: {$method}");
-                    try {
-                        $response = $client->$method(['key' => $key]);
-                        break;
-                    } catch (\Exception $e) {
-                        $this->warn("⚠️ Método {$method} falló: " . $e->getMessage());
-                    }
-                }
-            }
-            
-            // Si no encontró método automáticamente, usa el primero con el key
-            if ($response === null) {
-                $this->warn('⚠️ No se encontró método automáticamente. Listando métodos disponibles:');
-                foreach ($functions as $func) {
-                    $this->line("   - {$func}");
-                }
-                
-                // Intento genérico con el primer método que contenga "Product"
-                foreach ($functions as $func) {
-                    if (stripos($func, 'product') !== false || stripos($func, 'producto') !== false) {
-                        preg_match('/^\w+\s+(\w+)\(/', $func, $m);
-                        $methodName = $m[1] ?? null;
-                        if ($methodName) {
-                            $this->info("🔄 Intentando: {$methodName}");
-                            $response = $client->$methodName(['key' => $key]);
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if ($response === null) {
-                throw new \Exception('No se pudo determinar el método SOAP correcto. Revisa la documentación de Doble Vela.');
-            }
+            $this->info('✅ Respuesta recibida del API');
             
             // Convertir respuesta a array
             $products = $this->parseResponse($response);
@@ -191,41 +152,79 @@ class SyncDobleVelaProducts extends Command
      */
     private function parseResponse($response): array
     {
+        // Debug: mostrar estructura de respuesta
+        $this->line('🔍 Analizando estructura de respuesta...');
+        
         // Si ya es array, retornarlo
         if (is_array($response)) {
+            $this->line('   → Respuesta es array directo');
             return $response;
         }
         
         // Si es objeto, convertir a array
         if (is_object($response)) {
-            $response = json_decode(json_encode($response), true);
-        }
-        
-        // Buscar el array de productos en la respuesta
-        // La estructura puede variar según el WSDL
-        if (isset($response['productos'])) {
-            return $response['productos'];
-        }
-        if (isset($response['Productos'])) {
-            return $response['Productos'];
-        }
-        if (isset($response['result'])) {
-            return is_array($response['result']) ? $response['result'] : [$response['result']];
-        }
-        if (isset($response['return'])) {
-            return is_array($response['return']) ? $response['return'] : [$response['return']];
-        }
-        
-        // Si la respuesta es directamente el array de productos
-        if (is_array($response) && isset($response[0])) {
-            return $response;
-        }
-        
-        // Último intento: buscar cualquier array grande en la respuesta
-        foreach ($response as $key => $value) {
-            if (is_array($value) && count($value) > 10) {
-                $this->line("📦 Encontrado array de productos en key: {$key}");
-                return $value;
+            $responseArray = json_decode(json_encode($response), true);
+            
+            // Mostrar keys disponibles para debug
+            $this->line('   → Keys en respuesta: ' . implode(', ', array_keys($responseArray)));
+            
+            // Buscar GetExistenciaAllResult (estructura típica de SOAP .NET)
+            if (isset($responseArray['GetExistenciaAllResult'])) {
+                $result = $responseArray['GetExistenciaAllResult'];
+                $this->line('   → Encontrado GetExistenciaAllResult');
+                
+                // Puede ser string JSON o array
+                if (is_string($result)) {
+                    $decoded = json_decode($result, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $decoded;
+                    }
+                }
+                
+                if (is_array($result)) {
+                    return $result;
+                }
+            }
+            
+            // Buscar otras estructuras comunes
+            $keysToTry = ['Result', 'result', 'return', 'data', 'productos', 'Productos', 'items'];
+            foreach ($keysToTry as $key) {
+                if (isset($responseArray[$key])) {
+                    $this->line("   → Encontrado key: {$key}");
+                    $data = $responseArray[$key];
+                    
+                    if (is_string($data)) {
+                        $decoded = json_decode($data, true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            return $decoded;
+                        }
+                    }
+                    
+                    if (is_array($data)) {
+                        return $data;
+                    }
+                }
+            }
+            
+            // Si la respuesta tiene un solo key con array grande
+            foreach ($responseArray as $key => $value) {
+                if (is_array($value) && count($value) > 5) {
+                    $this->line("   → Usando array grande en key: {$key} (" . count($value) . " items)");
+                    return $value;
+                }
+                // Si es string, intentar decodificar JSON
+                if (is_string($value) && strlen($value) > 100) {
+                    $decoded = json_decode($value, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $this->line("   → Decodificado JSON de key: {$key} (" . count($decoded) . " items)");
+                        return $decoded;
+                    }
+                }
+            }
+            
+            // Último recurso: devolver el array completo
+            if (!empty($responseArray)) {
+                return $responseArray;
             }
         }
         
