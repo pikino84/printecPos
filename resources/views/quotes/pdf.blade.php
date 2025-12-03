@@ -11,13 +11,17 @@
         }
         .header {
             margin-bottom: 30px;
-            border-bottom: 2px solid #007bff;
+            border-bottom: 2px solid #1F4C94;
             padding-bottom: 10px;
         }
         .header h1 {
             margin: 0;
-            color: #007bff;
+            color: #1F4C94;
             font-size: 24px;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
         }
         .header p {
             margin: 5px 0;
@@ -25,6 +29,13 @@
         .company-info {
             float: left;
             width: 50%;
+            background-color: #1F4C94;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+        }
+        .company-info p {
+            color: white;
         }
         .quote-info {
             float: right;
@@ -42,7 +53,7 @@
             margin-top: 20px;
             margin-bottom: 10px;
             font-weight: bold;
-            border-left: 4px solid #007bff;
+            border-left: 4px solid #1F4C94;
         }
         table {
             width: 100%;
@@ -50,7 +61,7 @@
             margin-top: 10px;
         }
         table th {
-            background-color: #007bff;
+            background-color: #1F4C94;
             color: white;
             padding: 8px;
             text-align: left;
@@ -59,6 +70,12 @@
         table td {
             padding: 8px;
             border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
         }
         table tr:nth-child(even) {
             background-color: #f8f9fa;
@@ -82,7 +99,7 @@
             padding: 5px;
         }
         .total-row {
-            background-color: #007bff !important;
+            background-color: #1F4C94 !important;
             color: white;
             font-weight: bold;
             font-size: 14px;
@@ -109,7 +126,7 @@
             font-weight: bold;
         }
         .status-draft { background-color: #6c757d; color: white; }
-        .status-sent { background-color: #007bff; color: white; }
+        .status-sent { background-color: #1F4C94; color: white; }
         .status-accepted { background-color: #28a745; color: white; }
         .status-rejected { background-color: #dc3545; color: white; }
         .status-expired { background-color: #ffc107; color: #000; }
@@ -119,7 +136,7 @@
     <!-- Header -->
     <div class="header clearfix">
         <div class="company-info">
-            <h1>PRINTEC</h1>
+            <img src="{{ public_path('images/logo_printec_white.png') }}" class="logo" alt="Printec">
             @if($quote->partner->defaultEntity)
                 <p><strong>{{ $quote->partner->defaultEntity->razon_social }}</strong></p>
                 @if($quote->partner->defaultEntity->rfc)
@@ -180,17 +197,25 @@
     <table>
         <thead>
             <tr>
+                <th style="width: 8%;">Imagen</th>
                 <th style="width: 10%;">SKU</th>
-                <th style="width: 40%;">Descripción</th>
-                <th style="width: 15%;">Almacén</th>
+                <th style="width: 32%;">Descripción</th>
+                <th style="width: 12%;">Almacén</th>
                 <th style="width: 10%;" class="text-center">Cantidad</th>
-                <th style="width: 12%;" class="text-right">P. Unitario</th>
-                <th style="width: 13%;" class="text-right">Subtotal</th>
+                <th style="width: 13%;" class="text-right">P. Unitario</th>
+                <th style="width: 15%;" class="text-right">Subtotal</th>
             </tr>
         </thead>
         <tbody>
             @foreach($quote->items as $item)
                 <tr>
+                    <td class="text-center">
+                        @if($item->variant->image_url)
+                            <img src="{{ public_path(str_replace('/storage', 'storage', $item->variant->image_url)) }}" class="product-image" alt="">
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td>{{ $item->variant->sku }}</td>
                     <td>
                         <strong>{{ $item->product->name }}</strong>

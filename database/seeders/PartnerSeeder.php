@@ -22,7 +22,7 @@ class PartnerSeeder extends Seeder
                 'name' => 'Printec',
                 'contact_name'     => 'Eduardo Butron',
                 'contact_phone'    => '9981669212',
-                'contact_email'    => 'ebutron@printec.mx',
+                'contact_email'    => 'eduardo@printec.mx',
                 'direccion'        => 'Calle Ficticia 123, CDMX',
                 'type'             => 'mixto', // si tu tabla tiene este campo
             ]

@@ -30,7 +30,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name'  => 'Eduardo Butrón',
-                'email' => 'ebutron@printec.mx',
+                'email' => 'eduardo@printec.mx',
                 'password'   => 'L4l0#$@@$#',
                 'partner_id' => $printecId,
                 'roles'      => ['super admin'],
