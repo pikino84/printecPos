@@ -80,8 +80,8 @@
                                     <th>Img</th>
                                     <th>Stock Total</th>
                                     <th>Color</th>
-                                    <th>Bruto</th>
-                                    <th>Precio</th>
+                                    <th>Tu precio</th>
+                                    <th>{{ $partnerPricing->getEffectiveTier()->name }}</th>
                                     <th>Cantidad</th>
                                     <th>Agregar</th>
                                     @foreach($almacenesUnicos as $warehouse)
