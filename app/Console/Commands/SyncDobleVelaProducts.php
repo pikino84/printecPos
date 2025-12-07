@@ -98,11 +98,23 @@ class SyncDobleVelaProducts extends Command
     {
         $wsdl = config('services.doblevela.wsdl');
         $key = config('services.doblevela.key');
-        
+
+        // Log detallado de configuración
+        Log::info('🔧 Configuración Doble Vela', [
+            'wsdl' => $wsdl,
+            'key_presente' => !empty($key),
+            'key_length' => strlen($key ?? ''),
+            'key_preview' => $key ? (substr($key, 0, 5) . '***' . substr($key, -5)) : 'N/A',
+        ]);
+        $this->line("🔧 WSDL: {$wsdl}");
+        $this->line("🔧 Key length: " . strlen($key ?? '') . " chars");
+
         if (empty($wsdl) || empty($key)) {
-            throw new \Exception('Configuración DOBLEVELA_WSDL o DOBLEVELA_KEY no definida en .env');
+            $errorMsg = 'Configuración DOBLEVELA_WSDL o DOBLEVELA_KEY no definida en .env';
+            Log::error($errorMsg, ['wsdl' => $wsdl, 'key_empty' => empty($key)]);
+            throw new \Exception($errorMsg);
         }
-        
+
         $this->info("🔗 Conectando a: {$wsdl}");
         
         // Crear cliente SOAP
@@ -122,11 +134,15 @@ class SyncDobleVelaProducts extends Command
         ];
         
         try {
+            $this->info('📡 Iniciando conexión SOAP...');
+            Log::info('📡 Iniciando conexión SOAP', ['wsdl' => $wsdl]);
+
             $client = new \SoapClient($wsdl, $options);
-            
+
             // Listar métodos disponibles (para debug)
             $functions = $client->__getFunctions();
             $this->line('📋 Métodos SOAP disponibles: ' . count($functions));
+            Log::info('📋 Métodos SOAP disponibles', ['count' => count($functions), 'methods' => array_slice($functions, 0, 10)]);
             
             // Llamar al método GetExistenciaAll
             $this->info('📡 Solicitando productos con GetExistenciaAll...');
@@ -172,18 +188,87 @@ class SyncDobleVelaProducts extends Command
             }
             
             if ($response === null) {
+                Log::error('❌ No se pudo conectar con ningún nombre de parámetro', [
+                    'ultimo_error' => $lastError,
+                    'parametros_probados' => $paramNames,
+                ]);
                 throw new \Exception('No se pudo conectar con ningún nombre de parámetro. Último error: ' . $lastError);
             }
-            
+
             $this->info('✅ Respuesta recibida del API');
-            
+
+            // Log detallado de la respuesta raw
+            $rawResponse = json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $responsePreview = substr($rawResponse, 0, 2000);
+            Log::info('📥 Respuesta raw del API (preview)', [
+                'response_type' => gettype($response),
+                'response_preview' => $responsePreview,
+                'response_length' => strlen($rawResponse),
+            ]);
+            $this->line("📥 Response type: " . gettype($response));
+            $this->line("📥 Response length: " . strlen($rawResponse) . " chars");
+
+            // Mostrar las primeras líneas del response para debug
+            if (is_object($response)) {
+                $responseArray = json_decode(json_encode($response), true);
+                $this->line("📥 Response keys: " . implode(', ', array_keys($responseArray)));
+
+                // Si tiene GetExistenciaAllResult, mostrar su contenido
+                if (isset($responseArray['GetExistenciaAllResult'])) {
+                    $result = $responseArray['GetExistenciaAllResult'];
+                    $this->line("📥 GetExistenciaAllResult type: " . gettype($result));
+                    if (is_string($result)) {
+                        $this->line("📥 GetExistenciaAllResult preview: " . substr($result, 0, 500));
+                        Log::info('📥 GetExistenciaAllResult (string)', ['preview' => substr($result, 0, 1000)]);
+                    }
+                }
+            }
+
+            // Verificar si la API rechazó por horario
+            $responseArray = json_decode(json_encode($response), true);
+            if (isset($responseArray['GetExistenciaAllResult'])) {
+                $result = $responseArray['GetExistenciaAllResult'];
+                if (is_string($result)) {
+                    $decoded = json_decode($result, true);
+                    if (isset($decoded['intCodigo']) && $decoded['intCodigo'] !== 0) {
+                        $mensaje = $decoded['strMensaje'] ?? 'Error desconocido';
+                        Log::warning('⚠️ API Doble Vela rechazó la petición', [
+                            'codigo' => $decoded['intCodigo'],
+                            'mensaje' => $mensaje,
+                        ]);
+                        $this->error("⚠️ API rechazó petición: [{$decoded['intCodigo']}] {$mensaje}");
+                        throw new \Exception("API Doble Vela: {$mensaje} (código {$decoded['intCodigo']})");
+                    }
+                }
+            }
+
             // Convertir respuesta a array
             $products = $this->parseResponse($response);
-            
+
+            Log::info('📦 Productos parseados', [
+                'count' => count($products),
+                'sample' => array_slice($products, 0, 2),
+            ]);
+
             return $products;
-            
+
         } catch (\SoapFault $e) {
+            Log::error('❌ Error SOAP', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'faultcode' => $e->faultcode ?? null,
+                'faultstring' => $e->faultstring ?? null,
+                'last_request' => $client->__getLastRequest() ?? null,
+                'last_response' => $client->__getLastResponse() ?? null,
+            ]);
+            $this->error("SOAP Fault: " . $e->faultstring ?? $e->getMessage());
             throw new \Exception('Error SOAP: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('❌ Error general en downloadFromSoap', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         }
     }
     
@@ -194,6 +279,7 @@ class SyncDobleVelaProducts extends Command
     {
         // Debug: mostrar estructura de respuesta
         $this->line('🔍 Analizando estructura de respuesta...');
+        Log::info('🔍 Iniciando parseResponse', ['response_type' => gettype($response)]);
         
         // Si ya es array, verificar si tiene Resultado
         if (is_array($response)) {
@@ -277,6 +363,10 @@ class SyncDobleVelaProducts extends Command
             }
         }
         
+        Log::error('❌ No se pudo parsear la respuesta SOAP', [
+            'response_type' => gettype($response),
+            'response_preview' => substr(json_encode($response), 0, 1000),
+        ]);
         throw new \Exception('No se pudo parsear la respuesta SOAP. Estructura desconocida.');
     }
     
