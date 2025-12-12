@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->string('apellido');
-            $table->string('email')->nullable();
+            $table->string('email')->nullable()->unique();
             $table->string('telefono', 30)->nullable();
             $table->string('razon_social')->nullable();
             $table->string('rfc', 13)->nullable();
