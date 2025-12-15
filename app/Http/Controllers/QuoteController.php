@@ -100,6 +100,7 @@ class QuoteController extends Controller
             ], function($mail) use ($quote, $request, $pdfOutput) {
                 $mail->from(config('mail.from.address'), config('mail.from.name'))
                     ->to($request->email)
+                    ->cc('info@printec.mx')
                     ->subject("Cotización {$quote->quote_number} - Printec")
                     ->attachData($pdfOutput, "cotizacion-{$quote->quote_number}.pdf", [
                         'mime' => 'application/pdf',
@@ -283,6 +284,48 @@ class QuoteController extends Controller
 
             return back()->with('error', 'Error al editar cotización: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Aceptar cotización (cambiar status de sent a accepted)
+     */
+    public function accept(Quote $quote)
+    {
+        // Verificar permisos
+        if ($quote->user_id !== Auth::id() && !Auth::user()->hasRole(['super admin', 'admin'])) {
+            abort(403);
+        }
+
+        if (!$quote->canBeAccepted()) {
+            return back()->with('error', 'Esta cotización no puede ser aceptada. Debe estar en estado "Enviada" y no estar expirada.');
+        }
+
+        if ($quote->accept()) {
+            return back()->with('success', 'Cotización aceptada exitosamente. Ahora puede generar las facturas.');
+        }
+
+        return back()->with('error', 'Error al aceptar la cotización.');
+    }
+
+    /**
+     * Rechazar cotización
+     */
+    public function reject(Quote $quote)
+    {
+        // Verificar permisos
+        if ($quote->user_id !== Auth::id() && !Auth::user()->hasRole(['super admin', 'admin'])) {
+            abort(403);
+        }
+
+        if ($quote->status !== 'sent') {
+            return back()->with('error', 'Solo se pueden rechazar cotizaciones en estado "Enviada".');
+        }
+
+        if ($quote->reject()) {
+            return back()->with('success', 'Cotización rechazada.');
+        }
+
+        return back()->with('error', 'Error al rechazar la cotización.');
     }
 
     /**
