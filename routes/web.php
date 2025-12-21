@@ -59,6 +59,10 @@ Route::middleware('auth')->group(function () {
         Route::get('partners/{partner}/users', [PartnerController::class, 'users'])->name('partners.users');
         //Productos por socio
         Route::get('partners/{partner}/products', [PartnerController::class, 'products'])->name('partners.products');
+        // API del catálogo para partners
+        Route::post('partners/{partner}/generate-api-key', [PartnerController::class, 'generateApiKey'])->name('partners.generate-api-key');
+        Route::post('partners/{partner}/revoke-api-key', [PartnerController::class, 'revokeApiKey'])->name('partners.revoke-api-key');
+        Route::put('partners/{partner}/api-settings', [PartnerController::class, 'updateApiSettings'])->name('partners.api-settings');
 
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
@@ -107,10 +111,6 @@ Route::middleware('auth')->group(function () {
 
 
 
-    Route::resource('partners', PartnerController::class)->middleware('auth');
-    Route::post('partners/{partner}/generate-api-key', [PartnerController::class, 'generateApiKey'])->name('partners.generate-api-key');
-    Route::post('partners/{partner}/revoke-api-key', [PartnerController::class, 'revokeApiKey'])->name('partners.revoke-api-key');
-    Route::put('partners/{partner}/api-settings', [PartnerController::class, 'updateApiSettings'])->name('partners.api-settings');
     Route::resource('partners.entities', PartnerEntityController::class)->parameters(['entities' => 'entity'])->shallow();
     Route::resource('partner-entities.bank-accounts', PartnerEntityBankAccountController::class)->parameters(['bank-accounts' => 'bank_account'])->shallow();
     Route::resource('partner-products', PartnerProductController::class)->parameters(['partner-products' => 'product'])->shallow();
