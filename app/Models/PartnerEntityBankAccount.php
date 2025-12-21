@@ -17,6 +17,7 @@ class PartnerEntityBankAccount extends Model
         'alias',
         'account_holder',
         'account_number',
+        'card_number',
         'clabe',
         'swift',
         'iban',

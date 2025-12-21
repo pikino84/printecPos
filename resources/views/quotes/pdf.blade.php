@@ -288,6 +288,9 @@
         @if($bankAccount->account_number)
         <p><strong>CUENTA:</strong> {{ $bankAccount->account_number }}</p>
         @endif
+        @if($bankAccount->card_number)
+        <p><strong>NÚMERO DE TARJETA:</strong> {{ $bankAccount->card_number }}</p>
+        @endif
         @if($bankAccount->clabe)
         <p><strong>CLABE:</strong> {{ $bankAccount->clabe }}</p>
         @endif

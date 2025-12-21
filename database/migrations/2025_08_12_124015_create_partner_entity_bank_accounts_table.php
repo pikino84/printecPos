@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('bank_name');                 // BBVA, Santander, etc.
             $table->string('account_holder')->nullable(); // Titular (si difiere)
             $table->string('account_number')->nullable(); // usa string para ceros a la izquierda
+            $table->string('card_number', 20)->nullable(); // Número de tarjeta
             $table->string('clabe', 18)->nullable();      // MX CLABE 18 dígitos
             $table->string('swift')->nullable();
             $table->string('iban')->nullable();

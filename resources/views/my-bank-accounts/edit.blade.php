@@ -84,13 +84,26 @@
 
                     <div class="form-group mb-3">
                         <label class="form-label">Número de Cuenta</label>
-                        <input type="text" 
-                               name="account_number" 
-                               class="form-control @error('account_number') is-invalid @enderror" 
+                        <input type="text"
+                               name="account_number"
+                               class="form-control @error('account_number') is-invalid @enderror"
                                value="{{ old('account_number', $bankAccount->account_number) }}"
                                maxlength="40"
                                placeholder="Número de cuenta bancaria">
                         @error('account_number')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Número de Tarjeta</label>
+                        <input type="text"
+                               name="card_number"
+                               class="form-control @error('card_number') is-invalid @enderror"
+                               value="{{ old('card_number', $bankAccount->card_number) }}"
+                               maxlength="20"
+                               placeholder="16 dígitos de la tarjeta">
+                        @error('card_number')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

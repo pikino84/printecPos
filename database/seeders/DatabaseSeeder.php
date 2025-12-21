@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             ProductWarehouseFourPromotionalSeeder::class,
             ProductWarehouseCitySeeder::class,
             DobleVelaSeeder::class,
+            PartnerSeeder::class,
             OwnProductsExampleSeeder::class,
             /* FourPromotionalSeeder::class,
             ProductWarehouseInnovationSeeder::class,*/
