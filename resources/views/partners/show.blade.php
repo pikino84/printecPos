@@ -203,7 +203,7 @@
 &lt;div id="printec-catalog"&gt;&lt;/div&gt;
 
 &lt;!-- Script del widget --&gt;
-&lt;script src="{{ url('/js/printec-catalog-widget.js') }}"&gt;&lt;/script&gt;
+&lt;script src="{{ url('/js/printec-catalog-widget.js?v=1.0.1') }}"&gt;&lt;/script&gt;
 &lt;script&gt;
   PrintecCatalog.init({
     apiKey: '{{ $partner->api_key }}',
@@ -324,7 +324,7 @@ function copyWidgetCode() {
 <div id="printec-catalog"></div>
 
 <!-- Script del widget -->
-<script src="{{ url('/js/printec-catalog-widget.js') }}"><\/script>
+<script src="{{ url('/js/printec-catalog-widget.js?v=1.0.1') }}"><\/script>
 <script>
   PrintecCatalog.init({
     apiKey: '{{ $partner->api_key ?? '' }}',

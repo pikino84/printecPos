@@ -1,10 +1,10 @@
 /**
- * Printec Catalog Widget
+ * Printec Catalog Widget v1.0.1
  * Widget embebible para mostrar el catálogo de productos de Printec en sitios externos
  *
  * Uso:
  * <div id="printec-catalog"></div>
- * <script src="https://tu-dominio.com/js/printec-catalog-widget.js"></script>
+ * <script src="https://tu-dominio.com/js/printec-catalog-widget.js?v=1.0.1"></script>
  * <script>
  *   PrintecCatalog.init({
  *     apiKey: 'TU_API_KEY',
