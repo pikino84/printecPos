@@ -24,10 +24,13 @@ class Partner extends Model
         'comments',
         'is_active',
         'default_entity_id',
+        'api_key',
+        'api_show_prices',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'api_show_prices' => 'boolean',
     ];
 
     // ========================================================================
@@ -363,8 +366,26 @@ class Partner extends Model
             'Asociado' => 'Vende productos, no requiere almacén',
             'Mixto' => 'Provee y vende, requiere almacén'
         ];
-        
+
         return $descriptions[$this->type] ?? '';
+    }
+
+    /**
+     * Generar nueva API key para el partner
+     */
+    public function generateApiKey(): string
+    {
+        $apiKey = bin2hex(random_bytes(32));
+        $this->update(['api_key' => $apiKey]);
+        return $apiKey;
+    }
+
+    /**
+     * Revocar API key del partner
+     */
+    public function revokeApiKey(): void
+    {
+        $this->update(['api_key' => null]);
     }
 
     /**

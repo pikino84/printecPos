@@ -124,4 +124,45 @@ class PartnerController extends Controller
     {
         User::where('partner_id', $partner->id)->update(['is_active' => false]);
     }
+
+    /**
+     * Generar nueva API key para el partner
+     */
+    public function generateApiKey(Partner $partner)
+    {
+        $this->authorize('partners_index');
+
+        $partner->generateApiKey();
+
+        return redirect()->route('partners.show', $partner)
+            ->with('success', 'API key generada exitosamente.');
+    }
+
+    /**
+     * Revocar API key del partner
+     */
+    public function revokeApiKey(Partner $partner)
+    {
+        $this->authorize('partners_index');
+
+        $partner->revokeApiKey();
+
+        return redirect()->route('partners.show', $partner)
+            ->with('success', 'API key revocada exitosamente.');
+    }
+
+    /**
+     * Actualizar configuración de API (mostrar precios)
+     */
+    public function updateApiSettings(Request $request, Partner $partner)
+    {
+        $this->authorize('partners_index');
+
+        $partner->update([
+            'api_show_prices' => $request->boolean('api_show_prices'),
+        ]);
+
+        return redirect()->route('partners.show', $partner)
+            ->with('success', 'Configuración de API actualizada.');
+    }
 }

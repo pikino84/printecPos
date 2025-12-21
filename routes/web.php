@@ -108,6 +108,9 @@ Route::middleware('auth')->group(function () {
 
 
     Route::resource('partners', PartnerController::class)->middleware('auth');
+    Route::post('partners/{partner}/generate-api-key', [PartnerController::class, 'generateApiKey'])->name('partners.generate-api-key');
+    Route::post('partners/{partner}/revoke-api-key', [PartnerController::class, 'revokeApiKey'])->name('partners.revoke-api-key');
+    Route::put('partners/{partner}/api-settings', [PartnerController::class, 'updateApiSettings'])->name('partners.api-settings');
     Route::resource('partners.entities', PartnerEntityController::class)->parameters(['entities' => 'entity'])->shallow();
     Route::resource('partner-entities.bank-accounts', PartnerEntityBankAccountController::class)->parameters(['bank-accounts' => 'bank_account'])->shallow();
     Route::resource('partner-products', PartnerProductController::class)->parameters(['partner-products' => 'product'])->shallow();
