@@ -246,22 +246,33 @@ class PartnerEntityController extends Controller
                     ->ignore($entity->id)
                     ->where(fn($q)=>$q->where('partner_id',$partner->id))
             ],
-            'rfc'             => ['nullable','string','max:20'],
+            'rfc'             => ['nullable','string','max:13'],
             'telefono'        => ['nullable','string'],
             'correo_contacto' => ['nullable','email'],
             'direccion'       => ['nullable','string'],
             'logo'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'remove_logo'     => 'sometimes|boolean',
             'is_default'      => ['sometimes','boolean'],
+            // Datos fiscales
+            'fiscal_regime'     => ['nullable','string','max:10'],
+            'zip_code'          => ['nullable','string','max:5'],
+            'invoice_series'    => ['nullable','string','max:10'],
+            'invoice_next_folio'=> ['nullable','integer','min:1'],
+            // Certificados CSD
+            'csd_cer'         => ['nullable','file','max:10240'],
+            'csd_key'         => ['nullable','file','max:10240'],
+            'csd_password'    => ['nullable','string'],
+            'remove_csd'      => ['sometimes','boolean'],
         ]);
 
+        // Manejar logo
         if ($request->hasFile('logo')) {
             if ($entity->logo_path) {
                 Storage::disk('public')->delete($entity->logo_path);
             }
             $data['logo_path'] = $request->file('logo')->store('partners/logos', 'public');
         }
-    
+
         if ($request->boolean('remove_logo') && $entity->logo_path) {
             Storage::disk('public')->delete($entity->logo_path);
             $data['logo_path'] = null;
@@ -271,7 +282,40 @@ class PartnerEntityController extends Controller
             $partner->entities()->where('id','!=',$entity->id)->update(['is_default' => false]);
             $data['is_default'] = true;
         }
-        
+
+        // Manejar certificados CSD
+        if ($request->boolean('remove_csd')) {
+            if ($entity->csd_cer_path) Storage::disk('local')->delete($entity->csd_cer_path);
+            if ($entity->csd_key_path) Storage::disk('local')->delete($entity->csd_key_path);
+            $data['csd_cer_path'] = null;
+            $data['csd_key_path'] = null;
+            $data['csd_password'] = null;
+            $data['csd_valid_from'] = null;
+            $data['csd_valid_until'] = null;
+        } else {
+            if ($request->hasFile('csd_cer')) {
+                if ($entity->csd_cer_path) Storage::disk('local')->delete($entity->csd_cer_path);
+                $cerFile = $request->file('csd_cer');
+                $cerPath = "csd/{$entity->id}/" . $cerFile->getClientOriginalName();
+                Storage::disk('local')->put($cerPath, file_get_contents($cerFile));
+                $data['csd_cer_path'] = $cerPath;
+            }
+            if ($request->hasFile('csd_key')) {
+                if ($entity->csd_key_path) Storage::disk('local')->delete($entity->csd_key_path);
+                $keyFile = $request->file('csd_key');
+                $keyPath = "csd/{$entity->id}/" . $keyFile->getClientOriginalName();
+                Storage::disk('local')->put($keyPath, file_get_contents($keyFile));
+                $data['csd_key_path'] = $keyPath;
+            }
+            if ($request->filled('csd_password')) {
+                $data['csd_password'] = $request->csd_password;
+            } else {
+                unset($data['csd_password']);
+            }
+        }
+
+        unset($data['logo'], $data['remove_logo'], $data['csd_cer'], $data['csd_key'], $data['remove_csd']);
+
         $entity->update($data);
 
         return redirect()->route('my-entities.index')

@@ -59,6 +59,11 @@ class Quote extends Model
         return $this->hasMany(QuoteItem::class);
     }
 
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     // Scopes
     public function scopeDraft($query)
     {
@@ -126,5 +131,85 @@ class Quote extends Model
             return $this->client->email;
         }
         return $this->client_email;
+    }
+
+    // =========================================================================
+    // MÉTODOS PARA FACTURACIÓN
+    // =========================================================================
+
+    /**
+     * Verificar si la cotización puede ser aceptada
+     */
+    public function canBeAccepted(): bool
+    {
+        return $this->status === 'sent' && !$this->isExpired();
+    }
+
+    /**
+     * Verificar si se pueden generar facturas
+     */
+    public function canGenerateInvoices(): bool
+    {
+        return $this->status === 'accepted' && $this->items()->count() > 0;
+    }
+
+    /**
+     * Verificar si ya tiene facturas generadas
+     */
+    public function hasInvoices(): bool
+    {
+        return $this->invoices()->exists();
+    }
+
+    /**
+     * Obtener el total ya facturado
+     */
+    public function getInvoicedTotalAttribute(): float
+    {
+        return (float) $this->invoices()
+            ->whereIn('status', ['draft', 'stamped'])
+            ->sum('total');
+    }
+
+    /**
+     * Obtener el total pendiente de facturar
+     */
+    public function getPendingInvoiceTotalAttribute(): float
+    {
+        return max(0, $this->total - $this->invoiced_total);
+    }
+
+    /**
+     * Verificar si está completamente facturada
+     */
+    public function isFullyInvoiced(): bool
+    {
+        return $this->pending_invoice_total <= 0;
+    }
+
+    /**
+     * Aceptar la cotización
+     */
+    public function accept(): bool
+    {
+        if (!$this->canBeAccepted()) {
+            return false;
+        }
+
+        $this->status = 'accepted';
+        return $this->save();
+    }
+
+    /**
+     * Rechazar la cotización
+     */
+    public function reject(): bool
+    {
+        if ($this->status !== 'sent') {
+            return false;
+        }
+
+        $this->status = 'rejected';
+        return $this->save();
     }
 }

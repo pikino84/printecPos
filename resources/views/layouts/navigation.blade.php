@@ -172,6 +172,11 @@
                                 <span class="pcoded-mtext">Mis Cotizaciones</span>
                             </a>
                         </li>
+                        <li class="{{ request()->routeIs('invoices.*') ? 'active' : '' }}">
+                            <a href="{{ route('invoices.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Mis Facturas</span>
+                            </a>
+                        </li>
                         @can('view-own-products')
                         <li class="{{ request()->is('own-products*') ? 'active' : '' }}">
                             <a href="{{ route('own-products.index') }}" class="nav-link">

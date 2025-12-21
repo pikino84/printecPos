@@ -3,6 +3,15 @@
 @section('title', 'Mis Cotizaciones')
 
 @section('content')
+<style>
+    /* Fix para que los modales queden por encima del sidebar y backdrop */
+    .modal {
+        z-index: 1060 !important;
+    }
+    .modal-backdrop {
+        z-index: 1055 !important;
+    }
+</style>
 <div class="container">
     <div class="row mb-4">
         <div class="col-lg-6 col-md-6">
@@ -32,9 +41,9 @@
                             </select>
                         </div>
                         <div class="form-group mr-2">
-                            <input type="text" 
-                                   name="search" 
-                                   class="form-control form-control-sm" 
+                            <input type="text"
+                                   name="search"
+                                   class="form-control form-control-sm"
                                    placeholder="Buscar por número o notas..."
                                    value="{{ request('search') }}">
                         </div>
@@ -123,55 +132,97 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="{{ route('quotes.show', $quote) }}" 
+                                                    <a href="{{ route('quotes.show', $quote) }}"
                                                     class="btn btn-outline-primary"
                                                     title="Ver">
                                                         <i class="feather icon-eye"></i>
                                                     </a>
-                                                    <a href="{{ route('quotes.pdf', $quote) }}" 
+                                                    <a href="{{ route('quotes.pdf', $quote) }}"
                                                     class="btn btn-outline-secondary"
                                                     title="Descargar PDF">
                                                         <i class="feather icon-download"></i>
                                                     </a>
-                                                    
+
+                                                    {{-- ACEPTAR: Solo para cotizaciones enviadas --}}
+                                                    @if($quote->canBeAccepted())
+                                                        <button type="button"
+                                                                class="btn btn-outline-success"
+                                                                title="Aceptar Cotización"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#acceptModal{{ $quote->id }}">
+                                                            <i class="feather icon-check-circle"></i>
+                                                        </button>
+                                                        <button type="button"
+                                                                class="btn btn-outline-danger"
+                                                                title="Rechazar Cotización"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#rejectModal{{ $quote->id }}">
+                                                            <i class="feather icon-x-circle"></i>
+                                                        </button>
+                                                    @endif
+
+                                                    {{-- FACTURAR: Solo para cotizaciones aceptadas --}}
+                                                    @if($quote->canGenerateInvoices() && !$quote->isFullyInvoiced())
+                                                        <a href="{{ route('invoices.create-from-quote', $quote) }}"
+                                                           class="btn btn-success"
+                                                           title="Generar Factura(s)">
+                                                            <i class="feather icon-file-plus"></i>
+                                                        </a>
+                                                    @endif
+
+                                                    {{-- VER FACTURAS: Si ya tiene facturas --}}
+                                                    @if($quote->hasInvoices())
+                                                        <a href="{{ route('invoices.index', ['quote_id' => $quote->id]) }}"
+                                                           class="btn btn-outline-success"
+                                                           title="Ver Facturas">
+                                                            <i class="feather icon-file-text"></i>
+                                                        </a>
+                                                    @endif
+
                                                     @if($quote->canBeEdited())
                                                         <!-- EDITAR: Solo para borradores -->
-                                                        <form action="{{ route('quotes.edit-to-cart', $quote) }}" 
-                                                            method="POST" 
+                                                        <form action="{{ route('quotes.edit-to-cart', $quote) }}"
+                                                            method="POST"
                                                             class="d-inline"
-                                                            onsubmit="return confirm('¿Editar esta cotización? Se moverá al carrito y el borrador se eliminará.')">
+                                                            id="editForm{{ $quote->id }}">
                                                             @csrf
-                                                            <button type="submit" 
+                                                            <button type="button"
                                                                     class="btn btn-outline-warning"
-                                                                    title="Editar Cotización">
+                                                                    title="Editar Cotización"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#editModal{{ $quote->id }}">
                                                                 <i class="feather icon-edit"></i>
                                                             </button>
                                                         </form>
                                                     @else
                                                         <!-- CLONAR: Para cotizaciones enviadas/aceptadas/etc -->
-                                                        <form action="{{ route('quotes.clone-to-cart', $quote) }}" 
-                                                            method="POST" 
+                                                        <form action="{{ route('quotes.clone-to-cart', $quote) }}"
+                                                            method="POST"
                                                             class="d-inline"
-                                                            onsubmit="return confirm('¿Clonar esta cotización al carrito? Esto reemplazará el contenido actual del carrito.')">
+                                                            id="cloneForm{{ $quote->id }}">
                                                             @csrf
-                                                            <button type="submit" 
+                                                            <button type="button"
                                                                     class="btn btn-outline-info"
-                                                                    title="Clonar al Carrito">
+                                                                    title="Clonar al Carrito"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#cloneModal{{ $quote->id }}">
                                                                 <i class="feather icon-copy"></i>
                                                             </button>
                                                         </form>
                                                     @endif
-                                                    
+
                                                     @if($quote->canBeEdited())
-                                                        <form action="{{ route('quotes.destroy', $quote) }}" 
-                                                            method="POST" 
+                                                        <form action="{{ route('quotes.destroy', $quote) }}"
+                                                            method="POST"
                                                             class="d-inline"
-                                                            onsubmit="return confirm('¿Eliminar esta cotización?')">
+                                                            id="deleteForm{{ $quote->id }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" 
+                                                            <button type="button"
                                                                     class="btn btn-outline-danger"
-                                                                    title="Eliminar">
+                                                                    title="Eliminar"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#deleteModal{{ $quote->id }}">
                                                                 <i class="feather icon-trash-2"></i>
                                                             </button>
                                                         </form>
@@ -194,4 +245,184 @@
         </div>
     </div>
 </div>
+
+{{-- MODALES --}}
+@foreach($quotes as $quote)
+    {{-- Modal Aceptar Cotización --}}
+    @if($quote->canBeAccepted())
+    <div class="modal fade" id="acceptModal{{ $quote->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="feather icon-check-circle"></i> Aceptar Cotización
+                    </h5>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro de aceptar la cotización <strong>{{ $quote->quote_number }}</strong>?</p>
+                    <div class="alert alert-info">
+                        <i class="feather icon-info"></i>
+                        Al aceptar esta cotización podrá generar las facturas correspondientes.
+                    </div>
+                    <table class="table table-sm">
+                        <tr>
+                            <td>Total:</td>
+                            <td class="text-right"><strong>${{ number_format($quote->total, 2) }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Items:</td>
+                            <td class="text-right">{{ $quote->items->count() }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form action="{{ route('quotes.accept', $quote) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-success">
+                            <i class="feather icon-check"></i> Aceptar Cotización
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Rechazar Cotización --}}
+    <div class="modal fade" id="rejectModal{{ $quote->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="feather icon-x-circle"></i> Rechazar Cotización
+                    </h5>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro de rechazar la cotización <strong>{{ $quote->quote_number }}</strong>?</p>
+                    <div class="alert alert-warning">
+                        <i class="feather icon-alert-triangle"></i>
+                        Esta acción marcará la cotización como rechazada. El cliente será notificado.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form action="{{ route('quotes.reject', $quote) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-danger">
+                            <i class="feather icon-x"></i> Rechazar Cotización
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal Clonar al Carrito --}}
+    @if(!$quote->canBeEdited())
+    <div class="modal fade" id="cloneModal{{ $quote->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="feather icon-copy"></i> Clonar al Carrito
+                    </h5>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Desea clonar la cotización <strong>{{ $quote->quote_number }}</strong> al carrito?</p>
+                    <div class="alert alert-warning">
+                        <i class="feather icon-alert-triangle"></i>
+                        <strong>Atención:</strong> Esto reemplazará el contenido actual del carrito.
+                    </div>
+                    <table class="table table-sm">
+                        <tr>
+                            <td>Items a clonar:</td>
+                            <td class="text-right"><strong>{{ $quote->items->count() }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Total:</td>
+                            <td class="text-right"><strong>${{ number_format($quote->total, 2) }}</strong></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" onclick="document.getElementById('cloneForm{{ $quote->id }}').submit();">
+                        <i class="feather icon-copy"></i> Clonar al Carrito
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal Editar Cotización --}}
+    @if($quote->canBeEdited())
+    <div class="modal fade" id="editModal{{ $quote->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">
+                        <i class="feather icon-edit"></i> Editar Cotización
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Desea editar la cotización <strong>{{ $quote->quote_number }}</strong>?</p>
+                    <div class="alert alert-warning">
+                        <i class="feather icon-alert-triangle"></i>
+                        <strong>Atención:</strong> La cotización se moverá al carrito y el borrador actual se eliminará.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" onclick="document.getElementById('editForm{{ $quote->id }}').submit();">
+                        <i class="feather icon-edit"></i> Editar Cotización
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Eliminar Cotización --}}
+    <div class="modal fade" id="deleteModal{{ $quote->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="feather icon-trash-2"></i> Eliminar Cotización
+                    </h5>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro de eliminar la cotización <strong>{{ $quote->quote_number }}</strong>?</p>
+                    <div class="alert alert-danger">
+                        <i class="feather icon-alert-circle"></i>
+                        <strong>Esta acción no se puede deshacer.</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="document.getElementById('deleteForm{{ $quote->id }}').submit();">
+                        <i class="feather icon-trash-2"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+@endforeach
 @endsection

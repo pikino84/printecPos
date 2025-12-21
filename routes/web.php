@@ -27,6 +27,7 @@ use App\Http\Controllers\PartnerPricingController;
 use App\Http\Controllers\PricingDashboardController;
 use App\Http\Controllers\PricingReportController;
 use App\Http\Controllers\PartnerRegistrationController;
+use App\Http\Controllers\InvoiceController;
 
 
 
@@ -224,7 +225,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/{quote}/pdf', [QuoteController::class, 'downloadPdf'])->name('pdf');
         Route::post('/{quote}/clone-to-cart', [QuoteController::class, 'cloneToCart'])->name('clone-to-cart');
         Route::post('/{quote}/edit-to-cart', [QuoteController::class, 'editToCart'])->name('edit-to-cart');
+        Route::post('/{quote}/accept', [QuoteController::class, 'accept'])->name('accept');
+        Route::post('/{quote}/reject', [QuoteController::class, 'reject'])->name('reject');
         Route::delete('/{quote}', [QuoteController::class, 'destroy'])->name('destroy');
+    });
+
+    // ========================================================================
+    // RUTAS DE FACTURACIÓN
+    // ========================================================================
+    Route::prefix('invoices')->name('invoices.')->group(function () {
+        Route::get('/', [InvoiceController::class, 'index'])->name('index');
+
+        // Crear facturas desde cotización (ANTES de las rutas con {invoice})
+        Route::get('/create-from-quote/{quote}', [InvoiceController::class, 'createFromQuote'])->name('create-from-quote');
+        Route::post('/store-from-quote/{quote}', [InvoiceController::class, 'storeFromQuote'])->name('store-from-quote');
+
+        // Rutas con parámetro {invoice} (DESPUÉS de las rutas específicas)
+        Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
+        Route::post('/{invoice}/stamp', [InvoiceController::class, 'stamp'])->name('stamp');
+        Route::get('/{invoice}/download-xml', [InvoiceController::class, 'downloadXml'])->name('download-xml');
+        Route::get('/{invoice}/download-pdf', [InvoiceController::class, 'downloadPdf'])->name('download-pdf');
+        Route::get('/{invoice}/cancel', [InvoiceController::class, 'cancelForm'])->name('cancel-form');
+        Route::post('/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('cancel');
     });
 
     // ========================================================================
