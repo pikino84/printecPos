@@ -21,18 +21,6 @@
             <div class="card">
                 <div class="card-body">
                     <form method="GET" action="{{ route('quotes.index') }}" class="form-inline flex-wrap">
-                        @if($isSuperAdmin)
-                        <div class="form-group mr-2 mb-2">
-                            <select name="partner_id" id="partner_filter" class="form-control form-control-sm" style="min-width: 250px;">
-                                <option value="">Todos los partners</option>
-                                @foreach($partners as $partner)
-                                    <option value="{{ $partner->id }}" {{ $selectedPartnerId == $partner->id ? 'selected' : '' }}>
-                                        {{ $partner->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @endif
                         <div class="form-group mr-2 mb-2">
                             <select name="status" class="form-control form-control-sm">
                                 <option value="">Todos los estados</option>
@@ -53,7 +41,7 @@
                         <button type="submit" class="btn btn-sm btn-primary mr-2 mb-2">
                             <i class="feather icon-search"></i> Buscar
                         </button>
-                        <a href="{{ route('quotes.index') }}?partner_id=" class="btn btn-sm btn-outline-secondary mb-2">
+                        <a href="{{ route('quotes.index') }}" class="btn btn-sm btn-outline-secondary mb-2">
                             Limpiar
                         </a>
                     </form>
@@ -105,11 +93,11 @@
                                                 <strong>{{ $quote->quote_number }}</strong>
                                             </td>
                                             <td>
-                                                {{ $quote->client->name ?? $quote->client_name ?? 'N/A' }}
+                                                {{ $quote->client->nombre_completo ?? $quote->client_name ?? 'N/A' }}
                                             </td>
                                             @if($isSuperAdmin)
                                             <td>
-                                                <span class="badge badge-secondary">{{ $quote->partner->name ?? 'N/A' }}</span>
+                                                <span class="badge badge-primary">{{ $quote->partner->name ?? 'N/A' }}</span>
                                             </td>
                                             <td>
                                                 <small>{{ $quote->user->name ?? 'N/A' }}</small>
@@ -223,30 +211,3 @@
     </div>
 </div>
 @endsection
-
-@if($isSuperAdmin)
-@section('styles')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-<style>
-    .select2-container--bootstrap-5 .select2-selection {
-        font-size: 0.875rem;
-        min-height: calc(1.5em + 0.5rem + 2px);
-    }
-</style>
-@endsection
-
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-$(document).ready(function() {
-    $('#partner_filter').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Buscar partner...',
-        allowClear: true,
-        width: '250px'
-    });
-});
-</script>
-@endsection
-@endif

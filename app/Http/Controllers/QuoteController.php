@@ -6,12 +6,10 @@ use App\Models\Quote;
 use App\Models\QuoteItem;
 use App\Models\CartSession;
 use App\Models\Client;
-use App\Models\Partner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuoteController extends Controller
@@ -28,29 +26,12 @@ class QuoteController extends Controller
     {
         $user = Auth::user();
         $isSuperAdmin = $user->hasRole('super admin');
-        $partners = collect();
 
         $query = Quote::with(['items.variant.product', 'partner', 'user', 'client'])
             ->orderBy('created_at', 'desc');
 
         // Super admin ve todas las cotizaciones, otros usuarios solo las suyas
-        if ($isSuperAdmin) {
-            $partners = Partner::orderBy('name')->get();
-
-            // Manejar filtro por partner con persistencia en sesión
-            if ($request->has('partner_id')) {
-                if ($request->partner_id === '') {
-                    Session::forget('quotes_partner_filter');
-                } else {
-                    Session::put('quotes_partner_filter', $request->partner_id);
-                }
-            }
-
-            $partnerFilter = Session::get('quotes_partner_filter');
-            if ($partnerFilter) {
-                $query->where('partner_id', $partnerFilter);
-            }
-        } else {
+        if (!$isSuperAdmin) {
             $query->where('user_id', $user->id);
         }
 
@@ -68,9 +49,8 @@ class QuoteController extends Controller
         }
 
         $quotes = $query->paginate(15);
-        $selectedPartnerId = Session::get('quotes_partner_filter');
 
-        return view('quotes.index', compact('quotes', 'isSuperAdmin', 'partners', 'selectedPartnerId'));
+        return view('quotes.index', compact('quotes', 'isSuperAdmin'));
     }
 
     
