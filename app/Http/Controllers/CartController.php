@@ -40,10 +40,15 @@ class CartController extends Controller
 
         try {
             $variant = ProductVariant::with('product', 'stocks')->findOrFail($request->variant_id);
-            
-            // Verificar stock disponible
+
+            // Verificar si el usuario es del partner Printec (no aplica validación de stock)
+            $user = Auth::user();
+            $partner = Partner::find($user->partner_id);
+            $isPrintecPartner = $partner && $partner->slug === 'printec';
+
+            // Verificar stock disponible (excepto para partner Printec)
             $totalStock = $variant->stocks->sum('stock');
-            if ($totalStock < $request->quantity) {
+            if (!$isPrintecPartner && $totalStock < $request->quantity) {
                 return response()->json([
                     'success' => false,
                     'message' => "Stock insuficiente. Disponible: {$totalStock}"
@@ -65,8 +70,8 @@ class CartController extends Controller
             if ($cartItem) {
                 // Si ya existe, sumar la cantidad
                 $newQuantity = $cartItem->quantity + $request->quantity;
-                
-                if ($totalStock < $newQuantity) {
+
+                if (!$isPrintecPartner && $totalStock < $newQuantity) {
                     return response()->json([
                         'success' => false,
                         'message' => "Stock insuficiente. Ya tienes {$cartItem->quantity} en el carrito. Disponible: {$totalStock}"
@@ -140,9 +145,14 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Verificar stock
+        // Verificar si el usuario es del partner Printec (no aplica validación de stock)
+        $user = Auth::user();
+        $partner = Partner::find($user->partner_id);
+        $isPrintecPartner = $partner && $partner->slug === 'printec';
+
+        // Verificar stock (excepto para partner Printec)
         $totalStock = $item->variant->stocks->sum('stock');
-        if ($totalStock < $request->quantity) {
+        if (!$isPrintecPartner && $totalStock < $request->quantity) {
             return response()->json([
                 'success' => false,
                 'message' => "Stock insuficiente. Disponible: {$totalStock}"
