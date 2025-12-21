@@ -47,14 +47,22 @@ class PartnerEntityController extends Controller
         }
 
         // Asegura una sola default por partner
+        $setAsDefault = false;
         if ($request->boolean('is_default')) {
             $partner->entities()->update(['is_default' => false]);
             $data['is_default'] = true;
+            $setAsDefault = true;
         } elseif ($partner->entities()->count() === 0) {
             $data['is_default'] = true;
+            $setAsDefault = true;
         }
 
-        $partner->entities()->create($data);
+        $entity = $partner->entities()->create($data);
+
+        // Asignar como entidad por defecto del partner
+        if ($setAsDefault) {
+            $partner->update(['default_entity_id' => $entity->id]);
+        }
 
         return redirect()->route('partners.entities.index', $partner)
             ->with('success','Razón social creada.');
@@ -102,6 +110,8 @@ class PartnerEntityController extends Controller
         if ($request->boolean('is_default')) {
             $partner->entities()->where('id','!=',$entity->id)->update(['is_default' => false]);
             $data['is_default'] = true;
+            // Asignar como entidad por defecto del partner
+            $partner->update(['default_entity_id' => $entity->id]);
         }
 
         $entity->update($data);
@@ -195,16 +205,24 @@ class PartnerEntityController extends Controller
         }
 
         // Asegura una sola default por partner
+        $setAsDefault = false;
         if ($request->boolean('is_default')) {
             $partner->entities()->update(['is_default' => false]);
             $data['is_default'] = true;
+            $setAsDefault = true;
         } elseif ($partner->entities()->count() === 0) {
             $data['is_default'] = true;
+            $setAsDefault = true;
         }
 
         $data['is_active'] = true; // Siempre activo cuando lo crea el asociado
 
-        $partner->entities()->create($data);
+        $entity = $partner->entities()->create($data);
+
+        // Asignar como entidad por defecto del partner
+        if ($setAsDefault) {
+            $partner->update(['default_entity_id' => $entity->id]);
+        }
 
         return redirect()->route('my-entities.index')
             ->with('success','Razón social creada exitosamente.');
@@ -274,6 +292,8 @@ class PartnerEntityController extends Controller
         if ($request->boolean('is_default')) {
             $partner->entities()->where('id','!=',$entity->id)->update(['is_default' => false]);
             $data['is_default'] = true;
+            // Asignar como entidad por defecto del partner
+            $partner->update(['default_entity_id' => $entity->id]);
         }
 
         $entity->update($data);
