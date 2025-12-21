@@ -247,7 +247,15 @@
 .gris{
     background-color: #7c7c7c;
 }
-
+.beige{
+    background-color: #fbf1e3;
+}
+.marmoleado{
+    background-image: url(https://tienda.promocionalesweb.com/assets/css/images/marmol.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
 /* Estilo para el badge del carrito */
 .cart-badge {
     position: absolute;
