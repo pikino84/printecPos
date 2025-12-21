@@ -220,8 +220,17 @@ class PublicCatalogController extends Controller
      */
     public function categories(Request $request)
     {
-        // Get all PrintecCategories that have at least one mapped product category with products
-        $categories = PrintecCategory::orderBy('name')
+        $partner = $this->getPartner($request);
+
+        // Get product_category_ids from visible products
+        $query = $this->buildProductQuery($partner);
+        $productCategoryIds = $query->pluck('product_category_id')->unique()->filter();
+
+        // Get PrintecCategories that are mapped to those product categories
+        $categories = PrintecCategory::whereHas('providerCategories', function ($q) use ($productCategoryIds) {
+            $q->whereIn('product_categories.id', $productCategoryIds);
+        })
+            ->orderBy('name')
             ->get()
             ->map(fn($cat) => [
                 'id' => $cat->id,
