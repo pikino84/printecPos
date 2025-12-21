@@ -140,6 +140,23 @@ class PartnerEntity extends Model
     }
 
     /**
+     * Obtener la cuenta bancaria en USD (si existe y es diferente a la principal)
+     */
+    public function getUsdBankAccount()
+    {
+        $mainAccount = $this->getMainBankAccount();
+
+        // Buscar cuenta en USD que no sea la principal
+        return $this->bankAccounts()
+            ->where('currency', 'USD')
+            ->where('is_active', true)
+            ->when($mainAccount, function ($query) use ($mainAccount) {
+                $query->where('id', '!=', $mainAccount->id);
+            })
+            ->first();
+    }
+
+    /**
      * Obtener el conteo de cotizaciones
      */
     public function getQuotesCountAttribute()

@@ -58,7 +58,7 @@
                               {{-- API del catálogo (solo para Asociados y Mixtos) --}}
                               @if($partner->isAsociadoOMixto())
                               <a href="{{ route('partners.show', $partner) }}#api-section" class="btn btn-sm {{ $partner->api_key ? 'btn-success' : 'btn-outline-secondary' }}" title="{{ $partner->api_key ? 'API Activa' : 'Configurar API' }}">
-                                  <i class="feather icon-code"></i>
+                                  <i class="feather icon-link"></i>
                               </a>
                               @endif
 

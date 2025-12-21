@@ -276,6 +276,7 @@
     @if($partnerEntity && $partnerEntity->bankAccounts->count() > 0)
     @php
         $bankAccount = $partnerEntity->getMainBankAccount();
+        $usdBankAccount = $partnerEntity->getUsdBankAccount();
     @endphp
     @if($bankAccount)
     <div class="section-title">DATOS PARA REALIZAR PAGO</div>
@@ -295,6 +296,27 @@
         <p><strong>CLABE:</strong> {{ $bankAccount->clabe }}</p>
         @endif
     </div>
+
+    {{-- Cuenta en Dólares (USD) --}}
+    @if($usdBankAccount)
+    <div class="section-title" style="margin-top: 15px;">CUENTA EN DÓLARES (USD)</div>
+    <div style="padding: 10px; background-color: #f8f9fa;">
+        <p><strong>BENEFICIARIO:</strong> {{ $usdBankAccount->account_holder ?: $partnerEntity->razon_social }}</p>
+        <p><strong>BANCO:</strong> {{ $usdBankAccount->bank_name }}</p>
+        @if($usdBankAccount->account_number)
+        <p><strong>CUENTA:</strong> {{ $usdBankAccount->account_number }}</p>
+        @endif
+        @if($usdBankAccount->clabe)
+        <p><strong>CLABE:</strong> {{ $usdBankAccount->clabe }}</p>
+        @endif
+        @if($usdBankAccount->swift)
+        <p><strong>SWIFT:</strong> {{ $usdBankAccount->swift }}</p>
+        @endif
+        @if($usdBankAccount->iban)
+        <p><strong>IBAN:</strong> {{ $usdBankAccount->iban }}</p>
+        @endif
+    </div>
+    @endif
     @endif
     @endif
 
