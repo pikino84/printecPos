@@ -18,6 +18,7 @@ class PartnerEntity extends Model
         'telefono',
         'correo_contacto',
         'logo_path',
+        'payment_terms',
         'is_active',
         'is_default',
     ];

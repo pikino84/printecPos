@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('correo_contacto')->nullable();
             $table->text('direccion')->nullable();
             $table->string('logo_path')->nullable();
+            $table->text('payment_terms')->nullable(); // Condiciones de pago personalizadas
 
             // Opcionales útiles
             $table->boolean('is_default')->default(false); // marcar la principal

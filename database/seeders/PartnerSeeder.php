@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Partner;
+use App\Models\PartnerEntity;
+use App\Models\PartnerEntityBankAccount;
 use Illuminate\Support\Facades\DB;
 
 class PartnerSeeder extends Seeder
@@ -25,6 +27,35 @@ class PartnerSeeder extends Seeder
                 'contact_email'    => 'eduardo@printec.mx',
                 'direccion'        => 'Calle Ficticia 123, CDMX',
                 'type'             => 'mixto', // si tu tabla tiene este campo
+            ]
+        );
+
+        // Crear entidad principal de Printec con condiciones de pago
+        $printecEntity = PartnerEntity::updateOrCreate(
+            ['partner_id' => $printec->id, 'razon_social' => 'Eduardo Butrón Sáyago'],
+            [
+                'rfc' => 'BUSE841225G53',
+                'telefono' => '9981669212',
+                'correo_contacto' => 'eduardo@printec.mx',
+                'is_default' => true,
+                'is_active' => true,
+                'payment_terms' => "* Ésta cotización tiene una vigencia de 8 días.\n* El precio reflejado no incluye envío\n* Tiempo de entrega 15 días hábiles a partir de la recepción del pago.\n* Si requiere entrega a un plazo menor aplicará un cargo adicional del 30%",
+            ]
+        );
+
+        // Asignar entidad por defecto al partner
+        $printec->update(['default_entity_id' => $printecEntity->id]);
+
+        // Crear cuenta bancaria de Printec
+        PartnerEntityBankAccount::updateOrCreate(
+            ['partner_entity_id' => $printecEntity->id, 'bank_name' => 'XXX'],
+            [
+                'account_holder' => 'XXX',
+                'account_number' => 'XXX',
+                'clabe' => 'XXX',
+                'currency' => 'MXN',
+                'is_default' => true,
+                'is_active' => true,
             ]
         );
 

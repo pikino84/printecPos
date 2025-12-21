@@ -36,6 +36,12 @@
         <textarea name="direccion" class="form-control col-md-6">{{ old('direccion',$entity->direccion) }}</textarea>
       </div>
 
+      <div class="form-group mb-3">
+        <label>Condiciones de pago</label>
+        <textarea name="payment_terms" class="form-control" rows="8" placeholder="Ej: Vigencia de cotización, tiempos de entrega, datos bancarios...">{{ old('payment_terms',$entity->payment_terms) }}</textarea>
+        <small class="text-muted">Estas condiciones se mostrarán en los correos de cotización enviados a los clientes.</small>
+      </div>
+
       <div class="form-check mb-3">
         <input type="checkbox" class="form-check-input" id="is_default" name="is_default" value="1" {{ $entity->is_default ? 'checked' : '' }}>
         <label class="form-check-label" for="is_default">Marcar como principal</label>

@@ -35,6 +35,13 @@
         <label>Dirección fiscal</label>
         <textarea name="direccion" class="form-control col-md-6">{{ old('direccion') }}</textarea>
       </div>
+
+      <div class="form-group mb-3">
+        <label>Condiciones de pago</label>
+        <textarea name="payment_terms" class="form-control" rows="8" placeholder="Ej: Vigencia de cotización, tiempos de entrega, datos bancarios...">{{ old('payment_terms') }}</textarea>
+        <small class="text-muted">Estas condiciones se mostrarán en los correos de cotización enviados a los clientes.</small>
+      </div>
+
       <div class="form-group">
         <label>Logo (JPG/PNG/WEBP máx 2MB)</label>
         <input type="file" class="form-control @error('logo_path') is-invalid @enderror"

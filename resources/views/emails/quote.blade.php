@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .header {
-            background-color: #007bff;
+            background-color: #1F4C94;
             color: white;
             padding: 20px;
             text-align: center;
@@ -27,7 +27,7 @@
             background-color: white;
             padding: 15px;
             margin: 15px 0;
-            border-left: 4px solid #007bff;
+            border-left: 4px solid #1F4C94;
         }
         .footer {
             text-align: center;
@@ -63,10 +63,43 @@
                     <p><strong>Válida hasta:</strong> {{ $quote->valid_until->format('d/m/Y') }}</p>
                 @endif
                 <p><strong>Total de Items:</strong> {{ $quote->items->count() }}</p>
-                <p><strong>Total:</strong> <span style="font-size: 18px; color: #007bff;">${{ number_format($quote->total, 2) }}</span></p>
+                <p><strong>Total:</strong> <span style="font-size: 18px; color: #1F4C94;">${{ number_format($quote->total, 2) }}</span></p>
             </div>
 
             <p>El documento PDF adjunto contiene el detalle completo de todos los productos cotizados.</p>
+
+            @php
+                $partnerEntity = $quote->partner->defaultEntity;
+            @endphp
+
+            @if($partnerEntity && $partnerEntity->payment_terms)
+            <div class="quote-info" style="margin-top: 20px;">
+                <p><strong>CONDICIONES DE PAGO</strong></p>
+                {!! nl2br(e($partnerEntity->payment_terms)) !!}
+            </div>
+            @endif
+
+            @if($partnerEntity && $partnerEntity->bankAccounts->count() > 0)
+            @php
+                $bankAccount = $partnerEntity->getMainBankAccount();
+            @endphp
+            @if($bankAccount)
+            <div class="quote-info" style="margin-top: 20px;">
+                <p><strong>DATOS PARA REALIZAR PAGO</strong></p>
+                <p><strong>BENEFICIARIO:</strong> {{ $bankAccount->account_holder ?: $partnerEntity->razon_social }}</p>
+                @if($partnerEntity->rfc)
+                <p><strong>RFC:</strong> {{ $partnerEntity->rfc }}</p>
+                @endif
+                <p><strong>BANCO:</strong> {{ $bankAccount->bank_name }}</p>
+                @if($bankAccount->account_number)
+                <p><strong>CUENTA:</strong> {{ $bankAccount->account_number }}</p>
+                @endif
+                @if($bankAccount->clabe)
+                <p><strong>CLABE:</strong> {{ $bankAccount->clabe }}</p>
+                @endif
+            </div>
+            @endif
+            @endif
 
             <p>Si tiene alguna pregunta o necesita realizar algún cambio, no dude en contactarnos.</p>
 
