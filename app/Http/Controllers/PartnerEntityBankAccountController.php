@@ -50,6 +50,7 @@ class PartnerEntityBankAccountController extends Controller
                 Rule::unique('partner_entity_bank_accounts')
                     ->where(fn($q) => $q->where('partner_entity_id', $partner_entity->id)),
             ],
+            'card_number'    => ['nullable','string','max:20'],
             'clabe'          => ['nullable','digits:18',
                 Rule::unique('partner_entity_bank_accounts')
                     ->where(fn($q) => $q->where('partner_entity_id', $partner_entity->id)),
@@ -105,6 +106,7 @@ class PartnerEntityBankAccountController extends Controller
                     ->ignore($bank_account->id)
                     ->where(fn($q) => $q->where('partner_entity_id', $entityId)),
             ],
+            'card_number'    => ['nullable','string','max:20'],
             'clabe'          => ['nullable','digits:18',
                 Rule::unique('partner_entity_bank_accounts')
                     ->ignore($bank_account->id)
@@ -236,6 +238,7 @@ class PartnerEntityBankAccountController extends Controller
                     }
                 }
             ],
+            'card_number'    => ['nullable','string','max:20'],
             'clabe' => ['nullable','digits:18',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($value && $request->partner_entity_id) {
@@ -344,6 +347,7 @@ class PartnerEntityBankAccountController extends Controller
                     }
                 }
             ],
+            'card_number'    => ['nullable','string','max:20'],
             'clabe' => ['nullable','digits:18',
                 function ($attribute, $value, $fail) use ($request, $bankAccount) {
                     if ($value && $request->partner_entity_id) {
