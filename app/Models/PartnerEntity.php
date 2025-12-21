@@ -135,7 +135,7 @@ class PartnerEntity extends Model
      */
     public function getMainBankAccount()
     {
-        return $this->bankAccounts()->where('is_primary', true)->first() 
+        return $this->bankAccounts()->where('is_default', true)->first()
             ?? $this->bankAccounts()->first();
     }
 
