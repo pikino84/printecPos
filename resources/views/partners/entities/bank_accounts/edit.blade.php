@@ -34,6 +34,12 @@
             <input name="account_number" class="form-control" value="{{ old('account_number',$bankAccount->account_number) }}">
             @error('account_number')<small class="text-danger">{{ $message }}</small>@enderror
           </div>
+
+          <div class="form-group mb-3">
+            <label>Número de tarjeta</label>
+            <input name="card_number" class="form-control" maxlength="20" value="{{ old('card_number',$bankAccount->card_number) }}" placeholder="16 dígitos">
+            @error('card_number')<small class="text-danger">{{ $message }}</small>@enderror
+          </div>
         </div>
 
         <div class="col-md-6">
