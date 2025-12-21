@@ -226,8 +226,8 @@ class PublicCatalogController extends Controller
         $query = $this->buildProductQuery($partner);
         $productIds = $query->pluck('id');
 
-        $categories = PrintecCategory::whereHas('productCategories.products', function ($q) use ($productIds) {
-            $q->whereIn('id', $productIds);
+        $categories = PrintecCategory::whereHas('providerCategories.products', function ($q) use ($productIds) {
+            $q->whereIn('products.id', $productIds);
         })
             ->orderBy('name')
             ->get()
