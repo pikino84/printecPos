@@ -260,11 +260,46 @@
 
     <div style="clear: both;"></div>
 
+    @php
+        $partnerEntity = $quote->partner->defaultEntity;
+    @endphp
+
+    <!-- Condiciones de Pago -->
+    @if($partnerEntity && $partnerEntity->payment_terms)
+    <div class="section-title">CONDICIONES DE PAGO</div>
+    <div style="padding: 10px; background-color: #f8f9fa; margin-bottom: 15px;">
+        {!! nl2br(e($partnerEntity->payment_terms)) !!}
+    </div>
+    @endif
+
+    <!-- Datos Bancarios -->
+    @if($partnerEntity && $partnerEntity->bankAccounts->count() > 0)
+    @php
+        $bankAccount = $partnerEntity->getMainBankAccount();
+    @endphp
+    @if($bankAccount)
+    <div class="section-title">DATOS PARA REALIZAR PAGO</div>
+    <div style="padding: 10px; background-color: #f8f9fa;">
+        <p><strong>BENEFICIARIO:</strong> {{ $bankAccount->account_holder ?: $partnerEntity->razon_social }}</p>
+        @if($partnerEntity->rfc)
+        <p><strong>RFC:</strong> {{ $partnerEntity->rfc }}</p>
+        @endif
+        <p><strong>BANCO:</strong> {{ $bankAccount->bank_name }}</p>
+        @if($bankAccount->account_number)
+        <p><strong>CUENTA:</strong> {{ $bankAccount->account_number }}</p>
+        @endif
+        @if($bankAccount->clabe)
+        <p><strong>CLABE:</strong> {{ $bankAccount->clabe }}</p>
+        @endif
+    </div>
+    @endif
+    @endif
+
     <!-- Footer -->
     <div class="footer">
         <p>Cotización generada el {{ now()->format('d/m/Y H:i') }}</p>
         <p>Esta cotización es válida únicamente por el período especificado.</p>
-        <p><strong>Printec</strong> - Soluciones Promocionales</p>
+        <p><strong>{{ $quote->partner->name }}</strong> - Soluciones Promocionales</p>
     </div>
 </body>
 </html>
