@@ -222,12 +222,13 @@ class PublicCatalogController extends Controller
     {
         $partner = $this->getPartner($request);
 
-        // Get categories that have products visible to this partner
+        // Get product_category_ids from visible products
         $query = $this->buildProductQuery($partner);
-        $productIds = $query->pluck('id');
+        $productCategoryIds = $query->pluck('product_category_id')->unique()->filter();
 
-        $categories = PrintecCategory::whereHas('providerCategories.products', function ($q) use ($productIds) {
-            $q->whereIn('products.id', $productIds);
+        // Get PrintecCategories that are mapped to those product categories
+        $categories = PrintecCategory::whereHas('providerCategories', function ($q) use ($productCategoryIds) {
+            $q->whereIn('product_categories.id', $productCategoryIds);
         })
             ->orderBy('name')
             ->get()
