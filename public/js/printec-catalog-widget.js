@@ -97,6 +97,7 @@
             await this.loadPartnerInfo();
             await this.loadCategories();
             this.render();
+            this.renderCategories();
             await this.loadProducts();
         },
 
