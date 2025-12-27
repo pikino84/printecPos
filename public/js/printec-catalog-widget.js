@@ -250,7 +250,6 @@
                     </div>
                     <div class="pc-grid" id="pc-products-grid"></div>
                     <div class="pc-pagination" id="pc-pagination"></div>
-                    <div class="pc-footer">${this.t('poweredBy')}</div>
                 </div>
             `;
 
