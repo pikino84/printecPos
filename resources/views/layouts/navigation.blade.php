@@ -3,7 +3,7 @@
         <div class="pcoded-inner-navbar main-menu">
             <div class="pcoded-navigation-label">Navigation</div>
             <ul class="pcoded-item pcoded-left-item">
-                <li class="pcoded-hasmenu {{ menuActive(['partners.*', 'users.*', 'my-users.*', 'permissions.*', 'roles.*', 'activity.logs.*', 'clients.*', 'printec-cities.*', 'warehouses.*', 'my-warehouses.*', 'pricing-dashboard.*', 'pricing-tiers.*', 'partner-pricing.*', 'pricing-reports.*']) }}">
+                <li class="pcoded-hasmenu {{ menuActive(['partners.*', 'users.*', 'my-users.*', 'permissions.*', 'roles.*', 'activity.logs.*', 'clients.*', 'printec-cities.*', 'warehouses.*', 'my-warehouses.*', 'pricing-dashboard.*', 'pricing-tiers.*', 'partner-pricing.*', 'pricing-reports.*', 'pricing-settings.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                         <span class="pcoded-mtext">Administración</span>
@@ -114,6 +114,13 @@
                             </a>
                         </li>
                         @endcan
+                        @if(auth()->user()->hasRole('super admin'))
+                        <li class="{{ request()->routeIs('pricing-settings.*') ? 'active' : '' }}">
+                            <a href="{{ route('pricing-settings.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Config. de Pricing</span>
+                            </a>
+                        </li>
+                        @endif
                     </ul>
                 </li>
                 <li class="pcoded-hasmenu {{ menuActive(['my-entities.*', 'my-bank-accounts.*']) }}">

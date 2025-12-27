@@ -27,6 +27,7 @@ use App\Http\Controllers\PartnerPricingController;
 use App\Http\Controllers\PricingDashboardController;
 use App\Http\Controllers\PricingReportController;
 use App\Http\Controllers\PartnerRegistrationController;
+use App\Http\Controllers\PricingSettingController;
 
 
 
@@ -136,6 +137,14 @@ Route::middleware('auth')->group(function () {
         Route::get('pricing-reports/monthly-purchases', [PricingReportController::class, 'monthlyPurchases'])->name('pricing-reports.monthly-purchases');
         Route::get('pricing-reports/partner-evolution', [PricingReportController::class, 'partnerEvolution'])->name('pricing-reports.partner-evolution');
         Route::get('pricing-reports/export-tier-history', [PricingReportController::class, 'exportTierHistory'])->name('pricing-reports.export-tier-history');
+    });
+
+    // ========================================================================
+    // Configuración de Pricing (solo super admin)
+    // ========================================================================
+    Route::middleware(['role:super admin'])->group(function () {
+        Route::get('pricing-settings', [PricingSettingController::class, 'index'])->name('pricing-settings.index');
+        Route::put('pricing-settings', [PricingSettingController::class, 'update'])->name('pricing-settings.update');
     });
 
     // ========================================================================
