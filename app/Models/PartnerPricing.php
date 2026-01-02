@@ -91,10 +91,11 @@ class PartnerPricing extends Model
 
         // Producto de Printec o proveedores: aplicar tier
         $tier = $this->getEffectiveTier();
-        
+
         if (!$tier) {
-            // Fallback: si no hay tiers configurados, usar markup 52%
-            return $basePrice * 1.52;
+            // Fallback: si no hay tiers configurados, usar markup Printec de settings
+            $printecMarkup = PricingSetting::get('printec_markup', 52);
+            return $basePrice * (1 + $printecMarkup / 100);
         }
 
         // Aplicar markup y descuento del tier
@@ -131,18 +132,22 @@ class PartnerPricing extends Model
 
     /**
      * Obtener el desglose de precios para mostrar en UI
+     * Fórmula: ((Base + Markup Printec) + Markup Tier) - Descuento Tier + Markup Partner
      */
     public function getPriceBreakdown($basePrice, $isPrintecProduct = true)
     {
         $tier = $this->getEffectiveTier();
-        
-        if (!$isPrintecProduct || !$tier) {
+        $printecMarkup = PricingSetting::get('printec_markup', 52);
+
+        if (!$isPrintecProduct) {
             return [
                 'base_price' => $basePrice,
                 'tier_name' => null,
-                'markup_percentage' => 0,
+                'printec_markup' => 0,
+                'tier_markup' => 0,
                 'discount_percentage' => 0,
-                'after_markup' => $basePrice,
+                'after_printec_markup' => $basePrice,
+                'after_tier_markup' => $basePrice,
                 'after_discount' => $basePrice,
                 'cost_price' => $basePrice,
                 'partner_markup' => $this->markup_percentage,
@@ -150,15 +155,38 @@ class PartnerPricing extends Model
             ];
         }
 
-        $afterMarkup = $tier->applyMarkup($basePrice);
-        $afterDiscount = $tier->applyDiscount($afterMarkup);
+        if (!$tier) {
+            $afterPrintecMarkup = $basePrice * (1 + $printecMarkup / 100);
+            return [
+                'base_price' => $basePrice,
+                'tier_name' => null,
+                'printec_markup' => $printecMarkup,
+                'tier_markup' => 0,
+                'discount_percentage' => 0,
+                'after_printec_markup' => $afterPrintecMarkup,
+                'after_tier_markup' => $afterPrintecMarkup,
+                'after_discount' => $afterPrintecMarkup,
+                'cost_price' => $afterPrintecMarkup,
+                'partner_markup' => $this->markup_percentage,
+                'sale_price' => $this->applyMarkup($afterPrintecMarkup),
+            ];
+        }
+
+        // 1. Aplicar Markup Printec
+        $afterPrintecMarkup = $tier->applyPrintecMarkup($basePrice);
+        // 2. Aplicar Markup del Tier
+        $afterTierMarkup = $tier->applyTierMarkup($afterPrintecMarkup);
+        // 3. Aplicar Descuento del Tier
+        $afterDiscount = $tier->applyDiscount($afterTierMarkup);
 
         return [
             'base_price' => $basePrice,
             'tier_name' => $tier->name,
-            'markup_percentage' => $tier->markup_percentage,
+            'printec_markup' => $printecMarkup,
+            'tier_markup' => $tier->markup_percentage,
             'discount_percentage' => $tier->discount_percentage,
-            'after_markup' => $afterMarkup,
+            'after_printec_markup' => $afterPrintecMarkup,
+            'after_tier_markup' => $afterTierMarkup,
             'after_discount' => $afterDiscount,
             'cost_price' => $afterDiscount,
             'partner_markup' => $this->markup_percentage,

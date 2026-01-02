@@ -100,9 +100,18 @@ class PricingTier extends Model
     }
 
     /**
-     * Aplicar markup del tier al precio base
+     * Aplicar Markup Printec (de /pricing-settings)
      */
-    public function applyMarkup($price)
+    public function applyPrintecMarkup($price)
+    {
+        $printecMarkup = PricingSetting::get('printec_markup', 52);
+        return $price * (1 + $printecMarkup / 100);
+    }
+
+    /**
+     * Aplicar markup del tier al precio
+     */
+    public function applyTierMarkup($price)
     {
         return $price * (1 + $this->markup_percentage / 100);
     }
@@ -116,14 +125,18 @@ class PricingTier extends Model
     }
 
     /**
-     * Calcular precio final con markup y descuento (sin IVA)
-     * Fórmula: (Price + Markup%) - Descuento%
+     * Calcular precio final con todos los markups y descuento (sin IVA)
+     * Fórmula: ((Price + Markup Printec) + Markup Tier) - Descuento Tier
      */
     public function calculatePrice($basePrice)
     {
-        $withMarkup = $this->applyMarkup($basePrice);
-        $afterDiscount = $this->applyDiscount($withMarkup);
-        
+        // 1. Aplicar Markup Printec
+        $withPrintecMarkup = $this->applyPrintecMarkup($basePrice);
+        // 2. Aplicar Markup del Tier
+        $withTierMarkup = $this->applyTierMarkup($withPrintecMarkup);
+        // 3. Aplicar Descuento del Tier
+        $afterDiscount = $this->applyDiscount($withTierMarkup);
+
         return $afterDiscount;
     }
 

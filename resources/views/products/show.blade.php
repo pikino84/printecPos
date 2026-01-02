@@ -80,8 +80,11 @@
                                     <th>Img</th>
                                     <th>Stock Total</th>
                                     <th>Color</th>
-                                    <th>Tu precio</th>
-                                    <th>{{ $partnerPricing->getEffectiveTier()->name }}</th>
+                                    @if(auth()->user()->isPrintec())
+                                    <th>Precio Proveedor</th>
+                                    @endif
+                                    <th>Tu Precio</th>
+                                    <th>Precio Final</th>
                                     <th>Cantidad</th>
                                     <th>Agregar</th>
                                     @foreach($almacenesUnicos as $warehouse)
@@ -92,9 +95,13 @@
                             <tbody>
                                 @foreach($producto->variants as $variant)
                                     @php
-                                        // Calcular precio según tier del partner
-                                        $precioCalculado = $partnerPricing 
+                                        // Calcular precio de costo (lo que paga el distribuidor a Printec)
+                                        $precioCosto = $partnerPricing
                                             ? $partnerPricing->calculateCostPrice($variant->price, $isPrintecProduct)
+                                            : $variant->price;
+                                        // Calcular precio cliente final (con markup del partner)
+                                        $precioClienteFinal = $partnerPricing
+                                            ? $partnerPricing->calculateSalePrice($variant->price, $isPrintecProduct)
                                             : $variant->price;
                                     @endphp
                                     <tr>
@@ -113,11 +120,16 @@
                                             {{ $variant->color_name ?? 'no_color' }}
                                             <div class="color-icon {{ $variant->color_name ?? 'no_color' }}" ></div>
                                         </td>
+                                        @if(auth()->user()->isPrintec())
                                         <td>
                                             ${{ number_format($variant->price, 2) }}
                                         </td>
+                                        @endif
                                         <td>
-                                            ${{ number_format($precioCalculado, 2) }}
+                                            ${{ number_format($precioCosto, 2) }}
+                                        </td>
+                                        <td>
+                                            ${{ number_format($precioClienteFinal, 2) }}
                                         </td>
                                         <td style="min-width: 130px;">
                                             <div class="input-group quantity-selector">
@@ -135,10 +147,10 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <button class="btn btn-primary btn-sm btn-add-to-cart" 
+                                            <button class="btn btn-primary btn-sm btn-add-to-cart"
                                                     data-variant="{{ $variant->id }}"
                                                     data-warehouse="{{ $stock->warehouse_id ?? '' }}"
-                                                    data-price="{{ $precioCalculado }}">
+                                                    data-price="{{ $precioCosto }}">
                                                 <i class="feather icon-shopping-cart"></i> Agregar
                                             </button>
                                         </td>
