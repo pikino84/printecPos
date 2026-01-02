@@ -66,8 +66,8 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                     <small class="form-text text-muted">
-                        <strong>Asociado Administrador:</strong> Puede gestionar usuarios, razones sociales y cuentas bancarias.<br>
-                        <strong>Asociado Vendedor:</strong> Puede ver información y generar cotizaciones.
+                        <strong>Distribuidor Administrador:</strong> Puede gestionar usuarios, razones sociales y cuentas bancarias.<br>
+                        <strong>Distribuidor Vendedor:</strong> Puede ver información y generar cotizaciones.
                     </small>
                 </div>
             </div>

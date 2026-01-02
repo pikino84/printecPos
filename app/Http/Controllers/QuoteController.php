@@ -87,36 +87,69 @@ class QuoteController extends Controller
             return back()->with('error', 'Esta cotización no puede ser enviada');
         }
 
+        // Obtener la entidad emisora (partnerEntity o defaultEntity)
+        $entity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
+
+        // Verificar si la entidad tiene configuración de correo
+        if (!$entity || !$entity->hasMailConfig()) {
+            return back()->with('error', 'La razón social no tiene configuración de correo. Por favor configura el correo SMTP en la sección de Razones Sociales antes de enviar cotizaciones.');
+        }
+
         try {
             // Generar PDF
             $pdf = $this->generatePDF($quote);
             $pdfOutput = $pdf->output();
-            
+
             $customMessage = $request->message;
 
             \Log::info('Intentando enviar cotización', [
                 'quote_number' => $quote->quote_number,
                 'to_email' => $request->email,
+                'from_entity' => $entity->razon_social,
                 'pdf_size' => strlen($pdfOutput)
             ]);
 
-            // Enviar email
-            Mail::send('emails.quote', [
+            // Configurar mailer dinámico con los datos del partner
+            $mailerName = 'entity_' . $entity->id;
+            config([
+                "mail.mailers.{$mailerName}" => [
+                    'transport' => 'smtp',
+                    'host' => $entity->smtp_host,
+                    'port' => $entity->smtp_port,
+                    'encryption' => $entity->smtp_encryption === 'none' ? null : $entity->smtp_encryption,
+                    'username' => $entity->smtp_username,
+                    'password' => $entity->smtp_password_decrypted,
+                ],
+            ]);
+
+            // Preparar correos CC
+            $ccEmails = $entity->getMailCcArray();
+            $fromAddress = $entity->mail_from_address;
+            $fromName = $entity->mail_from_name ?: $entity->razon_social;
+
+            // Enviar email usando el mailer del partner
+            Mail::mailer($mailerName)->send('emails.quote', [
                 'quote' => $quote,
                 'customMessage' => $customMessage,
-            ], function($mail) use ($quote, $request, $pdfOutput) {
-                $mail->from(config('mail.from.address'), config('mail.from.name'))
+            ], function($mail) use ($quote, $request, $pdfOutput, $fromAddress, $fromName, $ccEmails, $entity) {
+                $mail->from($fromAddress, $fromName)
                     ->to($request->email)
-                    ->cc('info@printec.mx')
-                    ->subject("Cotización {$quote->quote_number} - Printec")
+                    ->subject("Cotización {$quote->quote_number} - {$entity->razon_social}")
                     ->attachData($pdfOutput, "cotizacion-{$quote->quote_number}.pdf", [
                         'mime' => 'application/pdf',
                     ]);
+
+                // Agregar CC si hay correos configurados
+                if (!empty($ccEmails)) {
+                    $mail->cc($ccEmails);
+                }
             });
 
             \Log::info('Cotización enviada exitosamente', [
                 'quote_number' => $quote->quote_number,
-                'to_email' => $request->email
+                'to_email' => $request->email,
+                'from' => $fromAddress,
+                'cc' => $ccEmails
             ]);
 
             // Actualizar estado
@@ -146,7 +179,7 @@ class QuoteController extends Controller
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
             ]);
-            
+
             return back()->with('error', 'Error al enviar cotización: ' . $e->getMessage());
         }
     }
@@ -170,10 +203,16 @@ class QuoteController extends Controller
      */
     private function generatePDF(Quote $quote)
     {
-        $quote->load(['items.variant.product', 'items.warehouse', 'partner.defaultEntity', 'user']);
+        $quote->load([
+            'items.variant.product',
+            'items.warehouse',
+            'partner.defaultEntity.bankAccounts',
+            'partnerEntity.bankAccounts',
+            'user'
+        ]);
 
         $pdf = PDF::loadView('quotes.pdf', compact('quote'));
-        
+
         return $pdf;
     }
 
@@ -345,6 +384,7 @@ class QuoteController extends Controller
             'client_name' => 'nullable|string|max:255',
             'client_rfc' => 'nullable|string|max:13',
             'client_razon_social' => 'nullable|string|max:255',
+            'partner_entity_id' => 'nullable|exists:partner_entities,id',
             'notes' => 'nullable|string|max:1000',
             'customer_notes' => 'nullable|string|max:1000',
             'short_description' => 'nullable|string|max:255',
@@ -408,10 +448,17 @@ class QuoteController extends Controller
                 }
             }
 
-            // 2. Crear cotización
+            // 2. Determinar la entidad emisora (partner_entity_id)
+            $partnerEntityId = $request->partner_entity_id;
+            if (!$partnerEntityId && $user->partner) {
+                $partnerEntityId = $user->partner->default_entity_id;
+            }
+
+            // 3. Crear cotización
             $quote = Quote::create([
                 'user_id' => $user->id,
                 'partner_id' => $partnerId,
+                'partner_entity_id' => $partnerEntityId,
                 'client_id' => $clientId,
                 'client_email' => $clientData['client_email'] ?? null,
                 'client_name' => $clientData['client_name'] ?? null,
@@ -425,7 +472,7 @@ class QuoteController extends Controller
                 'valid_until' => now()->addDays($request->valid_days ?? 15),
             ]);
 
-            // 3. Crear items usando el precio del carrito (ya calculado según tier)
+            // 4. Crear items usando el precio del carrito (ya calculado según tier)
             foreach ($cartItems as $cartItem) {
                 QuoteItem::create([
                     'quote_id' => $quote->id,

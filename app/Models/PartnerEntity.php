@@ -19,6 +19,16 @@ class PartnerEntity extends Model
         'correo_contacto',
         'logo_path',
         'payment_terms',
+        // Configuración de correo
+        'smtp_host',
+        'smtp_port',
+        'smtp_username',
+        'smtp_password',
+        'smtp_encryption',
+        'mail_from_address',
+        'mail_from_name',
+        'mail_cc_addresses',
+        'mail_configured',
         'is_active',
         'is_default',
     ];
@@ -26,6 +36,12 @@ class PartnerEntity extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'is_default' => 'boolean',
+        'mail_configured' => 'boolean',
+        'smtp_port' => 'integer',
+    ];
+
+    protected $hidden = [
+        'smtp_password',
     ];
 
     // ========================================================================
@@ -162,5 +178,93 @@ class PartnerEntity extends Model
     public function getQuotesCountAttribute()
     {
         return $this->quotes()->count();
+    }
+
+    // ========================================================================
+    // MÉTODOS DE CONFIGURACIÓN DE CORREO
+    // ========================================================================
+
+    /**
+     * Verificar si tiene configuración de correo completa
+     */
+    public function hasMailConfig()
+    {
+        return $this->mail_configured
+            && $this->smtp_host
+            && $this->smtp_port
+            && $this->smtp_username
+            && $this->smtp_password
+            && $this->mail_from_address;
+    }
+
+    /**
+     * Obtener array de correos CC
+     */
+    public function getMailCcArray()
+    {
+        if (empty($this->mail_cc_addresses)) {
+            return [];
+        }
+
+        return array_map('trim', explode(',', $this->mail_cc_addresses));
+    }
+
+    /**
+     * Encriptar contraseña SMTP antes de guardar
+     */
+    public function setSmtpPasswordAttribute($value)
+    {
+        if ($value) {
+            $this->attributes['smtp_password'] = encrypt($value);
+        }
+    }
+
+    /**
+     * Desencriptar contraseña SMTP al obtener
+     */
+    public function getSmtpPasswordDecryptedAttribute()
+    {
+        if ($this->attributes['smtp_password'] ?? null) {
+            try {
+                return decrypt($this->attributes['smtp_password']);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Obtener configuración de mailer para usar con Mail
+     */
+    public function getMailerConfig()
+    {
+        if (!$this->hasMailConfig()) {
+            return null;
+        }
+
+        return [
+            'transport' => 'smtp',
+            'host' => $this->smtp_host,
+            'port' => $this->smtp_port,
+            'encryption' => $this->smtp_encryption === 'none' ? null : $this->smtp_encryption,
+            'username' => $this->smtp_username,
+            'password' => $this->smtp_password_decrypted,
+            'from' => [
+                'address' => $this->mail_from_address,
+                'name' => $this->mail_from_name ?: $this->razon_social,
+            ],
+        ];
+    }
+
+    /**
+     * Obtener badge de estado de correo
+     */
+    public function getMailStatusBadgeAttribute()
+    {
+        if ($this->hasMailConfig()) {
+            return '<span class="badge bg-success">Configurado</span>';
+        }
+        return '<span class="badge bg-warning">No configurado</span>';
     }
 }

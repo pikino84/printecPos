@@ -205,11 +205,35 @@
                                 </div>
                             </div>
 
+                            {{-- Razón Social Emisora --}}
+                            @if($partnerEntities->count() > 0)
+                            <div class="mb-3">
+                                <h6 class="mb-3">Razón Social Emisora</h6>
+                                <div class="form-group mb-2">
+                                    <label>Emitir cotización como</label>
+                                    <select name="partner_entity_id"
+                                            id="partner_entity_id"
+                                            class="form-control form-control-sm">
+                                        <option value="">-- Usar predeterminada --</option>
+                                        @foreach($partnerEntities as $entity)
+                                            <option value="{{ $entity->id }}"
+                                                    {{ $entity->id == $defaultEntityId ? 'selected' : '' }}>
+                                                {{ $entity->razon_social }}
+                                                @if($entity->rfc) ({{ $entity->rfc }}) @endif
+                                                @if($entity->id == $defaultEntityId) ★ @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">La cotización llevará el logo y datos de esta razón social</small>
+                                </div>
+                            </div>
+                            @endif
+
                             {{-- Notas opcionales --}}
                             <div class="form-group mb-3">
                                 <label>Notas para la cotización</label>
-                                <textarea name="notes" 
-                                          class="form-control form-control-sm" 
+                                <textarea name="notes"
+                                          class="form-control form-control-sm"
                                           rows="2"
                                           placeholder="Notas o comentarios opcionales"></textarea>
                             </div>
@@ -386,44 +410,72 @@ $(document).ready(function() {
         $('#manual_client_fields').hide();
     });
 
-    // Verificar cliente cuando pierde foco el email
-    $('#client_email').on('blur', function() {
+    // Debounce para buscar cliente por email (2 segundos después de escribir @)
+    let emailSearchTimeout = null;
+
+    $('#client_email').on('input', function() {
         const email = $(this).val().trim();
-        
+
+        // Limpiar timeout anterior
+        if (emailSearchTimeout) {
+            clearTimeout(emailSearchTimeout);
+            emailSearchTimeout = null;
+        }
+
+        // Solo buscar si contiene @
         if (email && email.includes('@')) {
-            $.ajax({
-                url: '{{ route("clients.search") }}',
-                data: { q: email },
-                success: function(clients) {
-                    const existingClient = clients.find(c => c.email === email);
-                    
-                    if (existingClient) {
-                        $('#client_id').val(existingClient.id);
-                        $('#client_name').val(existingClient.text);
-                        $('#client_rfc').val(existingClient.rfc || '');
-                        $('#client_razon_social').val(existingClient.razon_social || '');
-                        
-                        $('#client_info').html(`
-                            <div class="alert alert-info alert-sm">
-                                <strong>✓ Cliente encontrado:</strong> ${existingClient.text}
-                            </div>
-                        `);
-                        
-                        $('#manual_client_fields').hide();
-                    } else {
-                        $('#client_id').val('');
-                        $('#manual_client_fields').show();
-                        
-                        $('#client_info').html(`
-                            <div class="alert alert-warning alert-sm">
-                                <strong>Cliente no registrado.</strong> Complete los datos adicionales.
-                            </div>
-                        `);
-                    }
-                }
-            });
+            // Mostrar indicador de búsqueda pendiente
+            $('#client_info').html(`
+                <div class="alert alert-secondary alert-sm">
+                    <i class="feather icon-clock"></i> Buscando cliente...
+                </div>
+            `);
+
+            // Debounce de 2 segundos
+            emailSearchTimeout = setTimeout(function() {
+                searchClientByEmail(email);
+            }, 2000);
+        } else {
+            // Limpiar info si no hay @
+            $('#client_info').html('');
+            $('#manual_client_fields').hide();
+            $('#client_id').val('');
         }
     });
+
+    function searchClientByEmail(email) {
+        $.ajax({
+            url: '{{ route("clients.search") }}',
+            data: { q: email },
+            success: function(clients) {
+                const existingClient = clients.find(c => c.email === email);
+
+                if (existingClient) {
+                    $('#client_id').val(existingClient.id);
+                    $('#client_name').val(existingClient.text);
+                    $('#client_rfc').val(existingClient.rfc || '');
+                    $('#client_razon_social').val(existingClient.razon_social || '');
+
+                    $('#client_info').html(`
+                        <div class="alert alert-info alert-sm">
+                            <strong>✓ Cliente encontrado:</strong> ${existingClient.text}
+                        </div>
+                    `);
+
+                    $('#manual_client_fields').hide();
+                } else {
+                    $('#client_id').val('');
+                    $('#manual_client_fields').show();
+
+                    $('#client_info').html(`
+                        <div class="alert alert-warning alert-sm">
+                            <strong>Cliente no registrado.</strong> Complete los datos adicionales.
+                        </div>
+                    `);
+                }
+            }
+        });
+    }
 });
 </script>
 @endsection

@@ -133,23 +133,32 @@
     </style>
 </head>
 <body>
+    @php
+        // Usar la entidad seleccionada en la cotización, o la default del partner como fallback
+        $entity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
+    @endphp
+
     <!-- Header -->
     <div class="header clearfix">
         <div class="company-info">
-            <img src="{{ public_path('images/logo_printec_white.png') }}" class="logo" alt="Printec">
-            @if($quote->partner->defaultEntity)
-                <p><strong>{{ $quote->partner->defaultEntity->razon_social }}</strong></p>
-                @if($quote->partner->defaultEntity->rfc)
-                    <p>RFC: {{ $quote->partner->defaultEntity->rfc }}</p>
+            @if($entity && $entity->logo_path)
+                <img src="{{ public_path('storage/' . $entity->logo_path) }}" class="logo" alt="{{ $entity->razon_social }}">
+            @else
+                <img src="{{ public_path('images/logo_printec_white.png') }}" class="logo" alt="Printec">
+            @endif
+            @if($entity)
+                <p><strong>{{ $entity->razon_social }}</strong></p>
+                @if($entity->rfc)
+                    <p>RFC: {{ $entity->rfc }}</p>
                 @endif
-                @if($quote->partner->defaultEntity->direccion)
-                    <p>{{ $quote->partner->defaultEntity->direccion }}</p>
+                @if($entity->direccion)
+                    <p>{{ $entity->direccion }}</p>
                 @endif
-                @if($quote->partner->defaultEntity->telefono)
-                    <p>Tel: {{ $quote->partner->defaultEntity->telefono }}</p>
+                @if($entity->telefono)
+                    <p>Tel: {{ $entity->telefono }}</p>
                 @endif
-                @if($quote->partner->defaultEntity->correo_contacto)
-                    <p>Email: {{ $quote->partner->defaultEntity->correo_contacto }}</p>
+                @if($entity->correo_contacto)
+                    <p>Email: {{ $entity->correo_contacto }}</p>
                 @endif
             @else
                 <p>{{ $quote->partner->name }}</p>
@@ -260,30 +269,26 @@
 
     <div style="clear: both;"></div>
 
-    @php
-        $partnerEntity = $quote->partner->defaultEntity;
-    @endphp
-
     <!-- Condiciones de Pago -->
-    @if($partnerEntity && $partnerEntity->payment_terms)
+    @if($entity && $entity->payment_terms)
     <div class="section-title">CONDICIONES DE PAGO</div>
     <div style="padding: 10px; background-color: #f8f9fa; margin-bottom: 15px;">
-        {!! nl2br(e($partnerEntity->payment_terms)) !!}
+        {!! nl2br(e($entity->payment_terms)) !!}
     </div>
     @endif
 
     <!-- Datos Bancarios -->
-    @if($partnerEntity && $partnerEntity->bankAccounts->count() > 0)
+    @if($entity && $entity->bankAccounts->count() > 0)
     @php
-        $bankAccount = $partnerEntity->getMainBankAccount();
-        $usdBankAccount = $partnerEntity->getUsdBankAccount();
+        $bankAccount = $entity->getMainBankAccount();
+        $usdBankAccount = $entity->getUsdBankAccount();
     @endphp
     @if($bankAccount)
     <div class="section-title">DATOS PARA REALIZAR PAGO</div>
     <div style="padding: 10px; background-color: #f8f9fa;">
-        <p><strong>BENEFICIARIO:</strong> {{ $bankAccount->account_holder ?: $partnerEntity->razon_social }}</p>
-        @if($partnerEntity->rfc)
-        <p><strong>RFC:</strong> {{ $partnerEntity->rfc }}</p>
+        <p><strong>BENEFICIARIO:</strong> {{ $bankAccount->account_holder ?: $entity->razon_social }}</p>
+        @if($entity->rfc)
+        <p><strong>RFC:</strong> {{ $entity->rfc }}</p>
         @endif
         <p><strong>BANCO:</strong> {{ $bankAccount->bank_name }}</p>
         @if($bankAccount->account_number)
@@ -301,7 +306,7 @@
     @if($usdBankAccount)
     <div class="section-title" style="margin-top: 15px;">CUENTA EN DÓLARES (USD)</div>
     <div style="padding: 10px; background-color: #f8f9fa;">
-        <p><strong>BENEFICIARIO:</strong> {{ $usdBankAccount->account_holder ?: $partnerEntity->razon_social }}</p>
+        <p><strong>BENEFICIARIO:</strong> {{ $usdBankAccount->account_holder ?: $entity->razon_social }}</p>
         <p><strong>BANCO:</strong> {{ $usdBankAccount->bank_name }}</p>
         @if($usdBankAccount->account_number)
         <p><strong>CUENTA:</strong> {{ $usdBankAccount->account_number }}</p>

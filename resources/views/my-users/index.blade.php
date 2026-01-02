@@ -60,9 +60,9 @@
                         <td>
                             @foreach($user->roles as $role)
                                 @if($role->name === 'Asociado Administrador')
-                                    <span class="badge bg-primary">{{ $role->name }}</span>
+                                    <span class="badge bg-primary">Distribuidor Administrador</span>
                                 @elseif($role->name === 'Asociado Vendedor')
-                                    <span class="badge bg-info">{{ $role->name }}</span>
+                                    <span class="badge bg-info">Distribuidor Vendedor</span>
                                 @else
                                     <span class="badge bg-secondary">{{ $role->name }}</span>
                                 @endif

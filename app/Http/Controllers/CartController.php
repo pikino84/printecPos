@@ -23,7 +23,17 @@ class CartController extends Controller
         $cartItems = CartSession::getCartItems(Auth::id());
         $subtotal = CartSession::getCartTotal(Auth::id());
 
-        return view('cart.index', compact('cartItems', 'subtotal'));
+        // Obtener entidades del partner del usuario para el selector de razón social emisora
+        $user = Auth::user();
+        $partnerEntities = collect();
+        $defaultEntityId = null;
+
+        if ($user->partner) {
+            $partnerEntities = $user->partner->entities()->active()->get();
+            $defaultEntityId = $user->partner->default_entity_id;
+        }
+
+        return view('cart.index', compact('cartItems', 'subtotal', 'partnerEntities', 'defaultEntityId'));
     }
 
     /**

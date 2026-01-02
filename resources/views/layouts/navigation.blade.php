@@ -123,19 +123,20 @@
                         @endif
                     </ul>
                 </li>
+                @if(auth()->user()->hasRole('Asociado Administrador|Asociado Vendedor'))
                 <li class="pcoded-hasmenu {{ menuActive(['my-entities.*', 'my-bank-accounts.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
-                        <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
-                        <span class="pcoded-mtext">Asociado</span>
+                        <span class="pcoded-micon"><i class="feather icon-briefcase"></i></span>
+                        <span class="pcoded-mtext">Distribuidor</span>
                     </a>
                     <ul class="pcoded-submenu">
-                        @can('my-entities')
+                        @if(auth()->user()->hasRole('Asociado Administrador'))
                         <li class="{{ request()->routeIs('my-entities.*') ? 'active' : '' }}">
                             <a href="{{ route('my-entities.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Razones Sociales</span>
                             </a>
                         </li>
-                        @endcan
+                        @endif
                         <li class="{{ request()->routeIs('my-bank-accounts.*') ? 'active' : '' }}">
                             <a href="{{ route('my-bank-accounts.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Cuentas Bancarias</span>
@@ -143,6 +144,7 @@
                         </li>
                     </ul>
                 </li>
+                @endif
                 <li class="pcoded-hasmenu {{ menuActive(['printec-categories.*', 'my-categories.*', 'category-mappings.*', 'catalogo.*', 'quotes.*', 'own-products.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>

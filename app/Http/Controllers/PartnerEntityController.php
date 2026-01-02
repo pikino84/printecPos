@@ -331,4 +331,156 @@ class PartnerEntityController extends Controller
         return redirect()->route('my-entities.index')
             ->with('success','Razón social eliminada exitosamente.');
     }
+
+    // ========================================================================
+    // MÉTODOS PARA CONFIGURACIÓN DE CORREO
+    // ========================================================================
+
+    /**
+     * Mostrar formulario de configuración de correo
+     */
+    public function mailConfig($id)
+    {
+        $user = Auth::user();
+        $entity = PartnerEntity::findOrFail($id);
+
+        // Verificar que la entidad pertenezca al partner del usuario
+        if ($entity->partner_id !== $user->partner_id && !$user->hasRole('super admin')) {
+            abort(403, 'No tienes permiso para configurar esta razón social.');
+        }
+
+        return view('my-entities.mail-config', compact('entity'));
+    }
+
+    /**
+     * Actualizar configuración de correo
+     */
+    public function mailConfigUpdate(Request $request, $id)
+    {
+        $user = Auth::user();
+        $entity = PartnerEntity::findOrFail($id);
+
+        // Verificar permisos
+        if ($entity->partner_id !== $user->partner_id && !$user->hasRole('super admin')) {
+            abort(403, 'No tienes permiso para configurar esta razón social.');
+        }
+
+        $rules = [
+            'smtp_host' => 'required_if:mail_configured,1|nullable|string|max:255',
+            'smtp_port' => 'required_if:mail_configured,1|nullable|integer|min:1|max:65535',
+            'smtp_username' => 'required_if:mail_configured,1|nullable|string|max:255',
+            'smtp_encryption' => 'nullable|in:tls,ssl,none',
+            'mail_from_address' => 'required_if:mail_configured,1|nullable|email|max:255',
+            'mail_from_name' => 'nullable|string|max:255',
+            'mail_cc_addresses' => 'nullable|string|max:1000',
+            'mail_configured' => 'sometimes|boolean',
+        ];
+
+        // Solo requerir contraseña si no existe una previa
+        if (!$entity->smtp_password) {
+            $rules['smtp_password'] = 'required_if:mail_configured,1|nullable|string|max:255';
+        } else {
+            $rules['smtp_password'] = 'nullable|string|max:255';
+        }
+
+        $data = $request->validate($rules);
+
+        // Si no se envió contraseña nueva, no actualizar
+        if (empty($data['smtp_password'])) {
+            unset($data['smtp_password']);
+        }
+
+        // Asegurar que mail_configured sea boolean
+        $data['mail_configured'] = $request->boolean('mail_configured');
+
+        // Validar formato de correos CC
+        if (!empty($data['mail_cc_addresses'])) {
+            $emails = array_map('trim', explode(',', $data['mail_cc_addresses']));
+            foreach ($emails as $email) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    return back()->withErrors(['mail_cc_addresses' => "El correo '{$email}' no es válido."])->withInput();
+                }
+            }
+        }
+
+        $entity->update($data);
+
+        return redirect()->route('my-entities.mail-config', $entity->id)
+            ->with('success', 'Configuración de correo actualizada exitosamente.');
+    }
+
+    /**
+     * Enviar correo de prueba
+     */
+    public function mailConfigTest(Request $request, $id)
+    {
+        $user = Auth::user();
+        $entity = PartnerEntity::findOrFail($id);
+
+        // Verificar permisos
+        if ($entity->partner_id !== $user->partner_id && !$user->hasRole('super admin')) {
+            return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
+        try {
+            // Obtener datos del formulario
+            $host = $request->smtp_host;
+            $port = $request->smtp_port;
+            $username = $request->smtp_username;
+            $password = $request->smtp_password ?: $entity->smtp_password_decrypted;
+            $encryption = $request->smtp_encryption === 'none' ? null : $request->smtp_encryption;
+            $fromAddress = $request->mail_from_address;
+            $fromName = $request->mail_from_name ?: $entity->razon_social;
+
+            if (!$host || !$port || !$username || !$password || !$fromAddress) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Completa todos los campos requeridos antes de enviar la prueba.'
+                ]);
+            }
+
+            // Configurar mailer temporal
+            config([
+                'mail.mailers.entity_test' => [
+                    'transport' => 'smtp',
+                    'host' => $host,
+                    'port' => $port,
+                    'encryption' => $encryption,
+                    'username' => $username,
+                    'password' => $password,
+                ],
+            ]);
+
+            // Enviar correo de prueba
+            \Illuminate\Support\Facades\Mail::mailer('entity_test')
+                ->send([], [], function ($message) use ($fromAddress, $fromName, $user, $entity) {
+                    $message->from($fromAddress, $fromName)
+                        ->to($user->email)
+                        ->subject('Prueba de configuración de correo - ' . $entity->razon_social)
+                        ->html("
+                            <h2>Configuración exitosa</h2>
+                            <p>Este es un correo de prueba para verificar la configuración SMTP de <strong>{$entity->razon_social}</strong>.</p>
+                            <p>Si recibes este mensaje, la configuración es correcta y puedes activar el envío de cotizaciones.</p>
+                            <br>
+                            <p style='color: #666; font-size: 12px;'>Este correo fue enviado automáticamente desde el sistema de cotizaciones.</p>
+                        ");
+                });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Correo de prueba enviado a {$user->email}. Revisa tu bandeja de entrada."
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en prueba de correo SMTP', [
+                'entity_id' => $entity->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al enviar: ' . $e->getMessage()
+            ]);
+        }
+    }
 }

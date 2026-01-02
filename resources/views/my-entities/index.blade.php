@@ -46,6 +46,7 @@
                         <th>Teléfono</th>
                         <th>Principal</th>
                         <th>Estado</th>
+                        <th>Correo SMTP</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -83,24 +84,33 @@
                             @endif
                         </td>
                         <td>
+                            {!! $entity->mail_status_badge !!}
+                        </td>
+                        <td>
                             <div class="btn-group btn-group-sm">
                                 @if(auth()->user()->hasRole('Asociado Administrador|super admin'))
-                                <a href="{{ route('my-entities.edit', $entity->id) }}" 
+                                <a href="{{ route('my-entities.edit', $entity->id) }}"
                                    class="btn btn-warning"
                                    title="Editar">
                                     <i class="feather icon-edit"></i>
                                 </a>
-                                
+
+                                <a href="{{ route('my-entities.mail-config', $entity->id) }}"
+                                   class="btn btn-info"
+                                   title="Configurar Correo">
+                                    <i class="feather icon-mail"></i>
+                                </a>
+
                                 <button type="button"
                                         class="btn btn-danger"
                                         title="Eliminar"
                                         onclick="confirmDelete({{ $entity->id }})">
                                     <i class="feather icon-trash-2"></i>
                                 </button>
-                                
-                                <form id="delete-form-{{ $entity->id }}" 
-                                      action="{{ route('my-entities.destroy', $entity->id) }}" 
-                                      method="POST" 
+
+                                <form id="delete-form-{{ $entity->id }}"
+                                      action="{{ route('my-entities.destroy', $entity->id) }}"
+                                      method="POST"
                                       style="display: none;">
                                     @csrf
                                     @method('DELETE')

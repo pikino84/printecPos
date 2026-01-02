@@ -12,10 +12,16 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    // 👇 Lista de roles que un Asociado Administrador puede asignar
+    // 👇 Lista de roles que un Distribuidor Administrador puede asignar
     private const ASOCIADO_ROLES = [
         'Asociado Administrador',
         'Asociado Vendedor',
+    ];
+
+    // 👇 Etiquetas amigables para mostrar en la UI
+    private const ROLE_LABELS = [
+        'Asociado Administrador' => 'Distribuidor Administrador',
+        'Asociado Vendedor' => 'Distribuidor Vendedor',
     ];
     
     /**
@@ -216,9 +222,9 @@ class UserController extends Controller
     {
         $user = auth()->user();
         $partner = $user->partner;
-        
-        // Solo roles permitidos para asociados
-        $roles = collect(array_combine(self::ASOCIADO_ROLES, self::ASOCIADO_ROLES));
+
+        // Solo roles permitidos para asociados, con etiquetas amigables
+        $roles = collect(self::ROLE_LABELS);
 
         return view('my-users.create', compact('roles', 'partner'));
     }
@@ -260,11 +266,11 @@ class UserController extends Controller
     {
         $user = auth()->user();
         $partner = $user->partner;
-        
+
         $userToEdit = User::where('partner_id', $user->partner_id)->findOrFail($id);
-        
-        // Solo roles permitidos para asociados
-        $roles = collect(array_combine(self::ASOCIADO_ROLES, self::ASOCIADO_ROLES));
+
+        // Solo roles permitidos para asociados, con etiquetas amigables
+        $roles = collect(self::ROLE_LABELS);
 
         return view('my-users.edit', compact('userToEdit', 'roles', 'partner'));
     }

@@ -12,11 +12,12 @@ class Quote extends Model
     protected $fillable = [
         'user_id',
         'partner_id',
-        'client_id',           
-        'client_email',        
-        'client_name',         
-        'client_rfc',          
-        'client_razon_social', 
+        'partner_entity_id',
+        'client_id',
+        'client_email',
+        'client_name',
+        'client_rfc',
+        'client_razon_social',
         'quote_number',
         'status',
         'subtotal',
@@ -52,6 +53,11 @@ class Quote extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function partnerEntity()
+    {
+        return $this->belongsTo(PartnerEntity::class);
     }
 
     public function items()

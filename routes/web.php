@@ -126,6 +126,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/razones-sociales/{id}/edit', [PartnerEntityController::class, 'myEdit'])->name('my-entities.edit');
         Route::put('/razones-sociales/{id}', [PartnerEntityController::class, 'myUpdate'])->name('my-entities.update');
         Route::delete('/razones-sociales/{id}', [PartnerEntityController::class, 'myDestroy'])->name('my-entities.destroy');
+        // Configuración de correo por razón social
+        Route::get('/razones-sociales/{id}/mail-config', [PartnerEntityController::class, 'mailConfig'])->name('my-entities.mail-config');
+        Route::put('/razones-sociales/{id}/mail-config', [PartnerEntityController::class, 'mailConfigUpdate'])->name('my-entities.mail-config.update');
+        Route::post('/razones-sociales/{id}/mail-config/test', [PartnerEntityController::class, 'mailConfigTest'])->name('my-entities.mail-config.test');
         Route::resource('pricing-tiers', PricingTierController::class);
         Route::get('partner-pricing', [PartnerPricingController::class, 'index'])->name('partner-pricing.index');
         Route::get('partner-pricing/{partner}/edit', [PartnerPricingController::class, 'edit'])->name('partner-pricing.edit');
