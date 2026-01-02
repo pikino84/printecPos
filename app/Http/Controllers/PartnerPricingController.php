@@ -12,7 +12,7 @@ class PartnerPricingController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('role:super admin|admin');
+        $this->middleware('role:super admin|admin')->except(['myMarkup', 'updateMyMarkup']);
     }
 
     /**
@@ -141,5 +141,46 @@ class PartnerPricingController extends Controller
         $pricing->save();
 
         return back()->with('success', 'Compras del mes actual reseteadas.');
+    }
+
+    /**
+     * Mostrar formulario para que el asociado edite su propio markup
+     */
+    public function myMarkup()
+    {
+        $user = auth()->user();
+        $partner = $user->partner;
+
+        if (!$partner) {
+            abort(403, 'No tienes un partner asociado.');
+        }
+
+        $pricing = $partner->getPricingConfig();
+
+        return view('partner-pricing.my-markup', compact('partner', 'pricing'));
+    }
+
+    /**
+     * Actualizar el markup del asociado
+     */
+    public function updateMyMarkup(Request $request)
+    {
+        $request->validate([
+            'markup_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $user = auth()->user();
+        $partner = $user->partner;
+
+        if (!$partner) {
+            abort(403, 'No tienes un partner asociado.');
+        }
+
+        $pricing = $partner->getPricingConfig();
+        $pricing->update([
+            'markup_percentage' => $request->markup_percentage,
+        ]);
+
+        return back()->with('success', 'Tu porcentaje de ganancia ha sido actualizado.');
     }
 }

@@ -152,6 +152,14 @@ Route::middleware('auth')->group(function () {
     });
 
     // ========================================================================
+    // Mi Ganancia (Markup del Asociado)
+    // ========================================================================
+    Route::middleware(['role:Asociado Administrador|Asociado Vendedor'])->group(function () {
+        Route::get('/mi-ganancia', [PartnerPricingController::class, 'myMarkup'])->name('my-markup.index');
+        Route::put('/mi-ganancia', [PartnerPricingController::class, 'updateMyMarkup'])->name('my-markup.update');
+    });
+
+    // ========================================================================
     // Cuentas Bancarias para Asociados
     // ========================================================================
     Route::middleware(['role:Asociado Administrador|Asociado Vendedor|super admin'])->group(function () {

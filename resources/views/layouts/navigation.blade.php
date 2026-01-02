@@ -124,7 +124,7 @@
                     </ul>
                 </li>
                 @if(auth()->user()->hasRole('Asociado Administrador|Asociado Vendedor'))
-                <li class="pcoded-hasmenu {{ menuActive(['my-entities.*', 'my-bank-accounts.*']) }}">
+                <li class="pcoded-hasmenu {{ menuActive(['my-entities.*', 'my-bank-accounts.*', 'my-markup.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-briefcase"></i></span>
                         <span class="pcoded-mtext">Distribuidor</span>
@@ -140,6 +140,11 @@
                         <li class="{{ request()->routeIs('my-bank-accounts.*') ? 'active' : '' }}">
                             <a href="{{ route('my-bank-accounts.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Cuentas Bancarias</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('my-markup.*') ? 'active' : '' }}">
+                            <a href="{{ route('my-markup.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Mi Ganancia</span>
                             </a>
                         </li>
                     </ul>
