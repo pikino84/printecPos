@@ -123,14 +123,14 @@
                         @endif
                     </ul>
                 </li>
-                @if(auth()->user()->hasRole('Asociado Administrador|Asociado Vendedor'))
+                @if(auth()->user()->hasRole('Asociado Administrador|Asociado Vendedor|super admin'))
                 <li class="pcoded-hasmenu {{ menuActive(['my-entities.*', 'my-bank-accounts.*', 'my-markup.*']) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-briefcase"></i></span>
                         <span class="pcoded-mtext">Distribuidor</span>
                     </a>
                     <ul class="pcoded-submenu">
-                        @if(auth()->user()->hasRole('Asociado Administrador'))
+                        @if(auth()->user()->hasRole('Asociado Administrador|super admin'))
                         <li class="{{ request()->routeIs('my-entities.*') ? 'active' : '' }}">
                             <a href="{{ route('my-entities.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Razones Sociales</span>
