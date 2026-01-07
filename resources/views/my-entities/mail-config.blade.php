@@ -32,7 +32,7 @@
                 <h5><i class="feather icon-mail"></i> Configuración SMTP</h5>
             </div>
             <div class="card-body">
-                <form action="{{ route('my-entities.mail-config.update', $entity->id) }}" method="POST">
+                <form id="mail-config-form" action="{{ route('my-entities.mail-config.update', $entity->id) }}" method="POST">
                     @csrf
                     @method('PUT')
 
@@ -253,8 +253,11 @@
 @section('scripts')
 <script>
 function testMailConfig() {
-    const form = document.querySelector('form');
+    const form = document.getElementById('mail-config-form');
     const formData = new FormData(form);
+
+    // Eliminar _method porque la ruta de prueba es POST, no PUT
+    formData.delete('_method');
 
     // Agregar flag de prueba
     formData.append('test_email', '1');
@@ -270,12 +273,10 @@ function testMailConfig() {
         });
     }
 
+    // El token CSRF ya está en el FormData desde el formulario
     fetch('{{ route("my-entities.mail-config.test", $entity->id) }}', {
         method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
