@@ -64,6 +64,16 @@ class PublicCatalogController extends Controller
     }
 
     /**
+     * Calculate the sale price for a product
+     * Applies: Printec Markup + Tier Markup - Tier Discount + Partner Markup
+     */
+    protected function calculateSalePrice(float $basePrice, Partner $partner, bool $isPrintecProduct): float
+    {
+        $partnerPricing = $partner->getPricingConfig();
+        return $partnerPricing->calculateSalePrice($basePrice, $isPrintecProduct);
+    }
+
+    /**
      * Transform product for API response
      */
     protected function transformProduct(Product $product, Partner $partner): array
@@ -72,6 +82,9 @@ class PublicCatalogController extends Controller
 
         // Get first variant price as base price
         $basePrice = $product->variants->first()?->price ?? $product->price ?? 0;
+
+        // Determine if it's a Printec/provider product (not partner's own product)
+        $isPrintecProduct = !$product->is_own_product || $product->partner_id != $partner->id;
 
         // Build image URLs
         $images = [];
@@ -94,8 +107,8 @@ class PublicCatalogController extends Controller
             ])->toArray();
         }
 
-        // Build variants info
-        $variants = $product->variants->map(function ($variant) use ($showPrices) {
+        // Build variants info with calculated sale prices
+        $variants = $product->variants->map(function ($variant) use ($showPrices, $partner, $isPrintecProduct) {
             $data = [
                 'id' => $variant->id,
                 'sku' => $variant->sku,
@@ -105,7 +118,9 @@ class PublicCatalogController extends Controller
             ];
 
             if ($showPrices) {
-                $data['price'] = (float) $variant->price;
+                // Calculate sale price: Printec Markup + Tier Markup - Tier Discount + Partner Markup
+                $variantBasePrice = (float) $variant->price;
+                $data['price'] = $this->calculateSalePrice($variantBasePrice, $partner, $isPrintecProduct);
             }
 
             return $data;
@@ -131,7 +146,8 @@ class PublicCatalogController extends Controller
         ];
 
         if ($showPrices) {
-            $data['price'] = (float) $basePrice;
+            // Calculate sale price: Printec Markup + Tier Markup - Tier Discount + Partner Markup
+            $data['price'] = $this->calculateSalePrice($basePrice, $partner, $isPrintecProduct);
         }
 
         return $data;
