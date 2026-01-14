@@ -21,6 +21,18 @@
             <div class="card">
                 <div class="card-body">
                     <form method="GET" action="{{ route('quotes.index') }}" class="form-inline flex-wrap">
+                        @if($isSuperAdmin && $partners->isNotEmpty())
+                        <div class="form-group mr-2 mb-2">
+                            <select name="partner_id" class="form-control form-control-sm">
+                                <option value="">Todos los Partners</option>
+                                @foreach($partners as $partner)
+                                    <option value="{{ $partner->id }}" {{ request('partner_id') == $partner->id ? 'selected' : '' }}>
+                                        {{ $partner->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
                         <div class="form-group mr-2 mb-2">
                             <select name="status" class="form-control form-control-sm">
                                 <option value="">Todos los estados</option>

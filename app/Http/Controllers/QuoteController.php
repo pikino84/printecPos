@@ -6,6 +6,7 @@ use App\Models\Quote;
 use App\Models\QuoteItem;
 use App\Models\CartSession;
 use App\Models\Client;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,31 @@ class QuoteController extends Controller
     }
 
     /**
-     * Listar cotizaciones del usuario
+     * Verificar si el usuario puede acceder a la cotización
+     * - super admin: puede acceder a todas
+     * - otros usuarios: solo a cotizaciones de su mismo partner
+     */
+    private function canAccessQuote(Quote $quote): bool
+    {
+        $user = Auth::user();
+
+        // Super admin puede acceder a todas
+        if ($user->hasRole('super admin')) {
+            return true;
+        }
+
+        // Usuarios del mismo partner pueden acceder
+        if ($user->partner_id && $quote->partner_id === $user->partner_id) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Listar cotizaciones
+     * - super admin: ve todas con filtro por partner
+     * - otros usuarios: ven todas las cotizaciones de su partner
      */
     public function index(Request $request)
     {
@@ -30,37 +55,55 @@ class QuoteController extends Controller
         $query = Quote::with(['items.variant.product', 'partner', 'user', 'client'])
             ->orderBy('created_at', 'desc');
 
-        // Super admin ve todas las cotizaciones, otros usuarios solo las suyas
-        if (!$isSuperAdmin) {
-            $query->where('user_id', $user->id);
+        // Super admin ve todas, con opción de filtrar por partner
+        if ($isSuperAdmin) {
+            // Obtener lista de partners tipo Asociado y Mixto para el filtro
+            $partners = Partner::asociadosYMixtos()->orderBy('name')->get();
+
+            // Filtrar por partner si se selecciona
+            if ($request->filled('partner_id')) {
+                $query->where('partner_id', $request->partner_id);
+            }
+        } else {
+            // Otros usuarios solo ven cotizaciones de su partner
+            $partners = collect();
+            if ($user->partner_id) {
+                $query->where('partner_id', $user->partner_id);
+            } else {
+                // Si no tiene partner, solo ve las suyas
+                $query->where('user_id', $user->id);
+            }
         }
 
-        // Filtros
+        // Filtro por estado
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
+        // Filtro por búsqueda
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('quote_number', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
         $quotes = $query->paginate(15);
 
-        return view('quotes.index', compact('quotes', 'isSuperAdmin'));
+        return view('quotes.index', compact('quotes', 'isSuperAdmin', 'partners'));
     }
 
-    
+
     /**
      * Ver detalle de cotización
      */
     public function show(Quote $quote)
     {
-        // Verificar que la cotización pertenece al usuario o es admin
-        if ($quote->user_id !== Auth::id() && !Auth::user()->hasRole(['super admin', 'admin'])) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -74,7 +117,7 @@ class QuoteController extends Controller
      */
     public function send(Request $request, Quote $quote)
     {
-        if ($quote->user_id !== Auth::id()) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -189,7 +232,7 @@ class QuoteController extends Controller
      */
     public function downloadPdf(Quote $quote)
     {
-        if ($quote->user_id !== Auth::id() && !Auth::user()->hasRole(['super admin', 'admin'])) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -221,7 +264,7 @@ class QuoteController extends Controller
      */
     public function destroy(Quote $quote)
     {
-        if ($quote->user_id !== Auth::id()) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -240,8 +283,7 @@ class QuoteController extends Controller
      */
     public function cloneToCart(Quote $quote)
     {
-        // Verificar permisos
-        if ($quote->user_id !== Auth::id() && !Auth::user()->hasRole(['super admin', 'admin'])) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -269,7 +311,7 @@ class QuoteController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             \Log::error('Error al clonar cotización', [
                 'quote_number' => $quote->quote_number,
                 'error' => $e->getMessage(),
@@ -284,8 +326,7 @@ class QuoteController extends Controller
      */
     public function editToCart(Quote $quote)
     {
-        // Verificar permisos
-        if ($quote->user_id !== Auth::id()) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -322,7 +363,7 @@ class QuoteController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             \Log::error('Error al editar cotización', [
                 'quote_number' => $quote->quote_number,
                 'error' => $e->getMessage(),
@@ -337,8 +378,7 @@ class QuoteController extends Controller
      */
     public function accept(Quote $quote)
     {
-        // Verificar permisos
-        if ($quote->user_id !== Auth::id() && !Auth::user()->hasRole(['super admin', 'admin'])) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -358,8 +398,7 @@ class QuoteController extends Controller
      */
     public function reject(Quote $quote)
     {
-        // Verificar permisos
-        if ($quote->user_id !== Auth::id() && !Auth::user()->hasRole(['super admin', 'admin'])) {
+        if (!$this->canAccessQuote($quote)) {
             abort(403);
         }
 
@@ -411,10 +450,10 @@ class QuoteController extends Controller
             $clientData = [];
 
             $existingClient = Client::where('email', $request->client_email)->first();
-            
+
             if ($existingClient) {
                 $clientId = $existingClient->id;
-                
+
                 // Agregar relación con este partner si no existe
                 if (!$existingClient->hasContactWith($partnerId)) {
                     $existingClient->addPartner($partnerId);
@@ -423,7 +462,7 @@ class QuoteController extends Controller
                 // Si tenemos datos completos, crear cliente
                 if ($request->filled('client_name')) {
                     $nameParts = explode(' ', trim($request->client_name), 2);
-                    
+
                     $newClient = Client::create([
                         'nombre' => $nameParts[0],
                         'apellido' => $nameParts[1] ?? '',
@@ -431,11 +470,11 @@ class QuoteController extends Controller
                         'rfc' => $request->client_rfc,
                         'razon_social' => $request->client_razon_social,
                     ]);
-                    
+
                     $newClient->partners()->attach($partnerId, [
                         'first_contact_at' => now(),
                     ]);
-                    
+
                     $clientId = $newClient->id;
                 } else {
                     // Guardar datos en campos separados
