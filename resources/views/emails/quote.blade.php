@@ -69,7 +69,7 @@
             <p>El documento PDF adjunto contiene el detalle completo de todos los productos cotizados.</p>
 
             @php
-                $partnerEntity = $quote->partner->defaultEntity;
+                $partnerEntity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
             @endphp
 
             @if($partnerEntity && $partnerEntity->payment_terms)
