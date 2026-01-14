@@ -68,9 +68,15 @@ Route::middleware('auth')->group(function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
+    });
+
+    // ========================================================================
+    // Historial de Actividad (protegido por permiso)
+    // ========================================================================
+    Route::middleware(['permission:activity-logs.view'])->group(function () {
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity.logs.index');
     });
-    
+
     Route::get('/catalogo', [ProductCatalogController::class, 'index'])->name('catalogo.index');
     //Route::get('/catalogo/fetch', [ProductCatalogController::class, 'fetch'])->name('catalogo.fetch');
     Route::get('/catalogo/{id}', [ProductCatalogController::class, 'show'])->name('catalogo.show');
@@ -117,10 +123,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('partner-products', PartnerProductController::class)->parameters(['partner-products' => 'product'])->shallow();
 
     // ========================================================================
-    // Razones Sociales para Asociados
+    // Razones Sociales (protegido por permisos)
     // ========================================================================
-    Route::middleware(['role:Asociado Administrador|super admin'])->group(function () {
+    Route::middleware(['permission:razones-sociales.view'])->group(function () {
         Route::get('/razones-sociales', [PartnerEntityController::class, 'myIndex'])->name('my-entities.index');
+    });
+    Route::middleware(['permission:razones-sociales.manage'])->group(function () {
         Route::get('/razones-sociales/create', [PartnerEntityController::class, 'myCreate'])->name('my-entities.create');
         Route::post('/razones-sociales', [PartnerEntityController::class, 'myStore'])->name('my-entities.store');
         Route::get('/razones-sociales/{id}/edit', [PartnerEntityController::class, 'myEdit'])->name('my-entities.edit');
@@ -130,13 +138,47 @@ Route::middleware('auth')->group(function () {
         Route::get('/razones-sociales/{id}/mail-config', [PartnerEntityController::class, 'mailConfig'])->name('my-entities.mail-config');
         Route::put('/razones-sociales/{id}/mail-config', [PartnerEntityController::class, 'mailConfigUpdate'])->name('my-entities.mail-config.update');
         Route::post('/razones-sociales/{id}/mail-config/test', [PartnerEntityController::class, 'mailConfigTest'])->name('my-entities.mail-config.test');
-        Route::resource('pricing-tiers', PricingTierController::class);
+    });
+
+    // ========================================================================
+    // PRICING - Dashboard (requiere permiso pricing-dashboard.view)
+    // ========================================================================
+    Route::middleware(['permission:pricing-dashboard.view'])->group(function () {
+        Route::get('pricing-dashboard', [PricingDashboardController::class, 'index'])->name('pricing-dashboard.index');
+    });
+
+    // ========================================================================
+    // PRICING - Niveles de Precio (pricing-tiers)
+    // ========================================================================
+    Route::middleware(['permission:pricing-tiers.view'])->group(function () {
+        Route::get('pricing-tiers', [PricingTierController::class, 'index'])->name('pricing-tiers.index');
+        Route::get('pricing-tiers/{pricing_tier}', [PricingTierController::class, 'show'])->name('pricing-tiers.show');
+    });
+    Route::middleware(['permission:pricing-tiers.manage'])->group(function () {
+        Route::get('pricing-tiers/create', [PricingTierController::class, 'create'])->name('pricing-tiers.create');
+        Route::post('pricing-tiers', [PricingTierController::class, 'store'])->name('pricing-tiers.store');
+        Route::get('pricing-tiers/{pricing_tier}/edit', [PricingTierController::class, 'edit'])->name('pricing-tiers.edit');
+        Route::put('pricing-tiers/{pricing_tier}', [PricingTierController::class, 'update'])->name('pricing-tiers.update');
+        Route::delete('pricing-tiers/{pricing_tier}', [PricingTierController::class, 'destroy'])->name('pricing-tiers.destroy');
+    });
+
+    // ========================================================================
+    // PRICING - Pricing de Partners (partner-pricing)
+    // ========================================================================
+    Route::middleware(['permission:partner-pricing.view'])->group(function () {
         Route::get('partner-pricing', [PartnerPricingController::class, 'index'])->name('partner-pricing.index');
+        Route::get('partner-pricing/{partner}/history', [PartnerPricingController::class, 'history'])->name('partner-pricing.history');
+    });
+    Route::middleware(['permission:partner-pricing.manage'])->group(function () {
         Route::get('partner-pricing/{partner}/edit', [PartnerPricingController::class, 'edit'])->name('partner-pricing.edit');
         Route::put('partner-pricing/{partner}', [PartnerPricingController::class, 'update'])->name('partner-pricing.update');
-        Route::get('partner-pricing/{partner}/history', [PartnerPricingController::class, 'history'])->name('partner-pricing.history');
         Route::post('partner-pricing/{partner}/reset-purchases', [PartnerPricingController::class, 'resetPurchases'])->name('partner-pricing.reset-purchases');
-        Route::get('pricing-dashboard', [PricingDashboardController::class, 'index'])->name('pricing-dashboard.index');
+    });
+
+    // ========================================================================
+    // PRICING - Reportes (pricing-reports)
+    // ========================================================================
+    Route::middleware(['permission:pricing-reports.view'])->group(function () {
         Route::get('pricing-reports/tier-history', [PricingReportController::class, 'tierHistory'])->name('pricing-reports.tier-history');
         Route::get('pricing-reports/monthly-purchases', [PricingReportController::class, 'monthlyPurchases'])->name('pricing-reports.monthly-purchases');
         Route::get('pricing-reports/partner-evolution', [PricingReportController::class, 'partnerEvolution'])->name('pricing-reports.partner-evolution');
@@ -144,10 +186,12 @@ Route::middleware('auth')->group(function () {
     });
 
     // ========================================================================
-    // Configuración de Pricing (solo super admin)
+    // PRICING - Configuración (solo super admin)
     // ========================================================================
-    Route::middleware(['role:super admin'])->group(function () {
+    Route::middleware(['permission:pricing-settings.view'])->group(function () {
         Route::get('pricing-settings', [PricingSettingController::class, 'index'])->name('pricing-settings.index');
+    });
+    Route::middleware(['permission:pricing-settings.manage'])->group(function () {
         Route::put('pricing-settings', [PricingSettingController::class, 'update'])->name('pricing-settings.update');
     });
 
@@ -160,15 +204,12 @@ Route::middleware('auth')->group(function () {
     });
 
     // ========================================================================
-    // Cuentas Bancarias para Asociados
+    // Cuentas Bancarias (protegido por permisos)
     // ========================================================================
-    Route::middleware(['role:Asociado Administrador|Asociado Vendedor|super admin'])->group(function () {
-        // Todos pueden ver
+    Route::middleware(['permission:cuentas-bancarias.view'])->group(function () {
         Route::get('/cuentas-bancarias', [PartnerEntityBankAccountController::class, 'myIndex'])->name('my-bank-accounts.index');
     });
-
-    Route::middleware(['role:Asociado Administrador|super admin'])->group(function () {
-        // Solo admin puede crear/editar/eliminar
+    Route::middleware(['permission:cuentas-bancarias.manage'])->group(function () {
         Route::get('/cuentas-bancarias/create', [PartnerEntityBankAccountController::class, 'myCreate'])->name('my-bank-accounts.create');
         Route::post('/cuentas-bancarias', [PartnerEntityBankAccountController::class, 'myStore'])->name('my-bank-accounts.store');
         Route::get('/cuentas-bancarias/{id}/edit', [PartnerEntityBankAccountController::class, 'myEdit'])->name('my-bank-accounts.edit');
@@ -224,7 +265,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/mis-categorias/{id}', [MyCategoryController::class, 'update'])->name('my-categories.update');
         Route::delete('/mis-categorias/{id}', [MyCategoryController::class, 'destroy'])->name('my-categories.destroy');
     });
-    
+
     // ========================================================================
     // RUTAS DEL CARRITO
     // ========================================================================
@@ -262,7 +303,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
         Route::put('/{client}', [ClientController::class, 'update'])->name('update');
         Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
-        
+
         // API para búsqueda
         Route::get('/api/search', [ClientController::class, 'search'])->name('search');
     });

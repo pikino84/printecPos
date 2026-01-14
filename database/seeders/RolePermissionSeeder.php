@@ -32,6 +32,31 @@ class RolePermissionSeeder extends Seeder
             'cities.view', 'cities.manage',
 
             'printec_categories.view', 'printec_categories.manage',
+
+            // Permisos granulares de Pricing
+            'pricing-dashboard.view',      // Dashboard de Pricing
+            'pricing-tiers.view',          // Ver niveles de precio
+            'pricing-tiers.manage',        // Gestionar niveles de precio
+            'partner-pricing.view',        // Ver pricing de partners
+            'partner-pricing.manage',      // Gestionar pricing de partners
+            'pricing-reports.view',        // Ver reportes (tier-history, monthly-purchases, partner-evolution)
+            'pricing-settings.view',       // Ver configuración de pricing (solo super admin)
+            'pricing-settings.manage',     // Modificar configuración de pricing (solo super admin)
+
+            // Permisos de Clientes
+            'clients.view', 'clients.manage',
+
+            // Permisos de Cotizaciones
+            'quotes.view', 'quotes.manage',
+
+            // Historial de Actividad
+            'activity-logs.view',
+
+            // Distribuidor - Razones Sociales
+            'razones-sociales.view', 'razones-sociales.manage',
+
+            // Distribuidor - Cuentas Bancarias
+            'cuentas-bancarias.view', 'cuentas-bancarias.manage',
         ];
 
         // -----------------------------
@@ -79,7 +104,7 @@ class RolePermissionSeeder extends Seeder
         Role::where('name', 'super admin')->first()
             ?->syncPermissions(array_merge($modern, $legacy));
 
-        // admin: casi todo menos gestión de roles/permisos/actividad
+        // admin: casi todo menos gestión de roles/permisos/actividad/pricing
         $adminPerms = array_merge(
             [
                 'dashboard.view',
@@ -92,6 +117,13 @@ class RolePermissionSeeder extends Seeder
                 'warehouses.view','warehouses.manage',
                 'cities.view','cities.manage',
                 'printec_categories.view','printec_categories.manage',
+                'clients.view','clients.manage',
+                'quotes.view','quotes.manage',
+                'activity-logs.view',
+                // Distribuidor
+                'razones-sociales.view','razones-sociales.manage',
+                'cuentas-bancarias.view','cuentas-bancarias.manage',
+                // NO tiene permisos de pricing
             ],
             // legado necesario para que el menú actual no cambie
             [
@@ -114,8 +146,10 @@ class RolePermissionSeeder extends Seeder
                 'catalog.view',
                 'products.view','products.manage',
                 'product_categories.view','product_categories.manage',
-                'warehouses.view',   // ver/gestionar si lo deseas
+                'warehouses.view',
                 'cities.view',
+                'clients.view','clients.manage',
+                'quotes.view','quotes.manage',
             ],
             [
                 'edit profile',
@@ -124,13 +158,23 @@ class RolePermissionSeeder extends Seeder
         );
         Role::where('name', 'Proveedor Administrador')->first()?->syncPermissions($provAdmin);
 
-        // Asociado Administrador
+        // Asociado Administrador - Tiene acceso a TODOS los módulos de pricing excepto settings
         $asocAdmin = array_merge(
             [
                 'dashboard.view',
                 'catalog.view',
                 'products.view','products.manage',
                 'product_categories.view',
+                'clients.view','clients.manage',
+                'quotes.view','quotes.manage',
+                // Permisos de pricing
+                'pricing-dashboard.view',
+                'pricing-tiers.view', 'pricing-tiers.manage',
+                'partner-pricing.view', 'partner-pricing.manage',
+                'pricing-reports.view',
+                // Distribuidor
+                'razones-sociales.view','razones-sociales.manage',
+                'cuentas-bancarias.view','cuentas-bancarias.manage',
             ],
             ['edit profile']
         );
@@ -145,6 +189,8 @@ class RolePermissionSeeder extends Seeder
             'dashboard.view',
             'catalog.view',
             'products.view',
+            'clients.view','clients.manage',
+            'quotes.view','quotes.manage',
             'edit profile',
         ];
         Role::where('name', 'Asociado Vendedor')->first()?->syncPermissions($asocVend);
