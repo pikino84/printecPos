@@ -206,20 +206,28 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="{{ route('own-products.show', $product) }}" 
+                                                    <a href="{{ route('own-products.show', $product) }}"
                                                        class="btn btn-outline-primary"
                                                        title="Ver detalles">
                                                         <i class="feather icon-eye"></i>
                                                     </a>
                                                     @can('update', $product)
-                                                        <a href="{{ route('own-products.edit', $product) }}" 
+                                                        <a href="{{ route('own-products.edit', $product) }}"
                                                            class="btn btn-outline-warning"
                                                            title="Editar">
                                                             <i class="feather icon-edit"></i>
                                                         </a>
                                                     @endcan
+                                                    @can('create', App\Models\Product::class)
+                                                        <button type="button"
+                                                                class="btn btn-outline-info"
+                                                                onclick="confirmDuplicate({{ $product->id }})"
+                                                                title="Clonar producto">
+                                                            <i class="feather icon-copy"></i>
+                                                        </button>
+                                                    @endcan
                                                     @can('delete', $product)
-                                                        <button type="button" 
+                                                        <button type="button"
                                                                 class="btn btn-outline-danger"
                                                                 onclick="confirmDelete({{ $product->id }})"
                                                                 title="Eliminar">
@@ -273,26 +281,48 @@ function confirmDelete(productId) {
         dangerMode: true,
     }).then((willDelete) => {
         if (willDelete) {
-            // Crear y enviar formulario dinámicamente
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = `/own-products/${productId}`;
             form.style.display = 'none';
-            
-            // Token CSRF
+
             const csrfToken = document.createElement('input');
             csrfToken.type = 'hidden';
             csrfToken.name = '_token';
             csrfToken.value = '{{ csrf_token() }}';
             form.appendChild(csrfToken);
-            
-            // Method DELETE
+
             const methodField = document.createElement('input');
             methodField.type = 'hidden';
             methodField.name = '_method';
             methodField.value = 'DELETE';
             form.appendChild(methodField);
-            
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+function confirmDuplicate(productId) {
+    swal({
+        title: "¿Clonar este producto?",
+        text: "Se creará una copia del producto que podrás editar.",
+        icon: "info",
+        buttons: ["Cancelar", "Clonar"],
+    }).then((willDuplicate) => {
+        if (willDuplicate) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/own-products/${productId}/duplicate`;
+            form.style.display = 'none';
+
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
             document.body.appendChild(form);
             form.submit();
         }
