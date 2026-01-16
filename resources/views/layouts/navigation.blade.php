@@ -224,6 +224,14 @@
                         </li>
                         @endcan
 
+                        @can('view-own-products')
+                        <li class="{{ request()->is('own-products*') ? 'active' : '' }}">
+                            <a href="{{ route('own-products.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Productos Propios</span>
+                            </a>
+                        </li>
+                        @endcan
+
                         @can('catalog.view')
                         <li class="{{ request()->routeIs('catalogo.*') || request()->is('catalogo*') ? 'active' : '' }}">
                             <a href="{{ route('catalogo.index') }}" class="waves-effect waves-dark">
@@ -236,14 +244,6 @@
                         <li class="{{ request()->routeIs('quotes.*') || request()->is('quotes*') ? 'active' : '' }}">
                             <a href="{{ route('quotes.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Mis Cotizaciones</span>
-                            </a>
-                        </li>
-                        @endcan
-
-                        @can('view-own-products')
-                        <li class="{{ request()->is('own-products*') ? 'active' : '' }}">
-                            <a href="{{ route('own-products.index') }}" class="waves-effect waves-dark">
-                                <span class="pcoded-mtext">Productos Propios</span>
                             </a>
                         </li>
                         @endcan
