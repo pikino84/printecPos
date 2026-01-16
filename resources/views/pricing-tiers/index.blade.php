@@ -39,7 +39,7 @@
                         <th>Orden</th>
                         <th>Nivel</th>
                         <th>Rango de Compras Mensuales</th>
-                        <th>Descuento</th>
+                        <th>Markup</th>
                         <th>Partners</th>
                         <th>Estado</th>
                         <th>Acciones</th>
@@ -64,8 +64,8 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge bg-success">
-                                {{ number_format($tier->discount_percentage, 2) }}%
+                            <span class="badge bg-primary">
+                                {{ number_format($tier->markup_percentage, 2) }}%
                             </span>
                         </td>
                         <td>
