@@ -132,6 +132,50 @@
                             <span>Subtotal:</span>
                             <strong id="cart-subtotal">${{ number_format($subtotal, 2) }}</strong>
                         </div>
+
+                        {{-- Checkbox de trabajo urgente --}}
+                        <div id="urgency-section" class="mb-2 p-2 border rounded bg-light">
+                            @php
+                                $defaultEntity = $partnerEntities->firstWhere('id', $defaultEntityId) ?? $partnerEntities->first();
+                                $hasUrgentConfig = $defaultEntity && $defaultEntity->hasUrgentConfig();
+                            @endphp
+
+                            @if($hasUrgentConfig)
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="is_urgent" name="is_urgent" value="1">
+                                    <label class="form-check-label" for="is_urgent">
+                                        <i class="feather icon-clock text-warning"></i>
+                                        <strong>Trabajo urgente</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Entrega en menos de <span id="urgent-days">{{ $defaultEntity->urgent_days_limit }}</span> días
+                                    (+<span id="urgent-percentage">{{ number_format($defaultEntity->urgent_fee_percentage, 0) }}</span>%)
+                                </small>
+                            @else
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="is_urgent" disabled>
+                                    <label class="form-check-label text-muted" for="is_urgent">
+                                        <i class="feather icon-clock"></i>
+                                        Trabajo urgente
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="feather icon-alert-circle"></i>
+                                    No configurado.
+                                    <a href="{{ route('my-entities.edit', $defaultEntity->id ?? 0) }}">Configurar</a>
+                                </small>
+                            @endif
+
+                            {{-- Cargo por urgencia (oculto inicialmente) --}}
+                            <div id="urgency-fee-row" class="d-flex justify-content-between mt-2" style="display: none !important;">
+                                <span class="text-warning">
+                                    <i class="feather icon-clock"></i> Cargo por urgencia:
+                                </span>
+                                <strong class="text-warning" id="urgency-fee">$0.00</strong>
+                            </div>
+                        </div>
+
                         <hr>
                         <div class="d-flex justify-content-between mb-3">
                             <strong>Total:</strong>
@@ -140,7 +184,10 @@
 
                         <form action="{{ route('quotes.create') }}" method="POST">
                             @csrf
-                            
+
+                            {{-- Campo oculto para urgencia --}}
+                            <input type="hidden" id="form_is_urgent" name="is_urgent" value="0">
+
                             {{-- Campo oculto para client_id --}}
                             <input type="hidden" id="client_id" name="client_id" value="">
 
@@ -341,14 +388,78 @@ $(document).ready(function() {
         });
     }
 
+    // Datos de configuración de urgencia por entidad
+    const entityUrgentConfig = {
+        @foreach($partnerEntities as $entity)
+        {{ $entity->id }}: {
+            hasConfig: {{ $entity->hasUrgentConfig() ? 'true' : 'false' }},
+            percentage: {{ $entity->urgent_fee_percentage ?? 0 }},
+            days: {{ $entity->urgent_days_limit ?? 0 }}
+        },
+        @endforeach
+    };
+
+    let currentSubtotal = {{ $subtotal }};
+
     function updateCartTotals(total) {
+        currentSubtotal = parseFloat(total.replace(/,/g, ''));
         $('#cart-subtotal').text('$' + total);
-        $('#cart-total').text('$' + total);
+        recalculateWithUrgency();
     }
 
     function updateCartBadge(count) {
         $('.cart-badge').text(count);
     }
+
+    // ===== MANEJO DE URGENCIA =====
+    function recalculateWithUrgency() {
+        const isUrgent = $('#is_urgent').is(':checked');
+        const entityId = $('#partner_entity_id').val() || {{ $defaultEntityId ?? 0 }};
+        const config = entityUrgentConfig[entityId] || { hasConfig: false, percentage: 0 };
+
+        if (isUrgent && config.hasConfig) {
+            const urgencyFee = currentSubtotal * (config.percentage / 100);
+            const total = currentSubtotal + urgencyFee;
+
+            $('#urgency-fee').text('$' + urgencyFee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            $('#urgency-fee-row').show();
+            $('#cart-total').text('$' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            $('#form_is_urgent').val('1');
+        } else {
+            $('#urgency-fee-row').hide();
+            $('#cart-total').text('$' + currentSubtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            $('#form_is_urgent').val('0');
+        }
+    }
+
+    // Checkbox de urgencia
+    $('#is_urgent').on('change', function() {
+        recalculateWithUrgency();
+    });
+
+    // Cambio de entidad emisora
+    $('#partner_entity_id').on('change', function() {
+        const entityId = $(this).val() || {{ $defaultEntityId ?? 0 }};
+        const config = entityUrgentConfig[entityId] || { hasConfig: false, percentage: 0, days: 0 };
+
+        if (config.hasConfig) {
+            $('#is_urgent').prop('disabled', false);
+            $('#urgent-days').text(config.days);
+            $('#urgent-percentage').text(config.percentage);
+            $('#urgency-section .text-muted').first().html(
+                'Entrega en menos de <span id="urgent-days">' + config.days + '</span> días (+<span id="urgent-percentage">' + config.percentage + '</span>%)'
+            );
+            // Remover link de configurar si existía
+            $('#urgency-section a').parent().remove();
+        } else {
+            $('#is_urgent').prop('disabled', true).prop('checked', false);
+            $('#urgency-section .form-check').next('small').html(
+                '<i class="feather icon-alert-circle"></i> No configurado. <a href="/razones-sociales/' + entityId + '/edit">Configurar</a>'
+            );
+        }
+
+        recalculateWithUrgency();
+    });
 
     // ===== SELECTOR DE CLIENTES =====
     // Inicializar Select2

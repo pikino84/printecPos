@@ -137,6 +137,15 @@
                                     <td colspan="6" class="text-right"><strong>Subtotal:</strong></td>
                                     <td class="text-right"><strong>${{ number_format($quote->subtotal, 2) }}</strong></td>
                                 </tr>
+                                @if($quote->is_urgent && $quote->urgency_fee > 0)
+                                    <tr class="text-warning">
+                                        <td colspan="6" class="text-right">
+                                            <i class="feather icon-clock"></i>
+                                            <strong>Cargo por urgencia ({{ number_format($quote->urgency_percentage, 0) }}%):</strong>
+                                        </td>
+                                        <td class="text-right"><strong>${{ number_format($quote->urgency_fee, 2) }}</strong></td>
+                                    </tr>
+                                @endif
                                 @if($quote->tax > 0)
                                     <tr>
                                         <td colspan="6" class="text-right">IVA:</td>

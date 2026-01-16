@@ -7,6 +7,7 @@ use App\Models\QuoteItem;
 use App\Models\CartSession;
 use App\Models\Client;
 use App\Models\Partner;
+use App\Models\PartnerEntity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -502,7 +503,24 @@ class QuoteController extends Controller
                 $partnerEntityId = $user->partner->default_entity_id;
             }
 
-            // 3. Crear cotización
+            // 3. Calcular cargo por urgencia si aplica
+            $isUrgent = $request->boolean('is_urgent');
+            $urgencyFee = 0;
+            $urgencyPercentage = null;
+
+            if ($isUrgent && $partnerEntityId) {
+                $entity = PartnerEntity::find($partnerEntityId);
+                if ($entity && $entity->hasUrgentConfig()) {
+                    // Calcular subtotal del carrito
+                    $cartSubtotal = $cartItems->sum(function ($item) {
+                        return $item->quantity * $item->effective_price;
+                    });
+                    $urgencyFee = $entity->calculateUrgencyFee($cartSubtotal);
+                    $urgencyPercentage = $entity->urgent_fee_percentage;
+                }
+            }
+
+            // 4. Crear cotización
             $quote = Quote::create([
                 'user_id' => $user->id,
                 'partner_id' => $partnerId,
@@ -514,6 +532,9 @@ class QuoteController extends Controller
                 'client_razon_social' => $clientData['client_razon_social'] ?? null,
                 'quote_number' => Quote::generateQuoteNumber(),
                 'status' => 'draft',
+                'is_urgent' => $isUrgent,
+                'urgency_fee' => $urgencyFee,
+                'urgency_percentage' => $urgencyPercentage,
                 'notes' => $request->notes,
                 'customer_notes' => $request->customer_notes,
                 'short_description' => $request->short_description,

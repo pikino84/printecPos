@@ -23,6 +23,9 @@ class Quote extends Model
         'subtotal',
         'tax',
         'total',
+        'is_urgent',
+        'urgency_fee',
+        'urgency_percentage',
         'notes',
         'customer_notes',
         'short_description',
@@ -35,6 +38,9 @@ class Quote extends Model
         'subtotal' => 'decimal:2',
         'tax' => 'decimal:2',
         'total' => 'decimal:2',
+        'is_urgent' => 'boolean',
+        'urgency_fee' => 'decimal:2',
+        'urgency_percentage' => 'decimal:2',
         'valid_until' => 'date',
         'sent_at' => 'datetime',
     ];
@@ -85,12 +91,15 @@ class Quote extends Model
     public function calculateTotals()
     {
         $this->subtotal = $this->items->sum('subtotal');
-        
+
         // Obtener tasa de IVA desde settings
         $taxRate = \App\Models\PricingSetting::get('tax_rate', 16) / 100;
-        $this->tax = $this->subtotal * $taxRate;
-        
-        $this->total = $this->subtotal + $this->tax;
+
+        // Calcular IVA sobre subtotal + cargo por urgencia
+        $baseForTax = $this->subtotal + ($this->urgency_fee ?? 0);
+        $this->tax = $baseForTax * $taxRate;
+
+        $this->total = $this->subtotal + ($this->urgency_fee ?? 0) + $this->tax;
         $this->save();
     }
 

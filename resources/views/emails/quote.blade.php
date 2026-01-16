@@ -63,6 +63,9 @@
                     <p><strong>Válida hasta:</strong> {{ $quote->valid_until->format('d/m/Y') }}</p>
                 @endif
                 <p><strong>Total de Items:</strong> {{ $quote->items->count() }}</p>
+                @if($quote->is_urgent && $quote->urgency_fee > 0)
+                    <p style="color: #e67e22;"><strong>Cargo por urgencia ({{ number_format($quote->urgency_percentage, 0) }}%):</strong> ${{ number_format($quote->urgency_fee, 2) }}</p>
+                @endif
                 <p><strong>Total:</strong> <span style="font-size: 18px; color: #1F4C94;">${{ number_format($quote->total, 2) }}</span></p>
             </div>
 

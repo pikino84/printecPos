@@ -42,6 +42,33 @@
         <small class="text-muted">Estas condiciones se mostrarán en los correos de cotización enviados a los clientes.</small>
       </div>
 
+      <div class="card mb-3">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="feather icon-clock"></i> Configuración de trabajo urgente</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label>Porcentaje por trabajo urgente (%)</label>
+                <input type="number" step="0.01" min="0" max="100" name="urgent_fee_percentage" class="form-control" value="{{ old('urgent_fee_percentage') }}" placeholder="Ej: 15">
+                <small class="text-muted">Porcentaje extra que se aplica sobre el subtotal.</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label>Plazo urgente (días)</label>
+                <input type="number" min="1" max="365" name="urgent_days_limit" class="form-control" value="{{ old('urgent_days_limit') }}" placeholder="Ej: 15">
+                <small class="text-muted">Días límite para considerar trabajo urgente.</small>
+              </div>
+            </div>
+          </div>
+          <small class="text-muted">
+            <i class="feather icon-info"></i> Ejemplo: Si configuras 15% y 15 días, los trabajos que se entreguen en menos de 15 días tendrán un cargo extra del 15%.
+          </small>
+        </div>
+      </div>
+
       <div class="form-group">
         <label>Logo (JPG/PNG/WEBP máx 2MB)</label>
         <input type="file" class="form-control @error('logo_path') is-invalid @enderror"

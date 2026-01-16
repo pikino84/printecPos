@@ -19,6 +19,9 @@ class PartnerEntity extends Model
         'correo_contacto',
         'logo_path',
         'payment_terms',
+        // Configuración de urgencia
+        'urgent_fee_percentage',
+        'urgent_days_limit',
         // Configuración de correo
         'smtp_host',
         'smtp_port',
@@ -38,6 +41,8 @@ class PartnerEntity extends Model
         'is_default' => 'boolean',
         'mail_configured' => 'boolean',
         'smtp_port' => 'integer',
+        'urgent_fee_percentage' => 'decimal:2',
+        'urgent_days_limit' => 'integer',
     ];
 
     protected $hidden = [
@@ -178,6 +183,33 @@ class PartnerEntity extends Model
     public function getQuotesCountAttribute()
     {
         return $this->quotes()->count();
+    }
+
+    // ========================================================================
+    // MÉTODOS DE CONFIGURACIÓN DE URGENCIA
+    // ========================================================================
+
+    /**
+     * Verificar si tiene configuración de trabajo urgente
+     */
+    public function hasUrgentConfig()
+    {
+        return $this->urgent_fee_percentage !== null
+            && $this->urgent_fee_percentage > 0
+            && $this->urgent_days_limit !== null
+            && $this->urgent_days_limit > 0;
+    }
+
+    /**
+     * Calcular cargo por urgencia basado en un subtotal
+     */
+    public function calculateUrgencyFee($subtotal)
+    {
+        if (!$this->hasUrgentConfig()) {
+            return 0;
+        }
+
+        return round($subtotal * ($this->urgent_fee_percentage / 100), 2);
     }
 
     // ========================================================================
