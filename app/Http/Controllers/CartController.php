@@ -139,10 +139,11 @@ class CartController extends Controller
 
         $partnerPricing = $partner->getPricingConfig();
         $product = $variant->product;
-        
+
         // Determinar si es producto de Printec/proveedor o producto propio
-        $isPrintecProduct = !$product->is_own_product || $product->partner_id != $user->partner_id;
-        
+        // Productos propios (is_own_product = true) siempre usan precio directo sin markup
+        $isPrintecProduct = !$product->is_own_product;
+
         return $partnerPricing->calculateCostPrice($variant->price, $isPrintecProduct);
     }
 

@@ -84,7 +84,8 @@ class PublicCatalogController extends Controller
         $basePrice = $product->variants->first()?->price ?? $product->price ?? 0;
 
         // Determine if it's a Printec/provider product (not partner's own product)
-        $isPrintecProduct = !$product->is_own_product || $product->partner_id != $partner->id;
+        // Own products (is_own_product = true) always use direct price without markup
+        $isPrintecProduct = !$product->is_own_product;
 
         // Build image URLs
         $images = [];
