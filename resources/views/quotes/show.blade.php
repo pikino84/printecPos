@@ -162,33 +162,47 @@
                         <h5>Enviar Cotización</h5>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('quotes.send', $quote) }}" method="POST">
-                            @csrf
-                            <div class="form-group">
-                                <label>Email del cliente *</label>
-                                <input type="email" 
-                                    name="email" 
-                                    class="form-control form-control-sm" 
-                                    required
-                                    value="{{ $quote->client ? $quote->client->email : $quote->client_email }}"
-                                    placeholder="cliente@ejemplo.com">
-                                @if($quote->client)
-                                    <small class="text-muted">
-                                        <i class="feather icon-user"></i> Cliente: {{ $quote->client->nombre_completo }}
-                                    </small>
-                                @endif
+                        @if($entity && $entity->hasMailConfig())
+                            <form action="{{ route('quotes.send', $quote) }}" method="POST">
+                                @csrf
+                                <div class="form-group">
+                                    <label>Email del cliente *</label>
+                                    <input type="email"
+                                        name="email"
+                                        class="form-control form-control-sm"
+                                        required
+                                        value="{{ $quote->client ? $quote->client->email : $quote->client_email }}"
+                                        placeholder="cliente@ejemplo.com">
+                                    @if($quote->client)
+                                        <small class="text-muted">
+                                            <i class="feather icon-user"></i> Cliente: {{ $quote->client->nombre_completo }}
+                                        </small>
+                                    @endif
+                                </div>
+                                <div class="form-group">
+                                    <label>Mensaje (opcional)</label>
+                                    <textarea name="message"
+                                            class="form-control form-control-sm"
+                                            rows="3"
+                                            placeholder="Mensaje adicional para el cliente..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block btn-sm">
+                                    <i class="feather icon-send"></i> Enviar por Email
+                                </button>
+                            </form>
+                        @else
+                            <div class="alert alert-warning mb-3">
+                                <i class="feather icon-alert-triangle"></i>
+                                <strong>Configuración de correo requerida</strong><br>
+                                <small>La razón social no tiene configurado el correo SMTP para enviar cotizaciones.</small>
                             </div>
-                            <div class="form-group">
-                                <label>Mensaje (opcional)</label>
-                                <textarea name="message" 
-                                        class="form-control form-control-sm" 
-                                        rows="3"
-                                        placeholder="Mensaje adicional para el cliente..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-block btn-sm">
+                            <button type="button" class="btn btn-secondary btn-block btn-sm" disabled>
                                 <i class="feather icon-send"></i> Enviar por Email
                             </button>
-                        </form>
+                            <a href="{{ route('my-entities.mail-config', $entity->id ?? 0) }}" class="btn btn-outline-primary btn-block btn-sm mt-2">
+                                <i class="feather icon-settings"></i> Configurar Correo
+                            </a>
+                        @endif
                     </div>
                 </div>
             @endif

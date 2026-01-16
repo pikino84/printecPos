@@ -107,9 +107,12 @@ class QuoteController extends Controller
             abort(403);
         }
 
-        $quote->load(['items.variant.product.productCategory', 'items.warehouse', 'partner', 'user']);
+        $quote->load(['items.variant.product.productCategory', 'items.warehouse', 'partner.defaultEntity', 'partnerEntity', 'user']);
 
-        return view('quotes.show', compact('quote'));
+        // Obtener la entidad emisora para verificar configuración de correo
+        $entity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
+
+        return view('quotes.show', compact('quote', 'entity'));
     }
 
     /**
