@@ -208,7 +208,7 @@
                             <button type="button" class="btn btn-secondary btn-block btn-sm" disabled>
                                 <i class="feather icon-send"></i> Enviar por Email
                             </button>
-                            <a href="{{ route('my-entities.mail-config', $entity->id ?? 0) }}" class="btn btn-outline-primary btn-block btn-sm mt-2">
+                            <a href="{{ route('my-entities.mail-config', $entity->id ?? 0) }}" class="btn btn-outline-primary btn-block btn-sm">
                                 <i class="feather icon-settings"></i> Configurar Correo
                             </a>
                         @endif

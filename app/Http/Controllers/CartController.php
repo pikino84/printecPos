@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\CartSession;
 use App\Models\ProductVariant;
 use App\Models\Partner;
+use App\Models\PartnerEntity;
+use App\Models\Client;
+use App\Models\Quote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CartController extends Controller
 {
@@ -238,5 +242,92 @@ class CartController extends Controller
             'message' => 'Precios recalculados',
             'cart_total' => number_format(CartSession::getCartTotal(Auth::id()), 2),
         ]);
+    }
+
+    /**
+     * Preview del PDF de cotización (sin crear la cotización)
+     */
+    public function previewPdf(Request $request)
+    {
+        $user = Auth::user();
+        $cartItems = CartSession::getCartItems($user->id);
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')
+                ->with('error', 'El carrito está vacío');
+        }
+
+        // Obtener partner y entidad
+        $partnerId = $user->partner_id;
+        $partnerEntityId = $request->partner_entity_id ?: ($user->partner->default_entity_id ?? null);
+
+        // Calcular subtotal
+        $subtotal = $cartItems->sum(function ($item) {
+            return $item->quantity * $item->effective_price;
+        });
+
+        // Calcular cargo por urgencia si aplica
+        $isUrgent = $request->boolean('is_urgent');
+        $urgencyFee = 0;
+        $urgencyPercentage = null;
+
+        if ($isUrgent && $partnerEntityId) {
+            $entity = PartnerEntity::find($partnerEntityId);
+            if ($entity && $entity->hasUrgentConfig()) {
+                $urgencyFee = $entity->calculateUrgencyFee($subtotal);
+                $urgencyPercentage = $entity->urgent_fee_percentage;
+            }
+        }
+
+        // Calcular IVA y total
+        $taxRate = \App\Models\PricingSetting::get('tax_rate', 16) / 100;
+        $baseForTax = $subtotal + $urgencyFee;
+        $tax = $baseForTax * $taxRate;
+        $total = $subtotal + $urgencyFee + $tax;
+
+        // Crear objeto Quote temporal (sin guardar en BD)
+        $quote = new Quote();
+        $quote->quote_number = 'PREVIEW-' . now()->format('YmdHis');
+        $quote->created_at = now();
+        $quote->valid_until = now()->addDays(15);
+        $quote->status = 'draft';
+        $quote->subtotal = $subtotal;
+        $quote->tax = $tax;
+        $quote->total = $total;
+        $quote->is_urgent = $isUrgent;
+        $quote->urgency_fee = $urgencyFee;
+        $quote->urgency_percentage = $urgencyPercentage;
+        $quote->customer_notes = $request->notes;
+
+        // Asignar relaciones manualmente
+        $quote->setRelation('partner', $user->partner);
+        $quote->setRelation('user', $user);
+
+        // Cargar entidad
+        if ($partnerEntityId) {
+            $partnerEntity = PartnerEntity::with('bankAccounts')->find($partnerEntityId);
+            $quote->setRelation('partnerEntity', $partnerEntity);
+        } else {
+            $quote->setRelation('partnerEntity', $user->partner->defaultEntity);
+        }
+
+        // Crear items temporales
+        $tempItems = $cartItems->map(function ($cartItem) {
+            $item = new \stdClass();
+            $item->variant = $cartItem->variant;
+            $item->product = $cartItem->product;
+            $item->warehouse = $cartItem->warehouse;
+            $item->quantity = $cartItem->quantity;
+            $item->unit_price = $cartItem->effective_price;
+            $item->subtotal = $cartItem->quantity * $cartItem->effective_price;
+            return $item;
+        });
+
+        $quote->setRelation('items', $tempItems);
+
+        // Generar PDF
+        $pdf = PDF::loadView('quotes.pdf', compact('quote'));
+
+        return $pdf->stream("preview-cotizacion.pdf");
     }
 }

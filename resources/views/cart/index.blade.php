@@ -288,6 +288,9 @@
                             <button type="submit" class="btn btn-primary btn-block">
                                 <i class="feather icon-file-text"></i> Generar Cotización
                             </button>
+                            <button type="button" class="btn btn-outline-secondary btn-block" id="btn-preview-pdf">
+                                <i class="feather icon-eye"></i> Vista Previa
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -459,6 +462,33 @@ $(document).ready(function() {
         }
 
         recalculateWithUrgency();
+    });
+
+    // ===== PREVIEW PDF =====
+    $('#btn-preview-pdf').on('click', function() {
+        // Construir URL con parámetros del formulario
+        const params = new URLSearchParams();
+
+        const clientId = $('#client_id').val();
+        const clientEmail = $('#client_email').val();
+        const clientName = $('#client_name').val();
+        const clientRfc = $('#client_rfc').val();
+        const clientRazonSocial = $('#client_razon_social').val();
+        const partnerEntityId = $('#partner_entity_id').val();
+        const notes = $('textarea[name="notes"]').val();
+        const isUrgent = $('#form_is_urgent').val();
+
+        if (clientId) params.append('client_id', clientId);
+        if (clientEmail) params.append('client_email', clientEmail);
+        if (clientName) params.append('client_name', clientName);
+        if (clientRfc) params.append('client_rfc', clientRfc);
+        if (clientRazonSocial) params.append('client_razon_social', clientRazonSocial);
+        if (partnerEntityId) params.append('partner_entity_id', partnerEntityId);
+        if (notes) params.append('notes', notes);
+        if (isUrgent) params.append('is_urgent', isUrgent);
+
+        const url = '{{ route("cart.preview-pdf") }}?' + params.toString();
+        window.open(url, '_blank');
     });
 
     // ===== SELECTOR DE CLIENTES =====
