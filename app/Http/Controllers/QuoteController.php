@@ -130,6 +130,12 @@ class QuoteController extends Controller
             return back()->with('error', 'Esta cotización no puede ser enviada');
         }
 
+        // Cargar relaciones necesarias para la entidad y sus cuentas bancarias
+        $quote->load([
+            'partnerEntity.bankAccounts',
+            'partner.defaultEntity.bankAccounts',
+        ]);
+
         // Obtener la entidad emisora (partnerEntity o defaultEntity)
         $entity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
 
