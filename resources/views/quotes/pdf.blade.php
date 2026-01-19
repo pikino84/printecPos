@@ -20,8 +20,8 @@
             font-size: 24px;
         }
         .logo {
-            max-width: 150px;
-            height: auto;
+            height: 64px;
+            width: auto;
         }
         .header p {
             margin: 5px 0;
@@ -177,19 +177,6 @@
             @if($quote->valid_until)
                 <p>Válida hasta: {{ $quote->valid_until->format('d/m/Y') }}</p>
             @endif
-            <p>
-                @if($quote->status === 'draft')
-                    <span class="status-badge status-draft">BORRADOR</span>
-                @elseif($quote->status === 'sent')
-                    <span class="status-badge status-sent">ENVIADA</span>
-                @elseif($quote->status === 'accepted')
-                    <span class="status-badge status-accepted">ACEPTADA</span>
-                @elseif($quote->status === 'rejected')
-                    <span class="status-badge status-rejected">RECHAZADA</span>
-                @elseif($quote->status === 'expired')
-                    <span class="status-badge status-expired">EXPIRADA</span>
-                @endif
-            </p>
         </div>
     </div>
 

@@ -126,13 +126,14 @@ class CartController extends Controller
     }
 
     /**
-     * Calcular precio para el usuario actual según su tier
+     * Calcular precio para el usuario actual según su tier y markup de ganancia
+     * Incluye el porcentaje de ganancia del distribuidor (markup_percentage de /mi-ganancia)
      */
     private function calculatePriceForUser(ProductVariant $variant)
     {
         $user = Auth::user();
         $partner = Partner::find($user->partner_id);
-        
+
         if (!$partner) {
             return $variant->price;
         }
@@ -144,7 +145,8 @@ class CartController extends Controller
         // Productos propios (is_own_product = true) siempre usan precio directo sin markup
         $isPrintecProduct = !$product->is_own_product;
 
-        return $partnerPricing->calculateCostPrice($variant->price, $isPrintecProduct);
+        // Usar calculateSalePrice para incluir el markup del partner (porcentaje de ganancia)
+        return $partnerPricing->calculateSalePrice($variant->price, $isPrintecProduct);
     }
 
     /**
