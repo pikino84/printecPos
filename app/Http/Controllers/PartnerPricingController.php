@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CartSession;
 use App\Models\Partner;
 use App\Models\PartnerPricing;
 use App\Models\PricingTier;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 
 class PartnerPricingController extends Controller
@@ -181,6 +183,30 @@ class PartnerPricingController extends Controller
             'markup_percentage' => $request->markup_percentage,
         ]);
 
+        // Recalcular precios del carrito del usuario con el nuevo porcentaje de ganancia
+        $this->recalculateCartPrices($user->id, $partner);
+
         return back()->with('success', 'Tu porcentaje de ganancia ha sido actualizado.');
+    }
+
+    /**
+     * Recalcular precios del carrito según el nuevo markup
+     */
+    private function recalculateCartPrices($userId, $partner)
+    {
+        $cartItems = CartSession::where('user_id', $userId)
+            ->with('variant.product')
+            ->get();
+
+        $partnerPricing = $partner->getPricingConfig();
+
+        foreach ($cartItems as $item) {
+            $variant = $item->variant;
+            $product = $variant->product;
+            $isPrintecProduct = !$product->is_own_product;
+
+            $newPrice = $partnerPricing->calculateSalePrice($variant->price, $isPrintecProduct);
+            $item->update(['unit_price' => $newPrice]);
+        }
     }
 }

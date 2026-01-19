@@ -150,7 +150,7 @@
                                             <button class="btn btn-primary btn-sm btn-add-to-cart"
                                                     data-variant="{{ $variant->id }}"
                                                     data-warehouse="{{ $stock->warehouse_id ?? '' }}"
-                                                    data-price="{{ $precioCosto }}">
+                                                    data-price="{{ $precioClienteFinal }}">
                                                 <i class="feather icon-shopping-cart"></i> Agregar
                                             </button>
                                         </td>
