@@ -202,6 +202,9 @@
                 .pc-card-category { font-size: 12px; color: #666; margin-bottom: 8px; }
                 .pc-card-price { font-size: 18px; font-weight: 700; color: ${this.config.primaryColor}; }
                 .pc-card-model { font-size: 12px; color: #888; margin-top: 4px; }
+                .pc-card-stock { font-size: 11px; margin-top: 6px; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+                .pc-card-stock.in-stock { background: #e8f5e9; color: #2e7d32; }
+                .pc-card-stock.out-of-stock { background: #ffebee; color: #c62828; }
                 .pc-card-footer { padding: 0 16px 16px; }
                 .pc-loading { text-align: center; padding: 60px 20px; color: #666; }
                 .pc-loading-spinner { width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid ${this.config.primaryColor}; border-radius: 50%; animation: pc-spin 1s linear infinite; margin: 0 auto 15px; }
@@ -222,20 +225,20 @@
                 .pc-modal { background: white; border-radius: 16px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
                 .pc-modal-close { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; border: none; background: #f1f1f1; border-radius: 50%; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; z-index: 1; }
                 .pc-modal-close:hover { background: #e0e0e0; }
-                .pc-modal-content { padding: 30px; }
-                .pc-modal-image { width: 100%; max-height: 350px; object-fit: contain; background: #f8f9fa; border-radius: 12px; }
-                .pc-modal-gallery { display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 10px; }
-                .pc-modal-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
+                .pc-modal-content { padding: 20px; }
+                .pc-modal-image { width: 100%; max-height: 175px; object-fit: contain; background: #f8f9fa; border-radius: 8px; }
+                .pc-modal-gallery { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; padding-bottom: 5px; }
+                .pc-modal-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
                 .pc-modal-thumb:hover, .pc-modal-thumb.active { border-color: ${this.config.primaryColor}; }
-                .pc-modal-info { margin-top: 25px; }
-                .pc-modal-title { font-size: 24px; font-weight: 700; color: #333; margin: 0 0 10px; }
-                .pc-modal-category { font-size: 14px; color: #666; margin-bottom: 15px; }
-                .pc-modal-price { font-size: 28px; font-weight: 700; color: ${this.config.primaryColor}; margin-bottom: 20px; }
-                .pc-modal-description { font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 20px; }
-                .pc-modal-variants { margin-top: 20px; }
-                .pc-modal-variants-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
-                .pc-variant-list { display: flex; flex-wrap: wrap; gap: 8px; }
-                .pc-variant-chip { padding: 8px 14px; background: #f1f1f1; border-radius: 20px; font-size: 13px; color: #555; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+                .pc-modal-info { margin-top: 12px; }
+                .pc-modal-title { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 4px; }
+                .pc-modal-category { font-size: 11px; color: #666; margin-bottom: 8px; }
+                .pc-modal-price { font-size: 20px; font-weight: 700; color: ${this.config.primaryColor}; margin-bottom: 10px; }
+                .pc-modal-description { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 15px; }
+                .pc-modal-variants { margin-top: 12px; }
+                .pc-modal-variants-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 6px; }
+                .pc-variant-list { display: flex; flex-wrap: wrap; gap: 5px; }
+                .pc-variant-chip { padding: 4px 10px; background: #f1f1f1; border-radius: 12px; font-size: 11px; color: #555; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
                 .pc-variant-chip:hover { border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.selected { background: ${this.config.primaryColor}; color: white; border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.in-stock { background: #e8f5e9; color: #2e7d32; }
@@ -286,13 +289,13 @@
                 .pc-cart-clear button:hover { color: #e53935; }
 
                 /* Add to cart section in modal */
-                .pc-add-to-cart-section { margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee; }
-                .pc-qty-selector { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-                .pc-qty-selector label { font-size: 14px; color: #333; }
-                .pc-qty-input { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-                .pc-qty-input button { width: 40px; height: 40px; border: none; background: #f5f5f5; cursor: pointer; font-size: 18px; }
+                .pc-add-to-cart-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; }
+                .pc-qty-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+                .pc-qty-selector label { font-size: 12px; color: #333; }
+                .pc-qty-input { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+                .pc-qty-input button { width: 32px; height: 32px; border: none; background: #f5f5f5; cursor: pointer; font-size: 16px; }
                 .pc-qty-input button:hover { background: #e0e0e0; }
-                .pc-qty-input input { width: 60px; height: 40px; border: none; text-align: center; font-size: 16px; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
+                .pc-qty-input input { width: 50px; height: 32px; border: none; text-align: center; font-size: 14px; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
                 .pc-added-message { display: flex; align-items: center; gap: 10px; padding: 12px; background: #e8f5e9; border-radius: 8px; margin-top: 15px; }
                 .pc-added-message svg { color: #2e7d32; width: 20px; height: 20px; flex-shrink: 0; }
                 .pc-added-message span { color: #2e7d32; font-size: 14px; }
@@ -499,7 +502,10 @@
                 return;
             }
 
-            grid.innerHTML = this.state.products.map(product => `
+            grid.innerHTML = this.state.products.map(product => {
+                const totalStock = product.total_stock !== undefined ? product.total_stock : (product.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) || 0);
+                const inStock = totalStock > 0;
+                return `
                 <div class="pc-card" data-product-id="${product.id}">
                     <img class="pc-card-image" src="${product.main_image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2212%22%3ESin imagen%3C/text%3E%3C/svg%3E'}" alt="${product.name}" loading="lazy">
                     <div class="pc-card-body">
@@ -507,9 +513,11 @@
                         ${product.categories?.length ? `<div class="pc-card-category">${product.categories[0].name}</div>` : ''}
                         ${product.price !== undefined ? `<div class="pc-card-price">$${this.formatPrice(product.price)}</div>` : ''}
                         ${product.model_code ? `<div class="pc-card-model">${product.model_code}</div>` : ''}
+                        <div class="pc-card-stock ${inStock ? 'in-stock' : 'out-of-stock'}">${inStock ? this.t('inStock') + ': ' + totalStock : this.t('outOfStock')}</div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             grid.querySelectorAll('.pc-card').forEach(card => {
                 const img = card.querySelector('.pc-card-image');
