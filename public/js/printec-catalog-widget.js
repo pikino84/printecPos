@@ -192,7 +192,7 @@
                 .pc-search input:focus { outline: none; border-color: ${this.config.primaryColor}; box-shadow: 0 0 0 3px ${this.config.primaryColor}22; }
                 .pc-categories { min-width: 180px; }
                 .pc-categories select { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: white; cursor: pointer; }
-                .pc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
+                .pc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
                 .pc-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; }
                 .pc-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
                 .pc-card-image { width: 100%; height: 200px; object-fit: contain; background: #f8f9fa; padding: 15px; cursor: pointer; }
@@ -233,12 +233,17 @@
                 .pc-modal-info { margin-top: 12px; }
                 .pc-modal-title { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 4px; }
                 .pc-modal-category { font-size: 11px; color: #666; margin-bottom: 8px; }
+                .pc-modal-codes { font-size: 11px; color: #666; margin-bottom: 8px; display: flex; gap: 15px; flex-wrap: wrap; }
+                .pc-modal-codes span { background: #f5f5f5; padding: 2px 8px; border-radius: 4px; }
+                .pc-modal-codes strong { color: #333; }
                 .pc-modal-price { font-size: 20px; font-weight: 700; color: ${this.config.primaryColor}; margin-bottom: 10px; }
                 .pc-modal-description { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 15px; }
                 .pc-modal-variants { margin-top: 12px; }
                 .pc-modal-variants-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 6px; }
                 .pc-variant-list { display: flex; flex-wrap: wrap; gap: 5px; }
-                .pc-variant-chip { padding: 4px 10px; background: #f1f1f1; border-radius: 12px; font-size: 11px; color: #555; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+                .pc-variant-chip { padding: 6px 10px; background: #f1f1f1; border-radius: 8px; font-size: 11px; color: #555; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+                .pc-variant-chip .pc-variant-color { font-weight: 600; }
+                .pc-variant-chip .pc-variant-stock { font-size: 9px; color: #888; margin-top: 2px; }
                 .pc-variant-chip:hover { border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.selected { background: ${this.config.primaryColor}; color: white; border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.in-stock { background: #e8f5e9; color: #2e7d32; }
@@ -304,9 +309,16 @@
                 /* Export info */
                 .pc-export-info { font-size: 12px; color: #666; text-align: center; margin-top: 15px; padding: 10px; background: #fff3e0; border-radius: 6px; }
 
+                @media (max-width: 1024px) {
+                    .pc-grid { grid-template-columns: repeat(3, 1fr); }
+                }
+                @media (max-width: 768px) {
+                    .pc-grid { grid-template-columns: repeat(2, 1fr); }
+                }
                 @media (max-width: 600px) {
                     .pc-header { flex-direction: column; }
                     .pc-search, .pc-categories { width: 100%; }
+                    .pc-grid { grid-template-columns: 1fr; }
                     .pc-modal-content { padding: 20px; }
                     .pc-modal-title { font-size: 20px; }
                     .pc-modal-price { font-size: 24px; }
@@ -502,10 +514,7 @@
                 return;
             }
 
-            grid.innerHTML = this.state.products.map(product => {
-                const totalStock = product.total_stock !== undefined ? product.total_stock : (product.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) || 0);
-                const inStock = totalStock > 0;
-                return `
+            grid.innerHTML = this.state.products.map(product => `
                 <div class="pc-card" data-product-id="${product.id}">
                     <img class="pc-card-image" src="${product.main_image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2212%22%3ESin imagen%3C/text%3E%3C/svg%3E'}" alt="${product.name}" loading="lazy">
                     <div class="pc-card-body">
@@ -513,11 +522,9 @@
                         ${product.categories?.length ? `<div class="pc-card-category">${product.categories[0].name}</div>` : ''}
                         ${product.price !== undefined ? `<div class="pc-card-price">$${this.formatPrice(product.price)}</div>` : ''}
                         ${product.model_code ? `<div class="pc-card-model">${product.model_code}</div>` : ''}
-                        <div class="pc-card-stock ${inStock ? 'in-stock' : 'out-of-stock'}">${inStock ? this.t('inStock') + ': ' + totalStock : this.t('outOfStock')}</div>
                     </div>
                 </div>
-            `;
-            }).join('');
+            `).join('');
 
             grid.querySelectorAll('.pc-card').forEach(card => {
                 const img = card.querySelector('.pc-card-image');
@@ -595,6 +602,10 @@
                         <div class="pc-modal-info">
                             <h2 class="pc-modal-title">${product.name}</h2>
                             ${product.categories?.length ? `<div class="pc-modal-category">${product.categories.map(c => c.name).join(', ')}</div>` : ''}
+                            <div class="pc-modal-codes">
+                                ${product.sku ? `<span><strong>SKU:</strong> ${product.sku}</span>` : ''}
+                                ${product.model_code ? `<span><strong>Modelo:</strong> ${product.model_code}</span>` : ''}
+                            </div>
                             ${product.price !== undefined ? `<div class="pc-modal-price">$${this.formatPrice(product.price)}</div>` : ''}
                             ${product.description ? `<div class="pc-modal-description">${product.description}</div>` : ''}
                             ${hasVariants ? `
@@ -608,7 +619,8 @@
                                                   data-variant-color="${v.color || ''}"
                                                   data-variant-price="${v.price || product.price}"
                                                   data-variant-in-stock="${v.in_stock ? '1' : '0'}">
-                                                ${v.color || v.code || v.sku}
+                                                <span class="pc-variant-color">${v.color || v.code || v.sku}</span>
+                                                <span class="pc-variant-stock">${v.stock !== undefined ? v.stock + ' uds' : (v.in_stock ? this.t('inStock') : this.t('outOfStock'))}</span>
                                             </span>
                                         `).join('')}
                                     </div>
