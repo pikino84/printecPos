@@ -223,8 +223,8 @@
                 /* Modal styles */
                 .pc-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
                 .pc-modal { background: white; border-radius: 16px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
-                .pc-modal-close { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; border: none; background: #f1f1f1; border-radius: 50%; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; z-index: 1; }
-                .pc-modal-close:hover { background: #e0e0e0; }
+                .pc-modal-close { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; border: none; background: transparent; border-radius: 50%; cursor: pointer; font-size: 24px; color: #000; display: flex; align-items: center; justify-content: center; z-index: 1; }
+                .pc-modal-close:hover { background: rgba(0,0,0,0.05); }
                 .pc-modal-content { padding: 20px; }
                 .pc-modal-image { width: 100%; max-height: 175px; object-fit: contain; background: #f8f9fa; border-radius: 8px; }
                 .pc-modal-gallery { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; padding-bottom: 5px; }
