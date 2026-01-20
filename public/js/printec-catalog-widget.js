@@ -602,7 +602,7 @@
                         ` : ''}
                         <div class="pc-modal-info">
                             <h2 class="pc-modal-title">${product.name}</h2>
-                            ${product.categories?.length ? `<div class="pc-modal-category">${product.categories.map(c => c.name).join(', ')}</div>` : ''}
+                            ${product.categories?.length ? `<div class="pc-modal-category"><strong>Categoría:</strong> ${product.categories.map(c => c.name).join(', ')}</div>` : ''}
                             <div class="pc-modal-codes">
                                 ${product.sku ? `<span><strong>SKU:</strong> ${product.sku}</span>` : ''}
                                 ${product.model_code ? `<span><strong>Modelo:</strong> ${product.model_code}</span>` : ''}
@@ -621,7 +621,7 @@
                                                   data-variant-price="${v.price || product.price}"
                                                   data-variant-in-stock="${v.in_stock ? '1' : '0'}">
                                                 <span class="pc-variant-color">${v.color || v.code || v.sku}</span>
-                                                <span class="pc-variant-stock">Stock: ${v.stock !== undefined ? v.stock : (v.in_stock ? '✓' : '0')}</span>
+                                                <span class="pc-variant-stock">Stock: ${v.stock !== undefined ? v.stock : '-'}</span>
                                             </span>
                                         `).join('')}
                                     </div>
