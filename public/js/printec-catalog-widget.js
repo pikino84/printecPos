@@ -232,11 +232,14 @@
                 .pc-modal-thumb:hover, .pc-modal-thumb.active { border-color: ${this.config.primaryColor}; }
                 .pc-modal-info { margin-top: 12px; }
                 .pc-modal-title { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 4px; }
-                .pc-modal-category { font-size: 11px; color: #666; margin-bottom: 8px; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; display: inline-block; }
-                .pc-modal-codes { font-size: 11px; color: #666; margin-bottom: 8px; display: flex; gap: 15px; flex-wrap: wrap; }
+                .pc-modal-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+                .pc-modal-meta-left { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+                .pc-modal-category { font-size: 11px; color: #666; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+                .pc-modal-category strong { color: #333; }
+                .pc-modal-codes { font-size: 11px; color: #666; display: flex; gap: 8px; flex-wrap: wrap; }
                 .pc-modal-codes span { background: #f5f5f5; padding: 2px 8px; border-radius: 4px; }
                 .pc-modal-codes strong { color: #333; }
-                .pc-modal-price { font-size: 20px; font-weight: 700; color: ${this.config.primaryColor}; margin-bottom: 10px; }
+                .pc-modal-price { font-size: 20px; font-weight: 700; color: ${this.config.primaryColor}; }
                 .pc-modal-description { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 15px; }
                 .pc-modal-variants { margin-top: 12px; }
                 .pc-modal-variants-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 6px; }
@@ -296,8 +299,9 @@
 
                 /* Add to cart section in modal */
                 .pc-add-to-cart-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; }
-                .pc-qty-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+                .pc-qty-selector { display: flex; align-items: center; gap: 10px; }
                 .pc-qty-selector label { font-size: 12px; color: #333; }
+                .pc-qty-selector .pc-btn { margin-left: auto; }
                 .pc-qty-input { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
                 .pc-qty-input button { width: 32px; height: 32px; border: none; background: #f5f5f5; cursor: pointer; font-size: 16px; color: #333; font-weight: 600; }
                 .pc-qty-input button:hover { background: #e0e0e0; }
@@ -602,12 +606,14 @@
                         ` : ''}
                         <div class="pc-modal-info">
                             <h2 class="pc-modal-title">${product.name}</h2>
-                            ${product.categories?.length ? `<div class="pc-modal-category"><strong>Categoría:</strong> ${product.categories.map(c => c.name).join(', ')}</div>` : ''}
-                            <div class="pc-modal-codes">
-                                ${product.sku ? `<span><strong>SKU:</strong> ${product.sku}</span>` : ''}
-                                ${product.model_code ? `<span><strong>Modelo:</strong> ${product.model_code}</span>` : ''}
+                            <div class="pc-modal-meta">
+                                <div class="pc-modal-meta-left">
+                                    ${product.categories?.length ? `<span class="pc-modal-category"><strong>Categoría:</strong> ${product.categories.map(c => c.name).join(', ')}</span>` : ''}
+                                    ${product.model_code ? `<span class="pc-modal-category"><strong>Modelo:</strong> ${product.model_code}</span>` : ''}
+                                    ${product.sku ? `<span class="pc-modal-category"><strong>SKU:</strong> ${product.sku}</span>` : ''}
+                                </div>
+                                ${product.price !== undefined ? `<div class="pc-modal-price">$${this.formatPrice(product.price)}</div>` : ''}
                             </div>
-                            ${product.price !== undefined ? `<div class="pc-modal-price">$${this.formatPrice(product.price)}</div>` : ''}
                             ${product.description ? `<div class="pc-modal-description">${product.description}</div>` : ''}
                             ${hasVariants ? `
                                 <div class="pc-modal-variants">
@@ -636,16 +642,16 @@
                                             <input type="number" id="pc-qty-value" value="1" min="1" max="9999">
                                             <button type="button" id="pc-qty-plus">+</button>
                                         </div>
+                                        <button class="pc-btn pc-btn-primary" id="pc-add-to-cart-btn"
+                                                data-product-id="${product.id}"
+                                                data-product-name="${this.escapeHtml(product.name)}"
+                                                data-product-image="${product.main_image || ''}"
+                                                data-product-price="${product.price}"
+                                                data-product-model="${product.model_code || ''}"
+                                                ${hasVariants ? `data-variant-id="${defaultVariant.id}" data-variant-color="${defaultVariant.color || ''}" data-variant-sku="${defaultVariant.sku || ''}"` : ''}>
+                                            ${this.t('addToCart')}
+                                        </button>
                                     </div>
-                                    <button class="pc-btn pc-btn-primary pc-btn-block" id="pc-add-to-cart-btn"
-                                            data-product-id="${product.id}"
-                                            data-product-name="${this.escapeHtml(product.name)}"
-                                            data-product-image="${product.main_image || ''}"
-                                            data-product-price="${product.price}"
-                                            data-product-model="${product.model_code || ''}"
-                                            ${hasVariants ? `data-variant-id="${defaultVariant.id}" data-variant-color="${defaultVariant.color || ''}" data-variant-sku="${defaultVariant.sku || ''}"` : ''}>
-                                        ${this.t('addToCart')}
-                                    </button>
                                     <div id="pc-added-message" style="display: none;"></div>
                                 </div>
                             ` : ''}
