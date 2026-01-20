@@ -36,42 +36,15 @@
                     <form action="{{ route('cart.import.process') }}" method="POST" enctype="multipart/form-data" id="importForm">
                         @csrf
 
-                        <ul class="nav nav-tabs mb-3" id="importTabs" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="file-tab" data-toggle="tab" href="#fileUpload" role="tab">
-                                    <i class="feather icon-upload"></i> Subir Archivo
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="paste-tab" data-toggle="tab" href="#pasteJson" role="tab">
-                                    <i class="feather icon-clipboard"></i> Pegar JSON
-                                </a>
-                            </li>
-                        </ul>
-
-                        <div class="tab-content" id="importTabsContent">
-                            <!-- Tab: Subir archivo -->
-                            <div class="tab-pane fade show active" id="fileUpload" role="tabpanel">
-                                <div class="form-group">
-                                    <label for="json_file">Selecciona el archivo JSON del pedido</label>
-                                    <div class="custom-file">
-                                        <input type="file" class="custom-file-input" id="json_file" name="json_file" accept=".json,.txt">
-                                        <label class="custom-file-label" for="json_file">Seleccionar archivo...</label>
-                                    </div>
-                                    <small class="form-text text-muted">
-                                        Acepta archivos .json o .txt exportados desde el widget del catálogo
-                                    </small>
-                                </div>
+                        <div class="form-group">
+                            <label for="json_file">Selecciona el archivo JSON del pedido</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="json_file" name="json_file" accept=".json,.txt">
+                                <label class="custom-file-label" for="json_file">Seleccionar archivo...</label>
                             </div>
-
-                            <!-- Tab: Pegar JSON -->
-                            <div class="tab-pane fade" id="pasteJson" role="tabpanel">
-                                <div class="form-group">
-                                    <label for="json_data">Pega el contenido JSON aquí</label>
-                                    <textarea class="form-control" id="json_data" name="json_data" rows="10"
-                                              placeholder='{"version": "1.0", "partner_api_key": "...", "items": [...]}'></textarea>
-                                </div>
-                            </div>
+                            <small class="form-text text-muted">
+                                Acepta archivos .json o .txt exportados desde el widget del catálogo
+                            </small>
                         </div>
 
                         <hr>
@@ -188,14 +161,12 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('json_file');
-    const jsonDataInput = document.getElementById('json_data');
     const submitBtn = document.getElementById('submitBtn');
     const previewDiv = document.getElementById('jsonPreview');
     const previewBody = document.getElementById('previewBody');
     const previewTotal = document.getElementById('previewTotal');
     const previewMeta = document.getElementById('previewMeta');
 
-    // Handle file input change
     fileInput.addEventListener('change', function(e) {
         const fileName = e.target.files[0]?.name || 'Seleccionar archivo...';
         e.target.nextElementSibling.textContent = fileName;
@@ -211,35 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle JSON text input
-    let debounceTimer;
-    jsonDataInput.addEventListener('input', function(e) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(function() {
-            if (jsonDataInput.value.trim()) {
-                parseAndPreview(jsonDataInput.value);
-            } else {
-                hidePreview();
-            }
-        }, 500);
-    });
-
-    // Tab change - clear other input
-    document.getElementById('file-tab').addEventListener('click', function() {
-        jsonDataInput.value = '';
-        if (!fileInput.files[0]) {
-            hidePreview();
-        }
-    });
-
-    document.getElementById('paste-tab').addEventListener('click', function() {
-        fileInput.value = '';
-        fileInput.nextElementSibling.textContent = 'Seleccionar archivo...';
-        if (!jsonDataInput.value.trim()) {
-            hidePreview();
-        }
-    });
-
     function parseAndPreview(jsonString) {
         try {
             const data = JSON.parse(jsonString);
@@ -249,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Build preview table
             let html = '';
             let total = 0;
 
@@ -271,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
             previewBody.innerHTML = html;
             previewTotal.textContent = '$' + formatNumber(total);
 
-            // Meta info
             let metaHtml = `<strong>Items:</strong> ${data.items.length}`;
             if (data.partner_name) {
                 metaHtml += ` | <strong>Partner:</strong> ${escapeHtml(data.partner_name)}`;
