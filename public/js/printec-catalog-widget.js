@@ -233,7 +233,7 @@
                 .pc-modal-info { margin-top: 12px; }
                 .pc-modal-title { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 4px; }
                 .pc-modal-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
-                .pc-modal-meta-left { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+                .pc-modal-meta-right { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
                 .pc-modal-category { font-size: 11px; color: #666; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; display: inline-block; }
                 .pc-modal-category strong { color: #333; }
                 .pc-modal-codes { font-size: 11px; color: #666; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -246,7 +246,7 @@
                 .pc-variant-list { display: flex; flex-wrap: wrap; gap: 5px; }
                 .pc-variant-chip { padding: 6px 10px; background: #f1f1f1; border-radius: 8px; font-size: 11px; color: #555; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; min-width: 60px; }
                 .pc-variant-chip .pc-variant-color { font-weight: 600; }
-                .pc-variant-chip .pc-variant-stock { font-size: 9px; color: #888; margin-top: 2px; }
+                .pc-variant-chip .pc-variant-stock { font-size: 9px; color: #333; margin-top: 1px; }
                 .pc-variant-chip.selected .pc-variant-stock { color: white; }
                 .pc-variant-chip:hover { border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.selected { background: ${this.config.primaryColor}; color: white; border-color: ${this.config.primaryColor}; }
@@ -607,12 +607,12 @@
                         <div class="pc-modal-info">
                             <h2 class="pc-modal-title">${product.name}</h2>
                             <div class="pc-modal-meta">
-                                <div class="pc-modal-meta-left">
+                                ${product.price !== undefined ? `<div class="pc-modal-price">$${this.formatPrice(product.price)}</div>` : ''}
+                                <div class="pc-modal-meta-right">
                                     ${product.categories?.length ? `<span class="pc-modal-category"><strong>Categoría:</strong> ${product.categories.map(c => c.name).join(', ')}</span>` : ''}
                                     ${product.model_code ? `<span class="pc-modal-category"><strong>Modelo:</strong> ${product.model_code}</span>` : ''}
                                     ${product.sku ? `<span class="pc-modal-category"><strong>SKU:</strong> ${product.sku}</span>` : ''}
                                 </div>
-                                ${product.price !== undefined ? `<div class="pc-modal-price">$${this.formatPrice(product.price)}</div>` : ''}
                             </div>
                             ${product.description ? `<div class="pc-modal-description">${product.description}</div>` : ''}
                             ${hasVariants ? `
@@ -692,6 +692,10 @@
                         addBtn.dataset.variantId = chip.dataset.variantId;
                         addBtn.dataset.variantColor = chip.dataset.variantColor;
                         addBtn.dataset.variantSku = chip.dataset.variantSku;
+
+                        // Reset quantity to 1
+                        const qtyInput = modal.querySelector('#pc-qty-value');
+                        if (qtyInput) qtyInput.value = 1;
                     });
                 });
             }
