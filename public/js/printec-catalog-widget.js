@@ -735,6 +735,9 @@
                         quantity: qty
                     });
 
+                    // Reset quantity to 1
+                    qtyInput.value = 1;
+
                     // Show added message
                     const msgDiv = modal.querySelector('#pc-added-message');
                     msgDiv.innerHTML = `
