@@ -621,7 +621,7 @@
                                                   data-variant-price="${v.price || product.price}"
                                                   data-variant-in-stock="${v.in_stock ? '1' : '0'}">
                                                 <span class="pc-variant-color">${v.color || v.code || v.sku}</span>
-                                                <span class="pc-variant-stock">Stock: ${v.stock !== undefined ? v.stock : '-'}</span>
+                                                <span class="pc-variant-stock">${v.stock !== undefined ? (v.stock > 0 ? 'Stock: ' + v.stock : 'Sin Stock') : '-'}</span>
                                             </span>
                                         `).join('')}
                                     </div>

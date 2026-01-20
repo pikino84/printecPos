@@ -110,12 +110,14 @@ class PublicCatalogController extends Controller
 
         // Build variants info with calculated sale prices
         $variants = $product->variants->map(function ($variant) use ($showPrices, $partner, $isPrintecProduct) {
+            $totalStock = $variant->stocks->sum('stock');
             $data = [
                 'id' => $variant->id,
                 'sku' => $variant->sku,
                 'color' => $variant->color_name,
                 'code' => $variant->code_name,
-                'in_stock' => $variant->stocks->sum('stock') > 0,
+                'in_stock' => $totalStock > 0,
+                'stock' => (int) $totalStock,
             ];
 
             if ($showPrices) {
