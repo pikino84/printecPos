@@ -232,7 +232,7 @@
                 .pc-modal-thumb:hover, .pc-modal-thumb.active { border-color: ${this.config.primaryColor}; }
                 .pc-modal-info { margin-top: 12px; }
                 .pc-modal-title { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 4px; }
-                .pc-modal-category { font-size: 11px; color: #666; margin-bottom: 8px; }
+                .pc-modal-category { font-size: 11px; color: #666; margin-bottom: 8px; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; display: inline-block; }
                 .pc-modal-codes { font-size: 11px; color: #666; margin-bottom: 8px; display: flex; gap: 15px; flex-wrap: wrap; }
                 .pc-modal-codes span { background: #f5f5f5; padding: 2px 8px; border-radius: 4px; }
                 .pc-modal-codes strong { color: #333; }
@@ -244,6 +244,7 @@
                 .pc-variant-chip { padding: 6px 10px; background: #f1f1f1; border-radius: 8px; font-size: 11px; color: #555; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; min-width: 60px; }
                 .pc-variant-chip .pc-variant-color { font-weight: 600; }
                 .pc-variant-chip .pc-variant-stock { font-size: 9px; color: #888; margin-top: 2px; }
+                .pc-variant-chip.selected .pc-variant-stock { color: white; }
                 .pc-variant-chip:hover { border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.selected { background: ${this.config.primaryColor}; color: white; border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.in-stock { background: #e8f5e9; color: #2e7d32; }
@@ -620,7 +621,7 @@
                                                   data-variant-price="${v.price || product.price}"
                                                   data-variant-in-stock="${v.in_stock ? '1' : '0'}">
                                                 <span class="pc-variant-color">${v.color || v.code || v.sku}</span>
-                                                <span class="pc-variant-stock">${v.stock !== undefined ? v.stock + ' uds' : (v.in_stock ? this.t('inStock') : this.t('outOfStock'))}</span>
+                                                <span class="pc-variant-stock">Stock: ${v.stock !== undefined ? v.stock : (v.in_stock ? '✓' : '0')}</span>
                                             </span>
                                         `).join('')}
                                     </div>
