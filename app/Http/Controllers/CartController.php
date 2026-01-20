@@ -333,4 +333,116 @@ class CartController extends Controller
 
         return $pdf->stream("preview-cotizacion.pdf");
     }
+
+    /**
+     * Mostrar la vista para importar carrito desde JSON
+     */
+    public function showImport()
+    {
+        return view('cart.import');
+    }
+
+    /**
+     * Procesar la importación del carrito desde JSON
+     */
+    public function processImport(Request $request)
+    {
+        $request->validate([
+            'json_file' => 'required_without:json_data|file|mimes:json,txt|max:2048',
+            'json_data' => 'required_without:json_file|nullable|string',
+            'clear_existing' => 'boolean'
+        ]);
+
+        try {
+            // Obtener datos JSON del archivo o del campo de texto
+            if ($request->hasFile('json_file')) {
+                $jsonContent = file_get_contents($request->file('json_file')->getRealPath());
+            } else {
+                $jsonContent = $request->json_data;
+            }
+
+            $data = json_decode($jsonContent, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return back()->with('error', 'El archivo JSON no es válido: ' . json_last_error_msg());
+            }
+
+            // Validar estructura
+            if (!isset($data['version']) || !isset($data['items']) || !is_array($data['items'])) {
+                return back()->with('error', 'El formato del JSON no es válido. Asegúrate de usar un archivo exportado del widget.');
+            }
+
+            // Verificar API key del partner
+            $user = Auth::user();
+            $partner = Partner::where('api_key', $data['partner_api_key'] ?? '')
+                ->where('is_active', true)
+                ->first();
+
+            if (!$partner) {
+                return back()->with('error', 'API key del partner inválida o partner inactivo.');
+            }
+
+            // Verificar permisos
+            if ($user->partner_id !== $partner->id && !$user->hasRole('admin')) {
+                return back()->with('error', 'No tienes permiso para importar carritos de este partner.');
+            }
+
+            // Limpiar carrito si se solicitó
+            if ($request->boolean('clear_existing', true)) {
+                CartSession::where('user_id', $user->id)->delete();
+            }
+
+            $isPrintecPartner = $partner->slug === 'printec';
+            $importedCount = 0;
+            $skippedItems = [];
+
+            foreach ($data['items'] as $item) {
+                $variant = ProductVariant::with(['product', 'stocks'])->find($item['variant_id']);
+
+                if (!$variant) {
+                    $skippedItems[] = ($item['name'] ?? "Variante {$item['variant_id']}") . ' - Producto no encontrado';
+                    continue;
+                }
+
+                // Verificar stock
+                $totalStock = $variant->stocks->sum('stock');
+                if (!$isPrintecPartner && $totalStock < $item['quantity']) {
+                    $skippedItems[] = ($item['name'] ?? $variant->product->name) . " - Stock insuficiente (disponible: {$totalStock})";
+                    continue;
+                }
+
+                // Buscar si ya existe en el carrito
+                $existingItem = CartSession::where('user_id', $user->id)
+                    ->where('variant_id', $item['variant_id'])
+                    ->first();
+
+                if ($existingItem) {
+                    $existingItem->quantity += $item['quantity'];
+                    $existingItem->save();
+                } else {
+                    CartSession::create([
+                        'user_id' => $user->id,
+                        'variant_id' => $item['variant_id'],
+                        'warehouse_id' => null,
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                    ]);
+                }
+
+                $importedCount++;
+            }
+
+            $message = "Se importaron {$importedCount} productos al carrito.";
+            if (count($skippedItems) > 0) {
+                $message .= ' ' . count($skippedItems) . ' productos fueron omitidos.';
+                session()->flash('skipped_items', $skippedItems);
+            }
+
+            return redirect()->route('cart.index')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al procesar la importación: ' . $e->getMessage());
+        }
+    }
 }

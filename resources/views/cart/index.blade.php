@@ -20,9 +20,14 @@
                         <i class="feather icon-shopping-cart" style="font-size: 4rem; color: #ccc;"></i>
                         <h5 class="mt-3">Tu carrito está vacío</h5>
                         <p class="text-muted">Agrega productos desde el catálogo para generar cotizaciones</p>
-                        <a href="{{ route('catalogo.index') }}" class="btn btn-primary mt-3">
-                            <i class="feather icon-arrow-left"></i> Ir al Catálogo
-                        </a>
+                        <div class="mt-3">
+                            <a href="{{ route('catalogo.index') }}" class="btn btn-primary">
+                                <i class="feather icon-arrow-left"></i> Ir al Catálogo
+                            </a>
+                            <a href="{{ route('cart.import') }}" class="btn btn-outline-secondary ml-2">
+                                <i class="feather icon-upload"></i> Importar Pedido
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -34,8 +39,11 @@
                 <div class="card">
                     <div class="card-header">
                         <h5>Productos ({{ $cartItems->count() }} items)</h5>
-                        <div class="card-header-right">
-                            <form action="{{ route('cart.clear') }}" method="POST" 
+                        <div class="card-header-right d-flex align-items-center">
+                            <a href="{{ route('cart.import') }}" class="btn btn-sm btn-outline-secondary mr-2">
+                                <i class="feather icon-upload"></i> Importar
+                            </a>
+                            <form action="{{ route('cart.clear') }}" method="POST"
                                   onsubmit="return confirm('¿Vaciar todo el carrito?')">
                                 @csrf
                                 @method('DELETE')
