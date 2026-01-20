@@ -247,8 +247,8 @@
                 .pc-variant-chip.selected .pc-variant-stock { color: white; }
                 .pc-variant-chip:hover { border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.selected { background: ${this.config.primaryColor}; color: white; border-color: ${this.config.primaryColor}; }
-                .pc-variant-chip.in-stock { background: #e8f5e9; color: #2e7d32; }
-                .pc-variant-chip.in-stock.selected { background: #2e7d32; color: white; }
+                .pc-variant-chip.in-stock { background: #f0f0f0; color: #333; }
+                .pc-variant-chip.in-stock.selected { background: ${this.config.primaryColor}; color: white; border-color: ${this.config.primaryColor}; }
                 .pc-variant-chip.out-of-stock { opacity: 0.5; cursor: not-allowed; }
                 .pc-footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999; }
 
@@ -299,7 +299,7 @@
                 .pc-qty-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
                 .pc-qty-selector label { font-size: 12px; color: #333; }
                 .pc-qty-input { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
-                .pc-qty-input button { width: 32px; height: 32px; border: none; background: #f5f5f5; cursor: pointer; font-size: 16px; }
+                .pc-qty-input button { width: 32px; height: 32px; border: none; background: #f5f5f5; cursor: pointer; font-size: 16px; color: #333; font-weight: 600; }
                 .pc-qty-input button:hover { background: #e0e0e0; }
                 .pc-qty-input input { width: 50px; height: 32px; border: none; text-align: center; font-size: 14px; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
                 .pc-added-message { display: flex; align-items: center; gap: 10px; padding: 12px; background: #e8f5e9; border-radius: 8px; margin-top: 15px; }
