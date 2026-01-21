@@ -8,9 +8,9 @@
         </div>
         <div class="col-lg-6 col-md-8 col-sm-12 mb-4 text-right wrapper-filters">
             <select id="categoryFilter" class="form-control">
-                <option value="">Categorías</option>
+                <option value="" data-type="">Categorías</option>
                 @foreach($categories as $category)
-                    <option value="{{ $category->slug }}">{{ $category->name }}</option>
+                    <option value="{{ $category->slug }}" data-type="{{ $category->type }}">{{ $category->name }}</option>
                 @endforeach
             </select>
             <select id="cityFilter" class="form-control">

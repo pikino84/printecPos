@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\PrintecCategory;
+use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\ProductStock;
 use App\Models\ProductWarehousesCities;
@@ -18,8 +19,31 @@ class ProductCatalogController extends Controller
         $user = auth()->user();
         $userPartnerId = $user->partner_id;
 
-        // Obtener todas las categorías internas de Printec order by name
-        $categories = PrintecCategory::orderBy('name')->get();
+        // Obtener categorías internas de Printec
+        $printecCategories = PrintecCategory::orderBy('name')->get()->map(function($cat) {
+            return (object)[
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+                'type' => 'printec'
+            ];
+        });
+
+        // Obtener categorías propias del distribuidor
+        $ownCategories = ProductCategory::where('partner_id', $userPartnerId)
+            ->orderBy('name')
+            ->get()
+            ->map(function($cat) {
+                return (object)[
+                    'id' => $cat->id,
+                    'name' => $cat->name,
+                    'slug' => $cat->slug,
+                    'type' => 'own'
+                ];
+            });
+
+        // Mezclar y ordenar alfabéticamente
+        $categories = $printecCategories->concat($ownCategories)->sortBy('name')->values();
 
         $query = Product::with(['productCategory.printecCategories', 'variants.stocks', 'partner'])
             ->where('is_active', true)
@@ -57,11 +81,22 @@ class ProductCatalogController extends Controller
             });
         }
 
-        // Filtro por categoría interna de Printec
+        // Filtro por categoría
         if ($request->filled('category')) {
-            $query->whereHas('productCategory.printecCategories', function ($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
+            $categorySlug = $request->category;
+            $categoryType = $request->input('category_type', 'printec');
+
+            if ($categoryType === 'own') {
+                // Filtro por categoría propia del distribuidor
+                $query->whereHas('productCategory', function ($q) use ($categorySlug) {
+                    $q->where('slug', $categorySlug);
+                });
+            } else {
+                // Filtro por categoría interna de Printec
+                $query->whereHas('productCategory.printecCategories', function ($q) use ($categorySlug) {
+                    $q->where('slug', $categorySlug);
+                });
+            }
         }
 
         // Filtro por texto de búsqueda con soporte a singular/plural

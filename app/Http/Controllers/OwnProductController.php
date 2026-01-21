@@ -251,26 +251,15 @@ class OwnProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        if ($userPartnerId == 1) {
-            $categories = ProductCategory::orderBy('name')->get();
-        } else {
-            $partnerIds = Partner::whereIn('type', ['proveedor', 'mixto'])
-                ->pluck('id')
-                ->push($userPartnerId)
-                ->push(1)
-                ->unique()
-                ->toArray();
+        // Solo mostrar categorías propias del distribuidor
+        $categories = ProductCategory::where('partner_id', $userPartnerId)
+            ->orderBy('name')
+            ->get();
 
-            $categories = ProductCategory::whereIn('partner_id', $partnerIds)
-                ->orderBy('name')
-                ->get();
-        }
-
-        // ✅ CAMBIO: Pasar todas las variables a la vista
         return view('own-products.edit', compact(
             'own_product',
             'warehouses',
-            'categories'  // Si lo necesitas
+            'categories'
         ));
     }
 

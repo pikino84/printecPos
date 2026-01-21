@@ -361,22 +361,31 @@
                                 <h5>Categoría</h5>
                             </div>
                             <div class="card-block">
-                                <div class="form-group">
-                                    <label class="form-label">Categoría</label>
-                                    <select class="form-control @error('product_category_id') is-invalid @enderror" 
-                                            name="product_category_id">
-                                        <option value="">Sin categoría</option>
-                                        @foreach($categories as $category)
-                                            <option value="{{ $category->id }}" 
-                                                    {{ old('product_category_id', $own_product->product_category_id) == $category->id ? 'selected' : '' }}>
-                                                {{ $category->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('product_category_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                                @if($categories->isEmpty())
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="feather icon-alert-circle"></i>
+                                        No tienes categorías propias creadas.
+                                        <a href="{{ url('/mis-categorias') }}" class="alert-link">Crear categoría</a>
+                                    </div>
+                                    <input type="hidden" name="product_category_id" value="">
+                                @else
+                                    <div class="form-group">
+                                        <label class="form-label">Categoría</label>
+                                        <select class="form-control @error('product_category_id') is-invalid @enderror"
+                                                name="product_category_id">
+                                            <option value="">Sin categoría</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}"
+                                                        {{ old('product_category_id', $own_product->product_category_id) == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('product_category_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
