@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PrintecCategory;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -168,9 +169,20 @@ class PublicCatalogController extends Controller
 
         // Filter by category
         if ($request->filled('category')) {
-            $query->whereHas('productCategory.printecCategories', function ($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
+            $categorySlug = $request->category;
+            $categoryType = $request->input('category_type', 'printec');
+
+            if ($categoryType === 'own') {
+                // Filter by partner's own category
+                $query->whereHas('productCategory', function ($q) use ($categorySlug) {
+                    $q->where('slug', $categorySlug);
+                });
+            } else {
+                // Filter by Printec internal category
+                $query->whereHas('productCategory.printecCategories', function ($q) use ($categorySlug) {
+                    $q->where('slug', $categorySlug);
+                });
+            }
         }
 
         // Search filter
@@ -246,15 +258,38 @@ class PublicCatalogController extends Controller
         $productCategoryIds = $query->pluck('product_category_id')->unique()->filter();
 
         // Get PrintecCategories that are mapped to those product categories
-        $categories = PrintecCategory::whereHas('providerCategories', function ($q) use ($productCategoryIds) {
+        $printecCategories = PrintecCategory::whereHas('providerCategories', function ($q) use ($productCategoryIds) {
             $q->whereIn('product_categories.id', $productCategoryIds);
         })
             ->orderBy('name')
             ->get()
+            ->map(fn($cat) => (object)[
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+                'type' => 'printec',
+            ]);
+
+        // Get own categories from the partner
+        $ownCategories = ProductCategory::where('partner_id', $partner->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn($cat) => (object)[
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+                'type' => 'own',
+            ]);
+
+        // Merge and sort alphabetically
+        $categories = $printecCategories->concat($ownCategories)
+            ->sortBy('name')
+            ->values()
             ->map(fn($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,
+                'type' => $cat->type,
             ]);
 
         return response()->json([

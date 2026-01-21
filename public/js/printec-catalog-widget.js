@@ -41,6 +41,7 @@
             currentPage: 1,
             totalPages: 1,
             currentCategory: '',
+            currentCategoryType: 'printec',
             searchQuery: '',
             loading: false,
             partnerInfo: null,
@@ -376,12 +377,18 @@
             this.renderProducts();
 
             try {
-                const result = await this.apiRequest('/products', {
+                const params = {
                     page: this.state.currentPage,
                     per_page: this.config.perPage,
-                    category: this.state.currentCategory,
                     search: this.state.searchQuery
-                });
+                };
+
+                if (this.state.currentCategory) {
+                    params.category = this.state.currentCategory;
+                    params.category_type = this.state.currentCategoryType;
+                }
+
+                const result = await this.apiRequest('/products', params);
 
                 this.state.products = result.data;
                 this.state.totalPages = result.meta.last_page;
@@ -468,7 +475,9 @@
             const categorySelect = document.getElementById('pc-category-select');
             if (categorySelect) {
                 categorySelect.addEventListener('change', (e) => {
+                    const selectedOption = e.target.options[e.target.selectedIndex];
                     this.state.currentCategory = e.target.value;
+                    this.state.currentCategoryType = selectedOption.dataset.type || 'printec';
                     this.state.currentPage = 1;
                     this.loadProducts();
                 });
@@ -494,9 +503,9 @@
             const select = document.getElementById('pc-category-select');
             if (!select) return;
 
-            select.innerHTML = `<option value="">${this.t('allCategories')}</option>` +
+            select.innerHTML = `<option value="" data-type="">${this.t('allCategories')}</option>` +
                 this.state.categories.map(cat =>
-                    `<option value="${cat.slug}">${cat.name}</option>`
+                    `<option value="${cat.slug}" data-type="${cat.type || 'printec'}">${cat.name}</option>`
                 ).join('');
         },
 
