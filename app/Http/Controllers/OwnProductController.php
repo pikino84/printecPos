@@ -102,29 +102,19 @@ class OwnProductController extends Controller
     public function create()
     {
         $this->authorize('create', Product::class);
-        
-        $userPartnerId = Auth::user()->partner_id;
-        
-        if ($userPartnerId == 1) {
-            $categories = ProductCategory::orderBy('name')->get();
-        } else {
-            $partnerIds = Partner::whereIn('type', ['proveedor', 'mixto'])
-                ->pluck('id')
-                ->push($userPartnerId)
-                ->push(1)
-                ->unique()
-                ->toArray();
 
-            $categories = ProductCategory::whereIn('partner_id', $partnerIds)
-                ->orderBy('name')
-                ->get();
-        }
-        
+        $userPartnerId = Auth::user()->partner_id;
+
+        // Solo mostrar categorías propias del distribuidor
+        $categories = ProductCategory::where('partner_id', $userPartnerId)
+            ->orderBy('name')
+            ->get();
+
         $warehouses = ProductWarehouse::where('partner_id', $userPartnerId)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
-        
+
         $hasWarehouses = $warehouses->isNotEmpty();
 
         return view('own-products.create', compact('categories', 'warehouses', 'hasWarehouses'));

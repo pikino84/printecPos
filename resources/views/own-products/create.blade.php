@@ -244,35 +244,37 @@
                             <!-- Categoría -->
                             <div class="card">
                                 <div class="card-header">
-                                    <h5>Categoría <span class="text-danger">*</span></h5>
+                                    <h5>Categoría</h5>
                                 </div>
                                 <div class="card-block">
-                                    <div class="form-group">
-                                        <label class="form-label">Categoría del Producto <span class="text-danger">*</span></label>
-                                        <select class="form-control @error('product_category_id') is-invalid @enderror" 
-                                                name="product_category_id"
-                                                required>
-                                            <option value="">Seleccionar categoría</option>
-                                            @foreach($categories as $category)
-                                                <option value="{{ $category->id }}" 
-                                                        {{ old('product_category_id') == $category->id ? 'selected' : '' }}>
-                                                    {{ $category->name }}
-                                                    @if($category->subcategory)
-                                                        - {{ $category->subcategory }}
-                                                    @endif
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('product_category_id')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                        @if($categories->isEmpty())
-                                            <small class="form-text text-warning">
-                                                <i class="feather icon-alert-triangle"></i> No tienes categorías. 
-                                                <a href="{{ route('my-categories.index') }}">Crear una ahora</a>
-                                            </small>
-                                        @endif
-                                    </div>
+                                    @if($categories->isEmpty())
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="feather icon-alert-circle"></i>
+                                            No tienes categorías propias creadas.
+                                            <a href="{{ url('/mis-categorias') }}" class="alert-link">Crear categoría</a>
+                                        </div>
+                                        <input type="hidden" name="product_category_id" value="">
+                                    @else
+                                        <div class="form-group">
+                                            <label class="form-label">Categoría del Producto</label>
+                                            <select class="form-control @error('product_category_id') is-invalid @enderror"
+                                                    name="product_category_id">
+                                                <option value="">Sin categoría</option>
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->id }}"
+                                                            {{ old('product_category_id') == $category->id ? 'selected' : '' }}>
+                                                        {{ $category->name }}
+                                                        @if($category->subcategory)
+                                                            - {{ $category->subcategory }}
+                                                        @endif
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('product_category_id')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
