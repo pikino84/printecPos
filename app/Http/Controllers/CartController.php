@@ -288,6 +288,28 @@ class CartController extends Controller
         $tax = $baseForTax * $taxRate;
         $total = $subtotal + $urgencyFee + $tax;
 
+        // Obtener datos del cliente
+        $clientData = null;
+        if ($request->client_id) {
+            $client = Client::find($request->client_id);
+            if ($client) {
+                $clientData = (object)[
+                    'nombre' => $client->nombre,
+                    'apellido' => $client->apellido,
+                    'email' => $client->email,
+                    'telefono' => $client->telefono,
+                ];
+            }
+        } else {
+            // Cliente manual desde el formulario
+            $clientData = (object)[
+                'nombre' => $request->client_name,
+                'apellido' => $request->client_apellido,
+                'email' => $request->client_email,
+                'telefono' => $request->client_telefono,
+            ];
+        }
+
         // Crear objeto Quote temporal (sin guardar en BD)
         $quote = new Quote();
         $quote->quote_number = 'PREVIEW-' . now()->format('YmdHis');
@@ -329,7 +351,7 @@ class CartController extends Controller
         $quote->setRelation('items', $tempItems);
 
         // Generar PDF
-        $pdf = PDF::loadView('quotes.pdf', compact('quote'));
+        $pdf = PDF::loadView('quotes.pdf', compact('quote', 'clientData'));
 
         return $pdf->stream("preview-cotizacion.pdf");
     }

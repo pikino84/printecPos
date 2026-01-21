@@ -42,6 +42,21 @@
             width: 45%;
             text-align: right;
         }
+        .client-info {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            text-align: right;
+        }
+        .client-info p {
+            margin: 3px 0;
+            font-size: 11px;
+        }
+        .client-info .client-label {
+            font-weight: bold;
+            color: #1F4C94;
+            margin-bottom: 5px;
+        }
         .clearfix::after {
             content: "";
             display: table;
@@ -176,6 +191,25 @@
             <p>Fecha: {{ $quote->created_at->format('d/m/Y') }}</p>
             @if($quote->valid_until)
                 <p>Válida hasta: {{ $quote->valid_until->format('d/m/Y') }}</p>
+            @endif
+
+            @php
+                // Obtener datos del cliente desde $clientData (preview) o desde $quote->client (cotización guardada)
+                $cliente = $clientData ?? ($quote->client ?? null);
+            @endphp
+            @if($cliente && ($cliente->nombre || $cliente->email))
+                <div class="client-info">
+                    <p class="client-label">CLIENTE</p>
+                    @if($cliente->nombre || $cliente->apellido)
+                        <p><strong>{{ trim(($cliente->nombre ?? '') . ' ' . ($cliente->apellido ?? '')) }}</strong></p>
+                    @endif
+                    @if($cliente->email)
+                        <p>{{ $cliente->email }}</p>
+                    @endif
+                    @if($cliente->telefono)
+                        <p>Tel: {{ $cliente->telefono }}</p>
+                    @endif
+                </div>
             @endif
         </div>
     </div>

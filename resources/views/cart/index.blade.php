@@ -231,30 +231,53 @@
 
                                 {{-- Campos adicionales para cliente nuevo --}}
                                 <div id="manual_client_fields" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-group mb-2">
+                                                <label>Nombre <span class="text-danger">*</span></label>
+                                                <input type="text"
+                                                       id="client_name"
+                                                       name="client_name"
+                                                       class="form-control form-control-sm"
+                                                       placeholder="Nombre">
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group mb-2">
+                                                <label>Apellido</label>
+                                                <input type="text"
+                                                       id="client_apellido"
+                                                       name="client_apellido"
+                                                       class="form-control form-control-sm"
+                                                       placeholder="Apellido">
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="form-group mb-2">
-                                        <label>Nombre del Cliente <span class="text-danger">*</span></label>
-                                        <input type="text" 
-                                               id="client_name" 
-                                               name="client_name" 
-                                               class="form-control form-control-sm" 
-                                               placeholder="Nombre completo">
+                                        <label>Teléfono</label>
+                                        <input type="text"
+                                               id="client_telefono"
+                                               name="client_telefono"
+                                               class="form-control form-control-sm"
+                                               placeholder="Teléfono (opcional)">
                                     </div>
 
                                     <div class="form-group mb-2">
                                         <label>RFC</label>
-                                        <input type="text" 
-                                               id="client_rfc" 
-                                               name="client_rfc" 
-                                               class="form-control form-control-sm" 
+                                        <input type="text"
+                                               id="client_rfc"
+                                               name="client_rfc"
+                                               class="form-control form-control-sm"
                                                placeholder="RFC (opcional)">
                                     </div>
 
                                     <div class="form-group mb-2">
                                         <label>Razón Social</label>
-                                        <input type="text" 
-                                               id="client_razon_social" 
-                                               name="client_razon_social" 
-                                               class="form-control form-control-sm" 
+                                        <input type="text"
+                                               id="client_razon_social"
+                                               name="client_razon_social"
+                                               class="form-control form-control-sm"
                                                placeholder="Razón social (opcional)">
                                     </div>
                                 </div>
@@ -480,6 +503,8 @@ $(document).ready(function() {
         const clientId = $('#client_id').val();
         const clientEmail = $('#client_email').val();
         const clientName = $('#client_name').val();
+        const clientApellido = $('#client_apellido').val();
+        const clientTelefono = $('#client_telefono').val();
         const clientRfc = $('#client_rfc').val();
         const clientRazonSocial = $('#client_razon_social').val();
         const partnerEntityId = $('#partner_entity_id').val();
@@ -489,6 +514,8 @@ $(document).ready(function() {
         if (clientId) params.append('client_id', clientId);
         if (clientEmail) params.append('client_email', clientEmail);
         if (clientName) params.append('client_name', clientName);
+        if (clientApellido) params.append('client_apellido', clientApellido);
+        if (clientTelefono) params.append('client_telefono', clientTelefono);
         if (clientRfc) params.append('client_rfc', clientRfc);
         if (clientRazonSocial) params.append('client_razon_social', clientRazonSocial);
         if (partnerEntityId) params.append('partner_entity_id', partnerEntityId);
@@ -530,19 +557,22 @@ $(document).ready(function() {
     // Cuando se selecciona un cliente
     $('#client_search').on('select2:select', function(e) {
         const client = e.params.data;
-        
+
         $('#client_id').val(client.id);
         $('#client_email').val(client.email || '');
-        $('#client_name').val(client.text);
+        $('#client_name').val(client.nombre || client.text);
+        $('#client_apellido').val(client.apellido || '');
+        $('#client_telefono').val(client.telefono || '');
         $('#client_rfc').val(client.rfc || '');
         $('#client_razon_social').val(client.razon_social || '');
-        
+
         $('#manual_client_fields').hide();
-        
+
         $('#client_info').html(`
             <div class="alert alert-info alert-sm">
                 <strong>Cliente registrado:</strong> ${client.text}<br>
                 ${client.email ? `<strong>Email:</strong> ${client.email}<br>` : ''}
+                ${client.telefono ? `<strong>Teléfono:</strong> ${client.telefono}<br>` : ''}
                 ${client.rfc ? `<strong>RFC:</strong> ${client.rfc}` : ''}
             </div>
         `);
@@ -553,6 +583,8 @@ $(document).ready(function() {
         $('#client_id').val('');
         $('#client_email').val('');
         $('#client_name').val('');
+        $('#client_apellido').val('');
+        $('#client_telefono').val('');
         $('#client_rfc').val('');
         $('#client_razon_social').val('');
         $('#client_info').html('');
@@ -601,7 +633,9 @@ $(document).ready(function() {
 
                 if (existingClient) {
                     $('#client_id').val(existingClient.id);
-                    $('#client_name').val(existingClient.text);
+                    $('#client_name').val(existingClient.nombre || existingClient.text);
+                    $('#client_apellido').val(existingClient.apellido || '');
+                    $('#client_telefono').val(existingClient.telefono || '');
                     $('#client_rfc').val(existingClient.rfc || '');
                     $('#client_razon_social').val(existingClient.razon_social || '');
 

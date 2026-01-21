@@ -261,10 +261,29 @@ class QuoteController extends Controller
             'items.warehouse',
             'partner.defaultEntity.bankAccounts',
             'partnerEntity.bankAccounts',
-            'user'
+            'user',
+            'client'
         ]);
 
-        $pdf = PDF::loadView('quotes.pdf', compact('quote'));
+        // Preparar datos del cliente para el PDF
+        $clientData = null;
+        if ($quote->client) {
+            $clientData = (object)[
+                'nombre' => $quote->client->nombre,
+                'apellido' => $quote->client->apellido,
+                'email' => $quote->client->email,
+                'telefono' => $quote->client->telefono,
+            ];
+        } elseif ($quote->client_name || $quote->client_email) {
+            $clientData = (object)[
+                'nombre' => $quote->client_name,
+                'apellido' => null,
+                'email' => $quote->client_email,
+                'telefono' => null,
+            ];
+        }
+
+        $pdf = PDF::loadView('quotes.pdf', compact('quote', 'clientData'));
 
         return $pdf;
     }
