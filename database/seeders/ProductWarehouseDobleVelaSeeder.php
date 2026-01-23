@@ -54,18 +54,28 @@ class ProductWarehouseDobleVelaSeeder extends Seeder
 
         DB::transaction(function () use ($codes, $partner, $nickByCode, &$created, &$updated) {
             foreach ($codes as $code) {
-                [$model, $wasCreated] = ProductWarehouse::updateOrCreate(
-                    ['partner_id' => $partner->id, 'codigo' => $code],
-                    [
-                        'name'      => "Doble Vela Almacén {$code}",
-                        'nickname'  => $nickByCode[$code] ?? null, // o déjalo null si prefieres mapear en otro seeder
-                        'is_active' => 1,
-                    ]
-                )->wasRecentlyCreated
-                    ? [$code, true]
-                    : [$code, false];
+                $existing = ProductWarehouse::where('partner_id', $partner->id)
+                    ->where('codigo', $code)
+                    ->first();
 
-                $wasCreated ? $created++ : $updated++;
+                if ($existing) {
+                    // Solo actualizar name e is_active, NO sobrescribir nickname
+                    $existing->update([
+                        'name'      => "Doble Vela Almacén {$code}",
+                        'is_active' => 1,
+                    ]);
+                    $updated++;
+                } else {
+                    // Crear nuevo con nickname por defecto
+                    ProductWarehouse::create([
+                        'partner_id' => $partner->id,
+                        'codigo'     => $code,
+                        'name'       => "Doble Vela Almacén {$code}",
+                        'nickname'   => $nickByCode[$code] ?? null,
+                        'is_active'  => 1,
+                    ]);
+                    $created++;
+                }
             }
         });
 
