@@ -81,15 +81,11 @@ class PartnerPricing extends Model
      * Calcular precio de costo para el partner (sin IVA, sin markup del partner)
      * Este es el precio que el partner paga a Printec
      * Fórmula: (Price + Markup del Tier) - Descuento del Tier
+     * Nota: Todos los productos (propios y de proveedores) reciben los mismos aumentos
      */
     public function calculateCostPrice($basePrice, $isPrintecProduct = true)
     {
-        // Si es producto propio del partner, el costo es el precio base
-        if (!$isPrintecProduct) {
-            return $basePrice;
-        }
-
-        // Producto de Printec o proveedores: aplicar tier
+        // Todos los productos reciben los mismos aumentos (propios y de proveedores)
         $tier = $this->getEffectiveTier();
 
         if (!$tier) {
@@ -133,27 +129,12 @@ class PartnerPricing extends Model
     /**
      * Obtener el desglose de precios para mostrar en UI
      * Fórmula: ((Base + Markup Printec) + Markup Tier) - Descuento Tier + Markup Partner
+     * Nota: Todos los productos (propios y de proveedores) reciben los mismos aumentos
      */
     public function getPriceBreakdown($basePrice, $isPrintecProduct = true)
     {
         $tier = $this->getEffectiveTier();
         $printecMarkup = PricingSetting::get('printec_markup', 52);
-
-        if (!$isPrintecProduct) {
-            return [
-                'base_price' => $basePrice,
-                'tier_name' => null,
-                'printec_markup' => 0,
-                'tier_markup' => 0,
-                'discount_percentage' => 0,
-                'after_printec_markup' => $basePrice,
-                'after_tier_markup' => $basePrice,
-                'after_discount' => $basePrice,
-                'cost_price' => $basePrice,
-                'partner_markup' => $this->markup_percentage,
-                'sale_price' => $this->applyMarkup($basePrice),
-            ];
-        }
 
         if (!$tier) {
             $afterPrintecMarkup = $basePrice * (1 + $printecMarkup / 100);

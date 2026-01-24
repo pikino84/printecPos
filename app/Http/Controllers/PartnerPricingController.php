@@ -202,10 +202,8 @@ class PartnerPricingController extends Controller
 
         foreach ($cartItems as $item) {
             $variant = $item->variant;
-            $product = $variant->product;
-            $isPrintecProduct = !$product->is_own_product;
-
-            $newPrice = $partnerPricing->calculateSalePrice($variant->price, $isPrintecProduct);
+            // Todos los productos (propios y de proveedores) reciben los mismos aumentos
+            $newPrice = $partnerPricing->calculateSalePrice($variant->price);
             $item->update(['unit_price' => $newPrice]);
         }
     }

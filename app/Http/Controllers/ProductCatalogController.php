@@ -206,9 +206,8 @@ class ProductCatalogController extends Controller
         $partner = Partner::find($userPartnerId);
         $partnerPricing = $partner ? $partner->getPricingConfig() : null;
 
-        // Determinar si es producto de Printec/proveedor o producto propio
-        // Productos propios (is_own_product = true) siempre usan precio directo sin markup
-        $isPrintecProduct = !$producto->is_own_product;
+        // Todos los productos (propios y de proveedores) reciben los mismos aumentos
+        $isPrintecProduct = true;
 
         return view('products.show', compact(
             'producto', 
