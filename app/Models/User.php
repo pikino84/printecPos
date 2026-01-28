@@ -30,6 +30,7 @@ class User extends Authenticatable
         'partner_id',
         'is_active',
         'must_change_password',
+        'tour_completed',
     ];
 
     /**
@@ -51,6 +52,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
         'must_change_password' => 'boolean',
+        'tour_completed' => 'boolean',
     ];
     
     protected static $logName = 'usuario';

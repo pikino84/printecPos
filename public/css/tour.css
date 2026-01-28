@@ -1,0 +1,390 @@
+/* ========================================
+   Estilos personalizados para Intro.js Tour
+   Tema: PrintecPOS (AdminDek/Bootstrap)
+   ======================================== */
+
+/* Overlay oscuro */
+.introjs-overlay {
+    background: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Tooltip principal */
+.introjs-tooltip {
+    min-width: 320px;
+    max-width: 420px;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    border: none;
+    background: #fff;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Header del tooltip */
+.introjs-tooltip-header {
+    background: linear-gradient(135deg, #4680ff 0%, #3a6fd9 100%);
+    padding: 18px 20px 14px;
+    border-bottom: none;
+}
+
+.introjs-tooltip-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff !important;
+    margin: 0;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Botón de cerrar/omitir */
+.introjs-skipbutton {
+  position: absolute;
+  top: 7px;
+  right: 20px;
+  padding: 12px 0px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  box-shadow: none !important;
+}
+
+.introjs-skipbutton:hover,
+.introjs-skipbutton:focus {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+    box-shadow: none !important;
+}
+
+.introjs-skipbutton::before,
+.introjs-skipbutton::after {
+    display: none !important;
+}
+
+/* Contenido del tooltip */
+.introjs-tooltiptext {
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #5c6873;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Scrollbar personalizado para contenido largo */
+.introjs-tooltiptext::-webkit-scrollbar {
+    width: 6px;
+}
+
+.introjs-tooltiptext::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.introjs-tooltiptext::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.introjs-tooltiptext::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Área de botones */
+.introjs-tooltipbuttons {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Botones generales */
+.introjs-button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-shadow: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.introjs-button:hover {
+    text-decoration: none;
+}
+
+.introjs-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(70, 128, 255, 0.25);
+}
+
+/* Botón Anterior */
+.introjs-prevbutton {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    color: #5c6873;
+}
+
+.introjs-prevbutton:hover {
+    background: #f8f9fa;
+    border-color: #c1c5ca;
+    color: #333;
+}
+
+/* Botón Siguiente */
+.introjs-nextbutton {
+    background: linear-gradient(135deg, #4680ff 0%, #3a6fd9 100%);
+    color: #fff !important;
+    border: none;
+}
+
+.introjs-nextbutton:hover {
+    background: linear-gradient(135deg, #3a6fd9 0%, #2d5fc9 100%);
+    color: #fff !important;
+}
+
+.introjs-nextbutton:focus {
+    color: #fff !important;
+}
+
+/* Botón Listo (finalizar) */
+.introjs-donebutton {
+    background: linear-gradient(135deg, #2ed8b6 0%, #26b99a 100%);
+    color: #fff;
+    border: none;
+}
+
+.introjs-donebutton:hover {
+    background: linear-gradient(135deg, #26b99a 0%, #1fa085 100%);
+    color: #fff;
+}
+
+/* Ocultar botón anterior en primer paso */
+.introjs-prevbutton.introjs-disabled {
+    display: none;
+}
+
+/* Indicador de pasos (bullets) */
+.introjs-bullets {
+    padding: 0 20px 10px;
+    text-align: center;
+}
+
+.introjs-bullets ul {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+}
+
+.introjs-bullets ul li {
+    list-style: none;
+}
+
+.introjs-bullets ul li a {
+    width: 10px;
+    height: 10px;
+    background: #dee2e6;
+    border-radius: 50%;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.introjs-bullets ul li a:hover {
+    background: #adb5bd;
+}
+
+.introjs-bullets ul li a.active {
+    background: #4680ff;
+    width: 24px;
+    border-radius: 5px;
+}
+
+/* Progress bar */
+.introjs-progress {
+    height: 4px;
+    background: #e9ecef;
+    margin: 0;
+    border-radius: 0;
+}
+
+.introjs-progressbar {
+    background: linear-gradient(90deg, #4680ff 0%, #2ed8b6 100%);
+    height: 100%;
+}
+
+/* Highlight del elemento */
+.introjs-helperLayer {
+    border-radius: 8px;
+    box-shadow:
+        0 0 0 2px rgba(70, 128, 255, 0.6),
+        0 0 0 5000px rgba(0, 0, 0, 0.5);
+    background: transparent;
+}
+
+/* Flecha del tooltip */
+.introjs-arrow {
+    border: 10px solid transparent;
+}
+
+.introjs-arrow.top {
+    top: -20px;
+    border-bottom-color: #4680ff;
+}
+
+.introjs-arrow.top-right {
+    top: -20px;
+    border-bottom-color: #4680ff;
+}
+
+.introjs-arrow.top-middle {
+    top: -20px;
+    border-bottom-color: #4680ff;
+}
+
+.introjs-arrow.right {
+    right: -20px;
+    border-left-color: #fff;
+}
+
+.introjs-arrow.right-bottom {
+    right: -20px;
+    border-left-color: #fff;
+}
+
+.introjs-arrow.bottom {
+    bottom: -20px;
+    border-top-color: #f8f9fa;
+}
+
+.introjs-arrow.bottom-right {
+    bottom: -20px;
+    border-top-color: #f8f9fa;
+}
+
+.introjs-arrow.bottom-middle {
+    bottom: -20px;
+    border-top-color: #f8f9fa;
+}
+
+.introjs-arrow.left {
+    left: -20px;
+    border-right-color: #fff;
+}
+
+.introjs-arrow.left-bottom {
+    left: -20px;
+    border-right-color: #fff;
+}
+
+/* Estilos para el botón de tour en el header */
+#start-tour-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 70px;
+}
+
+#start-tour-btn i {
+    font-size: 16px;
+}
+
+/* Animación de entrada suave */
+.introjs-tooltip {
+    animation: tourSlideIn 0.3s ease;
+}
+
+@keyframes tourSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-15px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive para móviles */
+@media (max-width: 576px) {
+    .introjs-tooltip {
+        min-width: 280px;
+        max-width: 300px;
+        margin: 10px;
+    }
+
+    .introjs-tooltip-header {
+        padding: 15px;
+    }
+
+    .introjs-tooltip-title {
+        font-size: 15px;
+    }
+
+    .introjs-tooltiptext {
+        padding: 15px;
+        font-size: 13px;
+        max-height: 150px;
+    }
+
+    .introjs-tooltipbuttons {
+        padding: 12px 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .introjs-button {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .introjs-bullets ul li a {
+        width: 8px;
+        height: 8px;
+    }
+
+    .introjs-bullets ul li a.active {
+        width: 18px;
+    }
+}
+
+/* Fix para z-index y evitar que se corte */
+.introjs-fixParent {
+    z-index: 9999998 !important;
+}
+
+.introjs-showElement {
+    z-index: 9999999 !important;
+}
+
+.introjs-tooltip {
+    z-index: 10000001 !important;
+}
+
+.introjs-helperLayer {
+    z-index: 9999999 !important;
+}
+
+.introjs-overlay {
+    z-index: 9999997 !important;
+}
+
+/* Asegurar que el contenido no se desborde */
+.introjs-tooltip * {
+    box-sizing: border-box;
+}

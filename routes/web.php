@@ -28,6 +28,7 @@ use App\Http\Controllers\PricingDashboardController;
 use App\Http\Controllers\PricingReportController;
 use App\Http\Controllers\PartnerRegistrationController;
 use App\Http\Controllers\PricingSettingController;
+use App\Http\Controllers\TourController;
 
 
 
@@ -52,6 +53,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Tour de usuario
+    Route::get('/tour/status', [TourController::class, 'status'])->name('tour.status');
+    Route::post('/tour/complete', [TourController::class, 'complete'])->name('tour.complete');
+    Route::post('/tour/reset', [TourController::class, 'reset'])->name('tour.reset');
 
     // 👮‍♂️ Rutas para usuarios (solo para rol admin)
     Route::middleware(['auth', 'role:admin|super admin|Asociado Administrador'])->group(function () {

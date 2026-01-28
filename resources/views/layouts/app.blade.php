@@ -36,6 +36,9 @@
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <!-- Custom css -->
         <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
+        <!-- Intro.js CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/introjs.min.css">
+        <link rel="stylesheet" type="text/css" href="{{ asset('css/tour.css') }}">
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -88,6 +91,9 @@
         <!-- Select2 JS -->
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script type="text/javascript" src="{{ asset('js/script.min.js') }}"></script>
+        <!-- Intro.js -->
+        <script src="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/intro.min.js"></script>
+        <script src="{{ asset('js/tour.js') }}"></script>
         @yield('scripts')
         <script>
             // Función global para actualizar el contador del carrito

@@ -14,23 +14,15 @@
         </div>
         <div class="navbar-container container-fluid">
             <ul class="nav-left">
-                <li class="header-search">
-                    <div class="main-search morphsearch-search">
-                        <div class="input-group">
-                            <span class="input-group-text search-close">
-                            <i class="feather icon-x input-group-text"></i>
-                        </span>
-                            <input type="text" class="form-control" placeholder="Enter Keyword">
-                            <span class="input-group-text search-btn">
-                            <i class="feather icon-search input-group-text"></i>
-                        </span>
-                        </div>
-                    </div>
-                </li>
                 <li>
                     <a href="#!" onclick="javascript:toggleFullScreen()" class="waves-effect waves-light">
-                    <i class="full-screen feather icon-maximize"></i>
-                </a>
+                        <i class="full-screen feather icon-maximize"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="start-tour-btn" class="waves-effect waves-light" title="Ver Tutorial">
+                        <i class="full-screen feather icon-help-circle"></i>
+                    </a>
                 </li>
             </ul>
             <ul class="nav-right">
@@ -43,7 +35,7 @@
                 </li>
 
                 <!-- Usuario -->
-                <li class="user-profile header-notification">
+                <li class="user-profile header-notification" id="user-dropdown">
                     <div class="dropdown-primary dropdown">
                         <div class="dropdown-toggle" data-bs-toggle="dropdown">
                             <img src="{{ asset('images/avatar-blank.jpg') }}" class="img-radius" alt="User-Profile-Image">
