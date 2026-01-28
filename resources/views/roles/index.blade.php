@@ -35,11 +35,14 @@
                         <tr>
                             <td>{{ $role->name }}</td>
                             <td>
-                                @forelse ($role->permissions as $permission)
+                                @forelse ($role->permissions->take(5) as $permission)
                                     <span class="badge badge-info">{{ $permission->name }}</span>
                                 @empty
                                     <span class="text-muted">Sin permisos</span>
                                 @endforelse
+                                @if ($role->permissions->count() > 5)
+                                    <small class="text-muted">+{{ $role->permissions->count() - 5 }} más</small>
+                                @endif
                             </td>
                             <td>
                                 <a href="{{ route('roles.edit', $role) }}" class="btn btn-sm btn-warning">Editar</a>
