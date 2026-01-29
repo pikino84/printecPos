@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\PricingSetting;
 use App\Models\PrintecCategory;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -309,6 +310,7 @@ class PublicCatalogController extends Controller
             'data' => [
                 'partner_name' => $partner->name,
                 'show_prices' => $partner->api_show_prices,
+                'tax_rate' => PricingSetting::get('tax_rate', 16),
             ],
         ]);
     }

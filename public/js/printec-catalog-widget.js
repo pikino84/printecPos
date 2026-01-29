@@ -45,6 +45,7 @@
             searchQuery: '',
             loading: false,
             partnerInfo: null,
+            taxRate: 16,
             cart: [],
             cartOpen: false
         },
@@ -357,6 +358,9 @@
             try {
                 const result = await this.apiRequest('/info');
                 this.state.partnerInfo = result.data;
+                if (result.data.tax_rate !== undefined) {
+                    this.state.taxRate = parseFloat(result.data.tax_rate);
+                }
             } catch (error) {
                 console.error('PrintecCatalog: Error loading partner info', error);
             }
@@ -534,7 +538,7 @@
                     <div class="pc-card-body">
                         <h3 class="pc-card-title">${product.name}</h3>
                         ${product.categories?.length ? `<div class="pc-card-category">${product.categories[0].name}</div>` : ''}
-                        ${product.price !== undefined ? `<div class="pc-card-price">$${this.formatPrice(product.price)}</div>` : ''}
+                        ${product.price !== undefined ? `<div class="pc-card-price">$${this.formatPriceWithTax(product.price)}</div>` : ''}
                         ${product.model_code ? `<div class="pc-card-model">${product.model_code}</div>` : ''}
                     </div>
                 </div>
@@ -616,7 +620,7 @@
                         <div class="pc-modal-info">
                             <h2 class="pc-modal-title">${product.name}</h2>
                             <div class="pc-modal-meta">
-                                ${product.price !== undefined ? `<div class="pc-modal-price">$${this.formatPrice(product.price)}</div>` : ''}
+                                ${product.price !== undefined ? `<div class="pc-modal-price">$${this.formatPriceWithTax(product.price)}</div>` : ''}
                                 <div class="pc-modal-meta-right">
                                     ${product.categories?.length ? `<span class="pc-modal-category"><strong>Categoría:</strong> ${product.categories.map(c => c.name).join(', ')}</span>` : ''}
                                     ${product.model_code ? `<span class="pc-modal-category"><strong>Modelo:</strong> ${product.model_code}</span>` : ''}
@@ -732,12 +736,14 @@
             if (addBtn) {
                 addBtn.addEventListener('click', () => {
                     const qty = parseInt(qtyInput.value) || 1;
+                    const basePrice = parseFloat(addBtn.dataset.productPrice);
                     this.addToCart({
                         productId: addBtn.dataset.productId,
                         variantId: addBtn.dataset.variantId || null,
                         name: addBtn.dataset.productName,
                         image: addBtn.dataset.productImage,
-                        price: parseFloat(addBtn.dataset.productPrice),
+                        price: this.applyTax(basePrice),
+                        basePrice: basePrice,
                         model: addBtn.dataset.productModel,
                         color: addBtn.dataset.variantColor || '',
                         sku: addBtn.dataset.variantSku || '',
@@ -951,11 +957,13 @@
 
         // Export methods
         downloadJson() {
+            const taxRate = this.state.taxRate || 16;
             const orderData = {
                 version: '1.0',
                 partner_api_key: this.config.apiKey,
                 partner_name: this.state.partnerInfo?.name || '',
                 created_at: new Date().toISOString(),
+                tax_rate: taxRate,
                 items: this.state.cart.map(item => ({
                     product_id: item.productId,
                     variant_id: item.variantId,
@@ -964,7 +972,8 @@
                     color: item.color,
                     sku: item.sku,
                     quantity: item.quantity,
-                    unit_price: item.price,
+                    unit_price_base: item.basePrice || item.price / (1 + taxRate / 100),
+                    unit_price_with_tax: item.price,
                     subtotal: item.price * item.quantity
                 })),
                 totals: {
@@ -1094,8 +1103,17 @@
         },
 
         // Utility methods
+        applyTax(price) {
+            const taxRate = this.state.taxRate || 16;
+            return parseFloat(price) * (1 + taxRate / 100);
+        },
+
         formatPrice(price) {
             return parseFloat(price).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        formatPriceWithTax(price) {
+            return this.formatPrice(this.applyTax(price));
         },
 
         formatDate(date) {
