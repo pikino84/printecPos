@@ -282,11 +282,11 @@
                 .pc-cart-item-variant { font-size: 12px; color: #666; margin-bottom: 8px; }
                 .pc-cart-item-price { font-size: 14px; font-weight: 700; color: ${this.config.primaryColor}; }
                 .pc-cart-item-actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-                .pc-qty-control { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 6px; }
-                .pc-qty-btn { width: 28px; height: 28px; border: none; background: none; cursor: pointer; font-size: 16px; color: #666; }
-                .pc-qty-btn:hover { background: #f5f5f5; }
+                .pc-qty-control { display: flex !important; align-items: center !important; border: 1px solid #ddd !important; border-radius: 6px !important; overflow: hidden !important; background: white !important; }
+                .pc-qty-btn { width: 28px !important; height: 28px !important; border: none !important; background: transparent !important; cursor: pointer !important; font-size: 16px !important; color: #666 !important; padding: 0 !important; margin: 0 !important; line-height: 1 !important; }
+                .pc-qty-btn:hover { background: #f5f5f5 !important; }
                 .pc-qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-                .pc-qty-value { width: 40px; text-align: center; font-size: 14px; border: none; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
+                .pc-qty-value { width: 40px !important; height: 28px !important; text-align: center !important; font-size: 14px !important; border: none !important; border-left: 1px solid #ddd !important; border-right: 1px solid #ddd !important; padding: 0 !important; margin: 0 !important; background: white !important; color: #333 !important; box-shadow: none !important; outline: none !important; border-radius: 0 !important; -webkit-appearance: none !important; appearance: none !important; min-width: auto !important; max-width: 40px !important; }
                 .pc-cart-item-remove { color: #e53935; font-size: 12px; cursor: pointer; background: none; border: none; padding: 4px 8px; }
                 .pc-cart-item-remove:hover { text-decoration: underline; }
                 .pc-cart-footer { padding: 20px; border-top: 1px solid #eee; background: #f9f9f9; }
@@ -304,10 +304,12 @@
                 .pc-qty-selector { display: flex; align-items: center; gap: 10px; }
                 .pc-qty-selector label { font-size: 12px; color: #333; }
                 .pc-qty-selector .pc-btn { margin-left: auto; }
-                .pc-qty-input { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
-                .pc-qty-input button { width: 32px; height: 32px; border: none; background: #f5f5f5; cursor: pointer; font-size: 16px; color: #333; font-weight: 600; }
-                .pc-qty-input button:hover { background: #e0e0e0; }
-                .pc-qty-input input { width: 50px; height: 32px; border: none; text-align: center; font-size: 14px; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
+                .pc-qty-input { display: flex !important; align-items: center !important; border: 1px solid #ddd !important; border-radius: 6px !important; overflow: hidden !important; background: white !important; }
+                .pc-qty-input button { width: 32px !important; height: 32px !important; border: none !important; background: #f5f5f5 !important; cursor: pointer !important; font-size: 16px !important; color: #333 !important; font-weight: 600 !important; padding: 0 !important; margin: 0 !important; line-height: 1 !important; }
+                .pc-qty-input button:hover { background: #e0e0e0 !important; }
+                .pc-qty-input input[type="number"] { width: 50px !important; height: 32px !important; border: none !important; text-align: center !important; font-size: 14px !important; border-left: 1px solid #ddd !important; border-right: 1px solid #ddd !important; padding: 0 !important; margin: 0 !important; -moz-appearance: textfield !important; -webkit-appearance: none !important; appearance: none !important; background: white !important; color: #333 !important; box-shadow: none !important; outline: none !important; border-radius: 0 !important; min-width: auto !important; max-width: 50px !important; }
+                .pc-qty-input input[type="number"]::-webkit-outer-spin-button,
+                .pc-qty-input input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !important; margin: 0 !important; }
                 .pc-added-message { display: flex; align-items: center; gap: 10px; padding: 12px; background: #e8f5e9; border-radius: 8px; margin-top: 15px; }
                 .pc-added-message svg { color: #2e7d32; width: 20px; height: 20px; flex-shrink: 0; }
                 .pc-added-message span { color: #2e7d32; font-size: 14px; }
