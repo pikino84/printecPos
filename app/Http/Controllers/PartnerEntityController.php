@@ -40,6 +40,7 @@ class PartnerEntityController extends Controller
             'urgent_fee_percentage' => ['nullable','numeric','min:0','max:100'],
             'urgent_days_limit'     => ['nullable','integer','min:1','max:365'],
             'logo'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'brand_color'     => ['nullable','string','max:7','regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_default'      => ['sometimes','boolean'],
             'is_active'       => ['sometimes','boolean'],
         ]);
@@ -94,6 +95,7 @@ class PartnerEntityController extends Controller
             'urgent_fee_percentage' => ['nullable','numeric','min:0','max:100'],
             'urgent_days_limit'     => ['nullable','integer','min:1','max:365'],
             'logo'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'brand_color'     => ['nullable','string','max:7','regex:/^#[0-9A-Fa-f]{6}$/'],
             'remove_logo'     => 'sometimes|boolean',
             'is_default'      => ['sometimes','boolean'],
             'is_active'       => ['sometimes','boolean'],
@@ -203,6 +205,7 @@ class PartnerEntityController extends Controller
             'urgent_fee_percentage' => ['nullable','numeric','min:0','max:100'],
             'urgent_days_limit'     => ['nullable','integer','min:1','max:365'],
             'logo'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'brand_color'     => ['nullable','string','max:7','regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_default'      => ['sometimes','boolean'],
         ]);
 
@@ -281,6 +284,7 @@ class PartnerEntityController extends Controller
             'urgent_fee_percentage' => ['nullable','numeric','min:0','max:100'],
             'urgent_days_limit'     => ['nullable','integer','min:1','max:365'],
             'logo'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'brand_color'     => ['nullable','string','max:7','regex:/^#[0-9A-Fa-f]{6}$/'],
             'remove_logo'     => 'sometimes|boolean',
             'is_default'      => ['sometimes','boolean'],
         ]);

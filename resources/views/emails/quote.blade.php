@@ -2,6 +2,11 @@
 <html>
 <head>
     <meta charset="utf-8">
+    @php
+        $partnerEntity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
+        $brandColor = $partnerEntity->brand_color ?? '#1F4C94';
+        $companyName = $partnerEntity->razon_social ?? $quote->partner->name;
+    @endphp
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,10 +19,14 @@
             padding: 20px;
         }
         .header {
-            background-color: #1F4C94;
+            background-color: {{ $brandColor }};
             color: white;
             padding: 20px;
             text-align: center;
+        }
+        .header img {
+            max-height: 60px;
+            margin-bottom: 10px;
         }
         .content {
             padding: 20px;
@@ -27,7 +36,7 @@
             background-color: white;
             padding: 15px;
             margin: 15px 0;
-            border-left: 4px solid #1F4C94;
+            border-left: 4px solid {{ $brandColor }};
         }
         .footer {
             text-align: center;
@@ -40,13 +49,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>PRINTEC</h1>
+            @if($partnerEntity && $partnerEntity->logo_path)
+                <img src="{{ asset('storage/' . $partnerEntity->logo_path) }}" alt="{{ $companyName }}">
+            @endif
+            <h1>{{ strtoupper($companyName) }}</h1>
             <p>Cotización de Productos Promocionales</p>
         </div>
 
         <div class="content">
             <h2>Estimado Cliente,</h2>
-            
+
             <p>Adjunto encontrará la cotización <strong>{{ $quote->quote_number }}</strong> con los productos solicitados.</p>
 
             @if($customMessage)
@@ -66,14 +78,10 @@
                 @if($quote->is_urgent && $quote->urgency_fee > 0)
                     <p style="color: #e67e22;"><strong>Cargo por urgencia ({{ number_format($quote->urgency_percentage, 0) }}%):</strong> ${{ number_format($quote->urgency_fee, 2) }}</p>
                 @endif
-                <p><strong>Total:</strong> <span style="font-size: 18px; color: #1F4C94;">${{ number_format($quote->total, 2) }}</span></p>
+                <p><strong>Total:</strong> <span style="font-size: 18px; color: {{ $brandColor }};">${{ number_format($quote->total, 2) }}</span></p>
             </div>
 
             <p>El documento PDF adjunto contiene el detalle completo de todos los productos cotizados.</p>
-
-            @php
-                $partnerEntity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
-            @endphp
 
             @if($partnerEntity && $partnerEntity->payment_terms)
             <div class="quote-info" style="margin-top: 20px;">
@@ -135,12 +143,19 @@
         </div>
 
         <div class="footer">
-            <p><strong>Printec</strong></p>
-            @if($quote->partner->contact_email)
+            <p><strong>{{ $companyName }}</strong></p>
+            @if($partnerEntity && $partnerEntity->correo_contacto)
+                <p>Email: {{ $partnerEntity->correo_contacto }}</p>
+            @elseif($quote->partner->contact_email)
                 <p>Email: {{ $quote->partner->contact_email }}</p>
             @endif
-            @if($quote->partner->contact_phone)
+            @if($partnerEntity && $partnerEntity->telefono)
+                <p>Teléfono: {{ $partnerEntity->telefono }}</p>
+            @elseif($quote->partner->contact_phone)
                 <p>Teléfono: {{ $quote->partner->contact_phone }}</p>
+            @endif
+            @if($partnerEntity && $partnerEntity->direccion)
+                <p>{{ $partnerEntity->direccion }}</p>
             @endif
             <p style="font-size: 10px; color: #999; margin-top: 20px;">
                 Este es un correo automático, por favor no responda directamente a este mensaje.

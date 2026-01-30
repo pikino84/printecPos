@@ -18,6 +18,7 @@ class PartnerEntity extends Model
         'telefono',
         'correo_contacto',
         'logo_path',
+        'brand_color',
         'payment_terms',
         // Configuración de urgencia
         'urgent_fee_percentage',

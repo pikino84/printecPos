@@ -73,18 +73,40 @@
         <input type="checkbox" class="form-check-input" id="is_default" name="is_default" value="1" {{ $entity->is_default ? 'checked' : '' }}>
         <label class="form-check-label" for="is_default">Marcar como principal</label>
       </div>
-      <div class="form-group">
-        <label>Logo (JPG/PNG/WEBP máx 2MB)</label>
-        @if($entity->logo_url)
-          <div class="mb-2">
-            <img src="{{ $entity->logo_url }}" alt="Logo" style="height:48px" class="rounded shadow-sm">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group mb-3">
+            <label>Logo (JPG/PNG/WEBP máx 2MB)</label>
+            @if($entity->logo_url)
+              <div class="mb-2">
+                <img src="{{ $entity->logo_url }}" alt="Logo" style="height:48px" class="rounded shadow-sm">
+              </div>
+            @endif
+            <input type="file" class="form-control @error('logo') is-invalid @enderror"
+                  name="logo" accept=".jpg,.jpeg,.png,.webp">
+            @error('logo')
+              <span class="invalid-feedback">{{ $message }}</span>
+            @enderror
           </div>
-        @endif
-        <input type="file" class="form-control @error('logo') is-invalid @enderror"
-              name="logo" accept=".jpg,.jpeg,.png,.webp">
-        @error('logo')
-          <span class="invalid-feedback">{{ $message }}</span>
-        @enderror
+        </div>
+        <div class="col-md-6">
+          <div class="form-group mb-3">
+            <label>Color de marca</label>
+            <div class="input-group">
+              <input type="color" class="form-control form-control-color" id="brand_color_picker"
+                    value="{{ old('brand_color', $entity->brand_color ?? '#1F4C94') }}"
+                    onchange="document.getElementById('brand_color').value = this.value">
+              <input type="text" class="form-control @error('brand_color') is-invalid @enderror"
+                    name="brand_color" id="brand_color" maxlength="7" pattern="^#[0-9A-Fa-f]{6}$"
+                    value="{{ old('brand_color', $entity->brand_color) }}" placeholder="#1F4C94"
+                    onchange="document.getElementById('brand_color_picker').value = this.value || '#1F4C94'">
+            </div>
+            <small class="text-muted">Color hexadecimal para el encabezado de cotizaciones (ej: #1F4C94)</small>
+            @error('brand_color')
+              <span class="invalid-feedback">{{ $message }}</span>
+            @enderror
+          </div>
+        </div>
       </div>
       <div class="form-check mb-3">
         <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="1" {{ $entity->is_active ? 'checked' : '' }}>
