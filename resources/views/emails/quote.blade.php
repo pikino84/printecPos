@@ -5,7 +5,7 @@
     @php
         $partnerEntity = $quote->partnerEntity ?? $quote->partner->defaultEntity;
         $brandColor = $partnerEntity->brand_color ?? '#1F4C94';
-        $companyName = $partnerEntity->razon_social ?? $quote->partner->name;
+        $companyName = $quote->partner->name;
     @endphp
     <style>
         body {
@@ -50,7 +50,7 @@
     <div class="container">
         <div class="header">
             @if($partnerEntity && $partnerEntity->logo_path)
-                <img src="{{ asset('storage/' . $partnerEntity->logo_path) }}" alt="{{ $companyName }}">
+                <img src="{{ url('storage/' . $partnerEntity->logo_path) }}" alt="{{ $companyName }}">
             @endif
             <h1>{{ strtoupper($companyName) }}</h1>
             <p>Cotización de Productos Promocionales</p>
