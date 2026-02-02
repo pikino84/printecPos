@@ -436,7 +436,7 @@ class QuoteController extends Controller
             abort(403);
         }
 
-        if ($quote->status !== 'sent') {
+        if (!$quote->canBeRejected()) {
             return back()->with('error', 'Solo se pueden rechazar cotizaciones en estado "Enviada".');
         }
 
@@ -445,6 +445,46 @@ class QuoteController extends Controller
         }
 
         return back()->with('error', 'Error al rechazar la cotización.');
+    }
+
+    /**
+     * Marcar cotización como facturada
+     */
+    public function invoice(Quote $quote)
+    {
+        if (!$this->canAccessQuote($quote)) {
+            abort(403);
+        }
+
+        if (!$quote->canBeInvoiced()) {
+            return back()->with('error', 'Solo se pueden facturar cotizaciones en estado "Aceptada".');
+        }
+
+        if ($quote->invoice()) {
+            return back()->with('success', 'Cotización marcada como facturada.');
+        }
+
+        return back()->with('error', 'Error al facturar la cotización.');
+    }
+
+    /**
+     * Marcar cotización como expirada
+     */
+    public function expired(Quote $quote)
+    {
+        if (!$this->canAccessQuote($quote)) {
+            abort(403);
+        }
+
+        if (!$quote->canBeExpired()) {
+            return back()->with('error', 'Solo se pueden expirar cotizaciones en estado "Enviada".');
+        }
+
+        if ($quote->markAsExpired()) {
+            return back()->with('success', 'Cotización marcada como expirada.');
+        }
+
+        return back()->with('error', 'Error al expirar la cotización.');
     }
 
     /**

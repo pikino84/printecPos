@@ -41,6 +41,7 @@
                                 <option value="accepted" {{ request('status') == 'accepted' ? 'selected' : '' }}>Aceptada</option>
                                 <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rechazada</option>
                                 <option value="expired" {{ request('status') == 'expired' ? 'selected' : '' }}>Expirada</option>
+                                <option value="invoiced" {{ request('status') == 'invoiced' ? 'selected' : '' }}>Facturada</option>
                             </select>
                         </div>
                         <div class="form-group mr-2 mb-2">
@@ -127,15 +128,25 @@
                                             </td>
                                             <td>
                                                 @if($quote->status === 'draft')
-                                                    <span class="badge badge-info ">Borrador</span>
+                                                    <span class="badge badge-info">Borrador</span>
                                                 @elseif($quote->status === 'sent')
-                                                    <span class="badge badge-primary">Enviada</span>
+                                                    <span class="badge badge-primary" style="cursor: pointer;"
+                                                          onclick="openStatusSelector('{{ $quote->id }}', '{{ $quote->quote_number }}', 'sent')"
+                                                          title="Clic para cambiar estado">
+                                                        Enviada <i class="feather icon-chevron-down" style="font-size: 10px;"></i>
+                                                    </span>
                                                 @elseif($quote->status === 'accepted')
-                                                    <span class="badge badge-success">Aceptada</span>
+                                                    <span class="badge badge-success" style="cursor: pointer;"
+                                                          onclick="openStatusSelector('{{ $quote->id }}', '{{ $quote->quote_number }}', 'accepted')"
+                                                          title="Clic para cambiar estado">
+                                                        Aceptada <i class="feather icon-chevron-down" style="font-size: 10px;"></i>
+                                                    </span>
                                                 @elseif($quote->status === 'rejected')
                                                     <span class="badge badge-danger">Rechazada</span>
                                                 @elseif($quote->status === 'expired')
                                                     <span class="badge badge-warning">Expirada</span>
+                                                @elseif($quote->status === 'invoiced')
+                                                    <span class="badge" style="background-color: #17a2b8; color: white;">Facturada</span>
                                                 @endif
                                             </td>
                                             <td>{{ $quote->items->count() }}</td>
@@ -222,4 +233,110 @@
         </div>
     </div>
 </div>
+
+<!-- Formularios ocultos para cambio de estado -->
+@foreach($quotes as $quote)
+    @if($quote->status === 'sent')
+        <form id="accept-form-{{ $quote->id }}" action="{{ route('quotes.accept', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+        <form id="reject-form-{{ $quote->id }}" action="{{ route('quotes.reject', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+        <form id="expired-form-{{ $quote->id }}" action="{{ route('quotes.expired', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+    @elseif($quote->status === 'accepted')
+        <form id="invoice-form-{{ $quote->id }}" action="{{ route('quotes.invoice', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+    @endif
+@endforeach
+
+@endsection
+
+@section('scripts')
+<script>
+function openStatusSelector(quoteId, quoteNumber, currentStatus) {
+    var selectHtml = '<select id="status-select" class="form-control">';
+
+    if (currentStatus === 'sent') {
+        selectHtml += '<option value="">-- Seleccionar estado --</option>';
+        selectHtml += '<option value="accept">Aceptada</option>';
+        selectHtml += '<option value="reject">Rechazada</option>';
+        selectHtml += '<option value="expired">Expirada</option>';
+    } else if (currentStatus === 'accepted') {
+        selectHtml += '<option value="">-- Seleccionar estado --</option>';
+        selectHtml += '<option value="invoice">Facturada</option>';
+    }
+
+    selectHtml += '</select>';
+
+    swal({
+        title: 'Cambiar estado',
+        text: 'Cotización: ' + quoteNumber,
+        content: {
+            element: "div",
+            attributes: {
+                innerHTML: selectHtml,
+            },
+        },
+        buttons: {
+            cancel: {
+                text: 'Cancelar',
+                value: null,
+                visible: true,
+                closeModal: true,
+            },
+            confirm: {
+                text: 'Cambiar',
+                value: true,
+                visible: true,
+                closeModal: false
+            }
+        },
+    }).then((willChange) => {
+        if (willChange) {
+            var selectedStatus = document.getElementById('status-select').value;
+
+            if (!selectedStatus) {
+                swal('Error', 'Debe seleccionar un estado', 'error');
+                return;
+            }
+
+            var statusLabels = {
+                'accept': 'Aceptada',
+                'reject': 'Rechazada',
+                'expired': 'Expirada',
+                'invoice': 'Facturada'
+            };
+
+            swal({
+                title: '¿Confirmar cambio?',
+                text: '¿Cambiar estado de "' + quoteNumber + '" a "' + statusLabels[selectedStatus] + '"?',
+                icon: 'warning',
+                buttons: {
+                    cancel: {
+                        text: 'Cancelar',
+                        value: null,
+                        visible: true,
+                        closeModal: true,
+                    },
+                    confirm: {
+                        text: 'Sí, confirmar',
+                        value: true,
+                        visible: true,
+                        closeModal: true
+                    }
+                },
+                dangerMode: selectedStatus === 'reject' || selectedStatus === 'expired',
+            }).then((confirmed) => {
+                if (confirmed) {
+                    document.getElementById(selectedStatus + '-form-' + quoteId).submit();
+                }
+            });
+        }
+    });
+}
+</script>
 @endsection

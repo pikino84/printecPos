@@ -298,6 +298,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/{quote}/pdf', [QuoteController::class, 'downloadPdf'])->name('pdf');
         Route::post('/{quote}/clone-to-cart', [QuoteController::class, 'cloneToCart'])->name('clone-to-cart');
         Route::post('/{quote}/edit-to-cart', [QuoteController::class, 'editToCart'])->name('edit-to-cart');
+        Route::post('/{quote}/accept', [QuoteController::class, 'accept'])->name('accept');
+        Route::post('/{quote}/reject', [QuoteController::class, 'reject'])->name('reject');
+        Route::post('/{quote}/invoice', [QuoteController::class, 'invoice'])->name('invoice');
+        Route::post('/{quote}/expired', [QuoteController::class, 'expired'])->name('expired');
         Route::delete('/{quote}', [QuoteController::class, 'destroy'])->name('destroy');
     });
 

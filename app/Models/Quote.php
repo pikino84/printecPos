@@ -142,4 +142,104 @@ class Quote extends Model
         }
         return $this->client_email;
     }
+
+    /**
+     * Verificar si la cotización puede ser aceptada
+     */
+    public function canBeAccepted(): bool
+    {
+        return $this->status === 'sent' && !$this->isExpired();
+    }
+
+    /**
+     * Verificar si la cotización puede ser rechazada
+     */
+    public function canBeRejected(): bool
+    {
+        return $this->status === 'sent';
+    }
+
+    /**
+     * Verificar si la cotización puede ser facturada
+     */
+    public function canBeInvoiced(): bool
+    {
+        return $this->status === 'accepted';
+    }
+
+    /**
+     * Verificar si la cotización puede ser expirada manualmente
+     */
+    public function canBeExpired(): bool
+    {
+        return $this->status === 'sent';
+    }
+
+    /**
+     * Aceptar cotización
+     */
+    public function accept(): bool
+    {
+        if (!$this->canBeAccepted()) {
+            return false;
+        }
+
+        $this->status = 'accepted';
+        return $this->save();
+    }
+
+    /**
+     * Rechazar cotización
+     */
+    public function reject(): bool
+    {
+        if (!$this->canBeRejected()) {
+            return false;
+        }
+
+        $this->status = 'rejected';
+        return $this->save();
+    }
+
+    /**
+     * Marcar cotización como facturada
+     */
+    public function invoice(): bool
+    {
+        if (!$this->canBeInvoiced()) {
+            return false;
+        }
+
+        $this->status = 'invoiced';
+        return $this->save();
+    }
+
+    /**
+     * Marcar cotización como expirada manualmente
+     */
+    public function markAsExpired(): bool
+    {
+        if (!$this->canBeExpired()) {
+            return false;
+        }
+
+        $this->status = 'expired';
+        return $this->save();
+    }
+
+    /**
+     * Obtener el nombre del estado en español
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match($this->status) {
+            'draft' => 'Borrador',
+            'sent' => 'Enviada',
+            'accepted' => 'Aceptada',
+            'rejected' => 'Rechazada',
+            'expired' => 'Expirada',
+            'invoiced' => 'Facturada',
+            default => $this->status,
+        };
+    }
 }
