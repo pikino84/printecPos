@@ -87,8 +87,13 @@ class QuoteController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('quote_number', 'like', "%{$search}%")
                   ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhere('client_name', 'like', "%{$search}%")
                   ->orWhereHas('user', function($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('client', function($q2) use ($search) {
+                      $q2->where('nombre', 'like', "%{$search}%")
+                        ->orWhere('apellido', 'like', "%{$search}%");
                   });
             });
         }

@@ -47,7 +47,7 @@
                             <input type="text"
                                    name="search"
                                    class="form-control form-control-sm"
-                                   placeholder="Buscar por número o notas..."
+                                   placeholder="Buscar por número, cliente o notas..."
                                    value="{{ request('search') }}">
                         </div>
                         <button type="submit" class="btn btn-sm btn-primary mr-2 mb-2">
