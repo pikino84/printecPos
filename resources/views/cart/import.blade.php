@@ -195,7 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let total = 0;
 
             data.items.forEach(function(item) {
-                const subtotal = (item.unit_price || 0) * (item.quantity || 0);
+                const unitPrice = item.unit_price_with_tax || item.unit_price || 0;
+                const subtotal = unitPrice * (item.quantity || 0);
                 total += subtotal;
 
                 html += `
@@ -203,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${escapeHtml(item.name || 'Sin nombre')}</td>
                         <td>${escapeHtml(item.color || item.sku || '-')}</td>
                         <td class="text-center">${item.quantity || 0}</td>
-                        <td class="text-right">$${formatNumber(item.unit_price || 0)}</td>
+                        <td class="text-right">$${formatNumber(unitPrice)}</td>
                         <td class="text-right">$${formatNumber(subtotal)}</td>
                     </tr>
                 `;

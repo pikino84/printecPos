@@ -1090,7 +1090,7 @@
                     </div>
 
                     <div class="footer">
-                        <p>${this.t('poweredBy')}</p>
+                        <p>Catálogo de ${partnerName}</p>
                     </div>
 
                     <script>

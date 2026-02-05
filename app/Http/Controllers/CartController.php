@@ -444,7 +444,7 @@ class CartController extends Controller
                         'variant_id' => $item['variant_id'],
                         'warehouse_id' => null,
                         'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'],
+                        'unit_price' => $item['unit_price_with_tax'] ?? $item['unit_price'] ?? 0,
                     ]);
                 }
 
