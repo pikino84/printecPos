@@ -156,16 +156,16 @@ Route::middleware('auth')->group(function () {
     // ========================================================================
     // PRICING - Niveles de Precio (pricing-tiers)
     // ========================================================================
-    Route::middleware(['permission:pricing-tiers.view'])->group(function () {
-        Route::get('pricing-tiers', [PricingTierController::class, 'index'])->name('pricing-tiers.index');
-        Route::get('pricing-tiers/{pricing_tier}', [PricingTierController::class, 'show'])->name('pricing-tiers.show');
-    });
     Route::middleware(['permission:pricing-tiers.manage'])->group(function () {
         Route::get('pricing-tiers/create', [PricingTierController::class, 'create'])->name('pricing-tiers.create');
         Route::post('pricing-tiers', [PricingTierController::class, 'store'])->name('pricing-tiers.store');
         Route::get('pricing-tiers/{pricing_tier}/edit', [PricingTierController::class, 'edit'])->name('pricing-tiers.edit');
         Route::put('pricing-tiers/{pricing_tier}', [PricingTierController::class, 'update'])->name('pricing-tiers.update');
         Route::delete('pricing-tiers/{pricing_tier}', [PricingTierController::class, 'destroy'])->name('pricing-tiers.destroy');
+    });
+    Route::middleware(['permission:pricing-tiers.view'])->group(function () {
+        Route::get('pricing-tiers', [PricingTierController::class, 'index'])->name('pricing-tiers.index');
+        Route::get('pricing-tiers/{pricing_tier}', [PricingTierController::class, 'show'])->name('pricing-tiers.show');
     });
 
     // ========================================================================
