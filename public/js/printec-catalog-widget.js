@@ -963,7 +963,7 @@
             const orderData = {
                 version: '1.0',
                 partner_api_key: this.config.apiKey,
-                partner_name: this.state.partnerInfo?.name || '',
+                partner_name: this.state.partnerInfo?.partner_name || '',
                 created_at: new Date().toISOString(),
                 tax_rate: taxRate,
                 items: this.state.cart.map(item => ({
@@ -998,7 +998,7 @@
         downloadPdf() {
             // Create a printable HTML and use browser print
             const printWindow = window.open('', '_blank');
-            const partnerName = this.config.companyName || this.state.partnerInfo?.name || 'Catálogo';
+            const partnerName = this.config.companyName || this.state.partnerInfo?.partner_name || 'Catálogo';
             const partnerEmail = this.config.companyEmail || '';
 
             const html = `

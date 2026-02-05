@@ -51,7 +51,7 @@ class CartImportController extends Controller
         }
 
         // Verificar que el usuario pertenezca al partner o sea admin
-        if ($user->partner_id !== $partner->id && !$user->hasRole('admin')) {
+        if ($user->partner_id !== $partner->id && !$user->hasAnyRole(['super admin', 'Asociado Administrador'])) {
             return response()->json([
                 'success' => false,
                 'error' => 'No tienes permiso para importar carritos de este partner'
