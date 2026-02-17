@@ -125,6 +125,10 @@ Route::middleware('auth')->group(function () {
 
 
     Route::resource('partners.entities', PartnerEntityController::class)->parameters(['entities' => 'entity'])->shallow();
+    // Configuración de correo desde el contexto de partners (super admin)
+    Route::get('/partners/{partner}/entities/{entity}/mail-config', [PartnerEntityController::class, 'adminMailConfig'])->name('partners.entities.mail-config');
+    Route::put('/partners/{partner}/entities/{entity}/mail-config', [PartnerEntityController::class, 'adminMailConfigUpdate'])->name('partners.entities.mail-config.update');
+    Route::post('/partners/{partner}/entities/{entity}/mail-config/test', [PartnerEntityController::class, 'adminMailConfigTest'])->name('partners.entities.mail-config.test');
     Route::resource('partner-entities.bank-accounts', PartnerEntityBankAccountController::class)->parameters(['bank-accounts' => 'bank_account'])->shallow();
     Route::resource('partner-products', PartnerProductController::class)->parameters(['partner-products' => 'product'])->shallow();
 

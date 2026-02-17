@@ -495,4 +495,124 @@ class PartnerEntityController extends Controller
             ]);
         }
     }
+
+    // ========================================================================
+    // MÉTODOS PARA CONFIGURACIÓN DE CORREO DESDE PARTNERS (SUPER ADMIN)
+    // ========================================================================
+
+    public function adminMailConfig(Partner $partner, PartnerEntity $entity)
+    {
+        abort_if($entity->partner_id !== $partner->id, 404);
+
+        return view('partners.entities.mail-config', compact('entity', 'partner'));
+    }
+
+    public function adminMailConfigUpdate(Request $request, Partner $partner, PartnerEntity $entity)
+    {
+        abort_if($entity->partner_id !== $partner->id, 404);
+
+        $rules = [
+            'smtp_host' => 'required_if:mail_configured,1|nullable|string|max:255',
+            'smtp_port' => 'required_if:mail_configured,1|nullable|integer|min:1|max:65535',
+            'smtp_username' => 'required_if:mail_configured,1|nullable|string|max:255',
+            'smtp_encryption' => 'nullable|in:tls,ssl,none',
+            'mail_from_address' => 'required_if:mail_configured,1|nullable|email|max:255',
+            'mail_from_name' => 'nullable|string|max:255',
+            'mail_cc_addresses' => 'nullable|string|max:1000',
+            'mail_configured' => 'sometimes|boolean',
+        ];
+
+        if (!$entity->smtp_password) {
+            $rules['smtp_password'] = 'required_if:mail_configured,1|nullable|string|max:255';
+        } else {
+            $rules['smtp_password'] = 'nullable|string|max:255';
+        }
+
+        $data = $request->validate($rules);
+
+        if (empty($data['smtp_password'])) {
+            unset($data['smtp_password']);
+        }
+
+        $data['mail_configured'] = $request->boolean('mail_configured');
+
+        if (!empty($data['mail_cc_addresses'])) {
+            $emails = array_map('trim', explode(',', $data['mail_cc_addresses']));
+            foreach ($emails as $email) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    return back()->withErrors(['mail_cc_addresses' => "El correo '{$email}' no es válido."])->withInput();
+                }
+            }
+        }
+
+        $entity->update($data);
+
+        return redirect()->route('partners.entities.mail-config', [$partner, $entity])
+            ->with('success', 'Configuración de correo actualizada exitosamente.');
+    }
+
+    public function adminMailConfigTest(Request $request, Partner $partner, PartnerEntity $entity)
+    {
+        abort_if($entity->partner_id !== $partner->id, 404);
+
+        $user = Auth::user();
+
+        try {
+            $host = $request->smtp_host;
+            $port = $request->smtp_port;
+            $username = $request->smtp_username;
+            $password = $request->smtp_password ?: $entity->smtp_password_decrypted;
+            $encryption = $request->smtp_encryption === 'none' ? null : $request->smtp_encryption;
+            $fromAddress = $request->mail_from_address;
+            $fromName = $request->mail_from_name ?: $entity->razon_social;
+
+            if (!$host || !$port || !$username || !$password || !$fromAddress) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Completa todos los campos requeridos antes de enviar la prueba.'
+                ]);
+            }
+
+            config([
+                'mail.mailers.entity_test' => [
+                    'transport' => 'smtp',
+                    'host' => $host,
+                    'port' => $port,
+                    'encryption' => $encryption,
+                    'username' => $username,
+                    'password' => $password,
+                ],
+            ]);
+
+            \Illuminate\Support\Facades\Mail::mailer('entity_test')
+                ->send([], [], function ($message) use ($fromAddress, $fromName, $user, $entity) {
+                    $message->from($fromAddress, $fromName)
+                        ->to($user->email)
+                        ->subject('Prueba de configuración de correo - ' . $entity->razon_social)
+                        ->html("
+                            <h2>Configuración exitosa</h2>
+                            <p>Este es un correo de prueba para verificar la configuración SMTP de <strong>{$entity->razon_social}</strong>.</p>
+                            <p>Si recibes este mensaje, la configuración es correcta y puedes activar el envío de cotizaciones.</p>
+                            <br>
+                            <p style='color: #666; font-size: 12px;'>Este correo fue enviado automáticamente desde el sistema de cotizaciones.</p>
+                        ");
+                });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Correo de prueba enviado a {$user->email}. Revisa tu bandeja de entrada."
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en prueba de correo SMTP (admin)', [
+                'entity_id' => $entity->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al enviar: ' . $e->getMessage()
+            ]);
+        }
+    }
 }

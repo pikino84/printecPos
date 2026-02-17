@@ -21,6 +21,7 @@
           <th>Teléfono</th>
           <th>Principal</th>
           <th>Activo</th>
+          <th>Correo SMTP</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -50,8 +51,16 @@
                 <span class="badge bg-secondary">No</span>
               @endif
             </td>
+            <td>
+              @if($e->mail_configured)
+                <span class="badge bg-success">Configurado</span>
+              @else
+                <span class="badge bg-secondary">No configurado</span>
+              @endif
+            </td>
             <td class="d-flex gap-2">
               <a href="{{ route('entities.edit', $e) }}" class="btn btn-sm btn-primary">Editar</a>
+              <a href="{{ route('partners.entities.mail-config', [$partner, $e]) }}" class="btn btn-sm btn-outline-info">Correo</a>
               <form method="POST" action="{{ route('entities.destroy', $e) }}" onsubmit="return confirm('¿Eliminar?')">
                 @csrf @method('DELETE')
                 <button class="btn btn-sm btn-outline-danger">Eliminar</button>
@@ -61,7 +70,7 @@
             </td>
           </tr>
         @empty
-          <tr><td colspan="8" class="text-center text-muted">Sin razones sociales aún.</td></tr>
+          <tr><td colspan="9" class="text-center text-muted">Sin razones sociales aún.</td></tr>
         @endforelse
       </tbody>
     </table>
