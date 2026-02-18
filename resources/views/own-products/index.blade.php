@@ -97,16 +97,20 @@
                                 </select>
                             </div>
 
+                            @if($isSuperAdmin && $partners->isNotEmpty())
                             <div class="col-md-2 form-group">
-                                <label class="form-label">Propietario</label>
-                                <select name="owner" class="form-control">
-                                    <option value="">Todos</option>
-                                    <option value="own" {{ request('owner') == 'own' ? 'selected' : '' }}>Mis productos</option>
-                                    @if(auth()->user()->partner_id != 1)
-                                        <option value="printec" {{ request('owner') == 'printec' ? 'selected' : '' }}>Productos Printec</option>
-                                    @endif
+                                <label class="form-label">Partner</label>
+                                <select name="partner_id" class="form-control">
+                                    <option value="">Todos los Partners</option>
+                                    @foreach($partners as $partner)
+                                        <option value="{{ $partner->id }}"
+                                                {{ request('partner_id') == $partner->id ? 'selected' : '' }}>
+                                            {{ $partner->name }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
+                            @endif
 
                             <div class="col-md-2 form-group">
                                 <label class="form-label">&nbsp;</label>

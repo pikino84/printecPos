@@ -28,14 +28,21 @@ class OwnProductController extends Controller
     {
         $user = Auth::user();
         $userPartnerId = $user->partner_id;
+        $isSuperAdmin = $user->hasRole('super admin');
 
         $query = Product::with(['productCategory', 'creator', 'variants.stocks.warehouse', 'partner'])
             ->ownProducts();
 
-        if ($userPartnerId == 1) {
-            // Printec: Ve TODOS los productos propios
+        // Super admin ve todos los productos propios, con opción de filtrar por partner
+        if ($isSuperAdmin) {
+            $partners = Partner::asociadosYMixtos()->orderBy('name')->get();
+
+            if ($request->filled('partner_id')) {
+                $query->where('partner_id', $request->partner_id);
+            }
         } else {
-            // Asociados: Solo ven SUS productos propios
+            // Todos los demás (incluido Printec admin) solo ven los de su organización
+            $partners = collect();
             $query->where('partner_id', $userPartnerId);
         }
 
@@ -70,18 +77,10 @@ class OwnProductController extends Controller
             }
         }
 
-        if ($request->filled('owner')) {
-            if ($request->owner === 'own') {
-                $query->where('partner_id', $userPartnerId);
-            } elseif ($request->owner === 'printec' && $userPartnerId == 1) {
-                $query->where('partner_id', 1);
-            }
-        }
-
         $products = $query->orderBy('created_at', 'desc')->paginate(20);
 
         // Categorías para el filtro
-        if ($userPartnerId == 1) {
+        if ($isSuperAdmin) {
             $categories = ProductCategory::orderBy('name')->get();
         } else {
             $partnerIds = Partner::whereIn('type', ['proveedor', 'mixto'])
@@ -96,7 +95,7 @@ class OwnProductController extends Controller
                 ->get();
         }
 
-        return view('own-products.index', compact('products', 'categories'));
+        return view('own-products.index', compact('products', 'categories', 'isSuperAdmin', 'partners'));
     }
 
     public function create()
@@ -464,7 +463,7 @@ class OwnProductController extends Controller
         $query = Product::with(['productCategory', 'variants'])
             ->ownProducts();
 
-        if ($user->partner_id != 1) {
+        if (!$user->hasRole('super admin')) {
             $query->where('partner_id', $user->partner_id);
         }
 
