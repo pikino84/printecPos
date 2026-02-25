@@ -594,7 +594,7 @@ class QuoteController extends Controller
                 'client_name' => $clientData['client_name'] ?? null,
                 'client_rfc' => $clientData['client_rfc'] ?? null,
                 'client_razon_social' => $clientData['client_razon_social'] ?? null,
-                'quote_number' => Quote::generateQuoteNumber(),
+                'quote_number' => Quote::generateQuoteNumber($partnerId),
                 'status' => 'draft',
                 'is_urgent' => $isUrgent,
                 'urgency_fee' => $urgencyFee,

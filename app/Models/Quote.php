@@ -103,10 +103,11 @@ class Quote extends Model
         $this->save();
     }
 
-    public static function generateQuoteNumber()
+    public static function generateQuoteNumber($partnerId)
     {
         $year = now()->year;
-        $lastQuote = self::where('quote_number', 'like', "COT-{$year}-%")
+        $lastQuote = self::where('partner_id', $partnerId)
+            ->where('quote_number', 'like', "COT-{$year}-%")
             ->orderBy('quote_number', 'desc')
             ->first();
 
