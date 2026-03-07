@@ -81,21 +81,30 @@
                 container.appendChild(header);
             }
 
-            // Hero
+            // Hero - render only the appropriate image based on viewport
             if (this.siteInfo.hero_desktop_url || this.siteInfo.hero_mobile_url) {
                 const hero = document.createElement('div');
                 hero.className = 'ps-hero';
-                let heroHtml = '';
-                if (this.siteInfo.hero_desktop_url) {
-                    heroHtml += `<img src="${this.escapeAttr(this.siteInfo.hero_desktop_url)}" alt="Banner" class="ps-hero-desktop">`;
-                }
-                if (this.siteInfo.hero_mobile_url) {
-                    heroHtml += `<img src="${this.escapeAttr(this.siteInfo.hero_mobile_url)}" alt="Banner" class="ps-hero-mobile">`;
-                } else if (this.siteInfo.hero_desktop_url) {
-                    // If no mobile hero, show desktop on mobile too
-                    heroHtml = `<img src="${this.escapeAttr(this.siteInfo.hero_desktop_url)}" alt="Banner" class="ps-hero-all">`;
-                }
-                hero.innerHTML = heroHtml;
+                const heroImg = document.createElement('img');
+                heroImg.alt = 'Banner';
+
+                const desktopUrl = this.siteInfo.hero_desktop_url;
+                const mobileUrl = this.siteInfo.hero_mobile_url;
+
+                const setHeroSrc = () => {
+                    const isMobile = window.innerWidth <= 768;
+                    if (isMobile && mobileUrl) {
+                        heroImg.src = mobileUrl;
+                    } else if (!isMobile && desktopUrl) {
+                        heroImg.src = desktopUrl;
+                    } else {
+                        heroImg.src = desktopUrl || mobileUrl;
+                    }
+                };
+
+                setHeroSrc();
+                window.addEventListener('resize', setHeroSrc);
+                hero.appendChild(heroImg);
                 container.appendChild(hero);
             }
 
@@ -169,15 +178,7 @@
                     height: auto;
                     max-height: 70vh;
                     object-fit: cover;
-                }
-                img.ps-hero-desktop {
-                    display: block !important;
-                }
-                img.ps-hero-mobile {
-                    display: none !important;
-                }
-                img.ps-hero-all {
-                    display: block !important;
+                    display: block;
                 }
 
                 .ps-catalog-section {
@@ -192,9 +193,11 @@
                     border-top: 1px solid ${this.adjustBrightness(headerFooterBg, -20)};
                 }
                 .ps-footer-inner {
-                    max-width: 1200px;
+                    max-width: 100%;
                     margin: 0 auto;
                     padding: 30px 20px;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
                 }
                 .ps-footer-inner a {
                     color: ${primary};
@@ -222,12 +225,6 @@
                 }
 
                 @media (max-width: 768px) {
-                    img.ps-hero-desktop {
-                        display: none !important;
-                    }
-                    img.ps-hero-mobile {
-                        display: block !important;
-                    }
                     .ps-logo {
                         max-height: 40px;
                     }
