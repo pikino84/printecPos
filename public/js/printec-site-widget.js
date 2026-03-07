@@ -162,19 +162,22 @@
                     width: 100%;
                     line-height: 0;
                     overflow: hidden;
+                    max-height: 70vh;
                 }
                 .ps-hero img {
                     width: 100%;
                     height: auto;
+                    max-height: 70vh;
+                    object-fit: cover;
                 }
-                .ps-hero .ps-hero-desktop {
-                    display: block;
+                img.ps-hero-desktop {
+                    display: block !important;
                 }
-                .ps-hero .ps-hero-mobile {
-                    display: none;
+                img.ps-hero-mobile {
+                    display: none !important;
                 }
-                .ps-hero .ps-hero-all {
-                    display: block;
+                img.ps-hero-all {
+                    display: block !important;
                 }
 
                 .ps-catalog-section {
@@ -219,10 +222,10 @@
                 }
 
                 @media (max-width: 768px) {
-                    .ps-hero .ps-hero-desktop {
+                    img.ps-hero-desktop {
                         display: none !important;
                     }
-                    .ps-hero .ps-hero-mobile {
+                    img.ps-hero-mobile {
                         display: block !important;
                     }
                     .ps-logo {
