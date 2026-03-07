@@ -29,6 +29,7 @@ use App\Http\Controllers\PricingReportController;
 use App\Http\Controllers\PartnerRegistrationController;
 use App\Http\Controllers\PricingSettingController;
 use App\Http\Controllers\TourController;
+use App\Http\Controllers\PartnerWebsiteController;
 
 
 
@@ -70,6 +71,11 @@ Route::middleware('auth')->group(function () {
         Route::post('partners/{partner}/generate-api-key', [PartnerController::class, 'generateApiKey'])->name('partners.generate-api-key');
         Route::post('partners/{partner}/revoke-api-key', [PartnerController::class, 'revokeApiKey'])->name('partners.revoke-api-key');
         Route::put('partners/{partner}/api-settings', [PartnerController::class, 'updateApiSettings'])->name('partners.api-settings');
+
+        // Configuracion del sitio web del partner
+        Route::get('partners/{partner}/website', [PartnerWebsiteController::class, 'edit'])->name('partners.website.edit');
+        Route::put('partners/{partner}/website', [PartnerWebsiteController::class, 'update'])->name('partners.website.update');
+        Route::get('partners/{partner}/website-preview', [PartnerWebsiteController::class, 'preview'])->name('partners.website.preview');
 
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
@@ -225,6 +231,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/cuentas-bancarias/{id}/edit', [PartnerEntityBankAccountController::class, 'myEdit'])->name('my-bank-accounts.edit');
         Route::put('/cuentas-bancarias/{id}', [PartnerEntityBankAccountController::class, 'myUpdate'])->name('my-bank-accounts.update');
         Route::delete('/cuentas-bancarias/{id}', [PartnerEntityBankAccountController::class, 'myDestroy'])->name('my-bank-accounts.destroy');
+    });
+
+    // ========================================================================
+    // Mi Sitio Web (solo Asociado Administrador)
+    // ========================================================================
+    Route::middleware(['role:Asociado Administrador'])->group(function () {
+        Route::get('/mi-sitio-web', [PartnerWebsiteController::class, 'myEdit'])->name('my-website.edit');
+        Route::put('/mi-sitio-web', [PartnerWebsiteController::class, 'myUpdate'])->name('my-website.update');
+        Route::get('/mi-sitio-web/preview', [PartnerWebsiteController::class, 'myPreview'])->name('my-website.preview');
     });
 
     // ========================================================================

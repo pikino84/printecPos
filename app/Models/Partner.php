@@ -26,6 +26,15 @@ class Partner extends Model
         'default_entity_id',
         'api_key',
         'api_show_prices',
+        'logo',
+        'hero_desktop',
+        'hero_mobile',
+        'contact_info',
+        'site_primary_color',
+        'site_secondary_color',
+        'site_accent_color',
+        'site_header_footer_bg',
+        'site_catalog_bg',
     ];
 
     protected $casts = [

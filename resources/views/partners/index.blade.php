@@ -62,6 +62,13 @@
                               </a>
                               @endif
 
+                              {{-- Configuracion del sitio web (solo para Asociados y Mixtos) --}}
+                              @if($partner->isAsociadoOMixto())
+                              <a href="{{ route('partners.website.edit', $partner) }}" class="btn btn-sm btn-outline-info" title="Configurar sitio web">
+                                  <i class="feather icon-globe"></i>
+                              </a>
+                              @endif
+
                               {{-- Ir al CRUD de razones sociales del partner --}}
                               <a href="{{ route('partners.entities.index', $partner) }}"
                                 class="btn btn-sm btn-outline-primary" title="Razones sociales">

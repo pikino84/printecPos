@@ -154,8 +154,8 @@
                 {{-- ========== DISTRIBUIDOR ========== --}}
                 @if(auth()->user()->can('razones-sociales.view') || auth()->user()->can('cuentas-bancarias.view') || auth()->user()->hasRole('Asociado Administrador|Asociado Vendedor'))
                 <li class="pcoded-hasmenu {{ menuActive([
-                    'my-entities.*', 'my-bank-accounts.*', 'my-markup.*',
-                    'razones-sociales*', 'cuentas-bancarias*', 'mi-ganancia*'
+                    'my-entities.*', 'my-bank-accounts.*', 'my-markup.*', 'my-website.*',
+                    'razones-sociales*', 'cuentas-bancarias*', 'mi-ganancia*', 'mi-sitio-web*'
                 ]) }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                         <span class="pcoded-micon"><i class="feather icon-briefcase"></i></span>
@@ -182,6 +182,14 @@
                         <li class="{{ request()->routeIs('my-markup.*') || request()->is('mi-ganancia*') ? 'active' : '' }}">
                             <a href="{{ route('my-markup.index') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-mtext">Mi Ganancia</span>
+                            </a>
+                        </li>
+                        @endif
+
+                        @if(auth()->user()->hasRole('Asociado Administrador'))
+                        <li class="{{ request()->routeIs('my-website.*') || request()->is('mi-sitio-web*') ? 'active' : '' }}">
+                            <a href="{{ route('my-website.edit') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Mi Sitio Web</span>
                             </a>
                         </li>
                         @endif

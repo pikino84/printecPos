@@ -226,9 +226,57 @@
                 </div>
             </div>
 
+            <div class="mb-3">
+                <button type="button" class="btn btn-outline-success" id="toggleSiteWidgetCode">
+                    <i class="feather icon-globe me-2"></i> Ver codigo del Widget Sitio Web completo
+                </button>
+            </div>
+
+            <div id="siteWidgetCodeContainer" style="display: none;">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <p class="text-muted mb-2">Este widget genera un sitio web completo (header, hero, catalogo, footer). Ideal para partners sin sitio web propio.</p>
+                        <pre class="bg-dark text-light p-3 rounded mb-2" style="font-size: 12px; overflow-x: auto;"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Catalogo de Productos&lt;/title&gt;
+    &lt;style&gt;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id="printec-site"&gt;&lt;/div&gt;
+
+    &lt;script src="{{ url('/js/printec-catalog-widget.js') }}"&gt;&lt;/script&gt;
+    &lt;script src="{{ url('/js/printec-site-widget.js') }}"&gt;&lt;/script&gt;
+    &lt;script&gt;
+      PrintecSite.init({
+        apiKey: '{{ $partner->api_key }}',
+        apiUrl: '{{ url('/api/public/catalog') }}',
+        container: '#printec-site'
+      });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="copySiteWidgetCode()">
+                            <i class="feather icon-copy"></i> Copiar codigo
+                        </button>
+                        <a href="{{ route('partners.website.edit', $partner) }}" class="btn btn-sm btn-info ms-2">
+                            <i class="feather icon-settings"></i> Configurar sitio web
+                        </a>
+                        <button type="button" class="btn btn-sm btn-secondary ms-2" id="hideSiteWidgetCode">
+                            <i class="feather icon-x"></i> Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="d-flex gap-2">
                 <form action="{{ route('partners.generate-api-key', $partner) }}" method="POST" class="d-inline"
-                      onsubmit="return confirm('¿Regenerar la API key? La anterior dejará de funcionar.')">
+                      onsubmit="return confirm('¿Regenerar la API key? La anterior dejará de funcionar.')"
                     @csrf
                     <button type="submit" class="btn btn-warning">
                         <i class="feather icon-refresh-cw"></i> Regenerar API Key
@@ -316,6 +364,53 @@ function copyApiKey() {
     const apiKey = document.getElementById('api-key-display').textContent;
     navigator.clipboard.writeText(apiKey).then(() => {
         swal("¡Copiado!", "API Key copiada al portapapeles", "success");
+    });
+}
+
+// Site widget toggle
+const toggleSiteBtn = document.getElementById('toggleSiteWidgetCode');
+const hideSiteBtn = document.getElementById('hideSiteWidgetCode');
+const siteContainer = document.getElementById('siteWidgetCodeContainer');
+
+if (toggleSiteBtn && siteContainer) {
+    toggleSiteBtn.addEventListener('click', function() {
+        siteContainer.style.display = siteContainer.style.display === 'none' ? 'block' : 'none';
+    });
+}
+if (hideSiteBtn && siteContainer) {
+    hideSiteBtn.addEventListener('click', function() {
+        siteContainer.style.display = 'none';
+    });
+}
+
+function copySiteWidgetCode() {
+    const code = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogo de Productos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="printec-site"></div>
+
+    <script src="{{ url('/js/printec-catalog-widget.js') }}"><\/script>
+    <script src="{{ url('/js/printec-site-widget.js') }}"><\/script>
+    <script>
+      PrintecSite.init({
+        apiKey: '{{ $partner->api_key ?? '' }}',
+        apiUrl: '{{ url('/api/public/catalog') }}',
+        container: '#printec-site'
+      });
+    <\/script>
+</body>
+</html>`;
+    navigator.clipboard.writeText(code).then(() => {
+        swal("Copiado!", "Codigo del sitio web copiado al portapapeles", "success");
     });
 }
 

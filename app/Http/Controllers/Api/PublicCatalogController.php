@@ -306,12 +306,34 @@ class PublicCatalogController extends Controller
     {
         $partner = $this->getPartner($request);
 
-        return response()->json([
-            'data' => [
-                'partner_name' => $partner->name,
-                'show_prices' => $partner->api_show_prices,
-                'tax_rate' => PricingSetting::get('tax_rate', 16),
-            ],
-        ]);
+        $data = [
+            'partner_name' => $partner->name,
+            'show_prices' => $partner->api_show_prices,
+            'tax_rate' => PricingSetting::get('tax_rate', 16),
+        ];
+
+        // Website configuration fields
+        if ($partner->logo) {
+            $data['logo_url'] = url(Storage::disk('public')->url($partner->logo));
+        }
+        if ($partner->hero_desktop) {
+            $data['hero_desktop_url'] = url(Storage::disk('public')->url($partner->hero_desktop));
+        }
+        if ($partner->hero_mobile) {
+            $data['hero_mobile_url'] = url(Storage::disk('public')->url($partner->hero_mobile));
+        }
+        if ($partner->contact_info) {
+            $data['contact_info'] = $partner->contact_info;
+        }
+
+        $data['site_colors'] = [
+            'primary' => $partner->site_primary_color ?? '#007bff',
+            'secondary' => $partner->site_secondary_color ?? '#6c757d',
+            'accent' => $partner->site_accent_color ?? '#28a745',
+            'header_footer_bg' => $partner->site_header_footer_bg ?? '#ffffff',
+            'catalog_bg' => $partner->site_catalog_bg ?? '#f8f9fa',
+        ];
+
+        return response()->json(['data' => $data]);
     }
 }

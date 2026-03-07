@@ -39,5 +39,5 @@ Route::prefix('public/catalog')->middleware('partner.api')->group(function () {
 */
 Route::prefix('cart')->middleware('auth:sanctum')->group(function () {
     Route::post('/import', [CartImportController::class, 'import'])->name('api.cart.import');
-    Route::post('/validate-import', [CartImportController::class, 'validate'])->name('api.cart.validate');
+    Route::post('/validate-import', [CartImportController::class, 'validateImport'])->name('api.cart.validate');
 });

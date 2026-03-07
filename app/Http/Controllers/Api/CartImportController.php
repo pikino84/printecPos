@@ -158,7 +158,7 @@ class CartImportController extends Controller
      * Validar JSON del carrito sin importarlo
      * Útil para preview antes de la importación
      */
-    public function validate(Request $request)
+    public function validateImport(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'version' => 'required|string',
