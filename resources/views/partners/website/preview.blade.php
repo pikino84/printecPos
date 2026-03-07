@@ -12,8 +12,8 @@
 <body>
     <div id="printec-site"></div>
 
-    <script src="{{ url('/js/printec-catalog-widget.js') }}"></script>
-    <script src="{{ url('/js/printec-site-widget.js') }}"></script>
+    <script src="{{ url('/js/printec-catalog-widget.js?v=' . time()) }}"></script>
+    <script src="{{ url('/js/printec-site-widget.js?v=' . time()) }}"></script>
     <script>
         PrintecSite.init({
             apiKey: '{{ $partner->api_key }}',

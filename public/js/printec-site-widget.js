@@ -191,6 +191,9 @@
                     background-color: ${headerFooterBg};
                     color: ${footerTextColor};
                     border-top: 1px solid ${this.adjustBrightness(headerFooterBg, -20)};
+                    width: 100%;
+                    overflow: hidden;
+                    box-sizing: border-box;
                 }
                 .ps-footer-inner {
                     max-width: 100%;
@@ -198,6 +201,17 @@
                     padding: 30px 20px;
                     word-wrap: break-word;
                     overflow-wrap: break-word;
+                    box-sizing: border-box;
+                }
+                .ps-footer-inner p,
+                .ps-footer-inner div,
+                .ps-footer-inner span,
+                .ps-footer-inner ul,
+                .ps-footer-inner ol {
+                    max-width: 100%;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    margin: 0 0 10px 0;
                 }
                 .ps-footer-inner a {
                     color: ${primary};
