@@ -166,15 +166,14 @@
                 .ps-hero img {
                     width: 100%;
                     height: auto;
+                }
+                .ps-hero .ps-hero-desktop {
                     display: block;
                 }
-                .ps-hero-desktop {
-                    display: block;
-                }
-                .ps-hero-mobile {
+                .ps-hero .ps-hero-mobile {
                     display: none;
                 }
-                .ps-hero-all {
+                .ps-hero .ps-hero-all {
                     display: block;
                 }
 
@@ -220,10 +219,10 @@
                 }
 
                 @media (max-width: 768px) {
-                    .ps-hero-desktop {
+                    .ps-hero .ps-hero-desktop {
                         display: none !important;
                     }
-                    .ps-hero-mobile {
+                    .ps-hero .ps-hero-mobile {
                         display: block !important;
                     }
                     .ps-logo {
