@@ -321,6 +321,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{quote}/reject', [QuoteController::class, 'reject'])->name('reject');
         Route::post('/{quote}/invoice', [QuoteController::class, 'invoice'])->name('invoice');
         Route::post('/{quote}/expired', [QuoteController::class, 'expired'])->name('expired');
+        Route::post('/{quote}/paid', [QuoteController::class, 'paid'])->name('paid');
         Route::delete('/{quote}', [QuoteController::class, 'destroy'])->name('destroy');
     });
 

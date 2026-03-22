@@ -149,7 +149,7 @@ class Quote extends Model
      */
     public function canBeAccepted(): bool
     {
-        return $this->status === 'sent' && !$this->isExpired();
+        return in_array($this->status, ['sent', 'expired']);
     }
 
     /**
@@ -229,6 +229,27 @@ class Quote extends Model
     }
 
     /**
+     * Verificar si la cotización puede ser marcada como pagada
+     */
+    public function canBePaid(): bool
+    {
+        return $this->status === 'invoiced';
+    }
+
+    /**
+     * Marcar cotización como pagada
+     */
+    public function markAsPaid(): bool
+    {
+        if (!$this->canBePaid()) {
+            return false;
+        }
+
+        $this->status = 'paid';
+        return $this->save();
+    }
+
+    /**
      * Obtener el nombre del estado en español
      */
     public function getStatusLabelAttribute(): string
@@ -240,6 +261,7 @@ class Quote extends Model
             'rejected' => 'Rechazada',
             'expired' => 'Expirada',
             'invoiced' => 'Facturada',
+            'paid' => 'Pagada',
             default => $this->status,
         };
     }

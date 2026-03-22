@@ -23,9 +23,17 @@
             </h4>
         </div>
         <div class="col-lg-4 text-right">
-            <a href="{{ route('quotes.index') }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ route('quotes.index') }}" class="btn btn-outline-secondary btn-sm" id="btn-volver-quotes">
                 <i class="feather icon-arrow-left"></i> Volver
             </a>
+            <script>
+                (function() {
+                    var saved = sessionStorage.getItem('quotes_filters');
+                    if (saved) {
+                        document.getElementById('btn-volver-quotes').href = '{{ route("quotes.index") }}' + saved;
+                    }
+                })();
+            </script>
             <a href="{{ route('quotes.pdf', $quote) }}" class="btn btn-primary btn-sm">
                 <i class="feather icon-download"></i> Descargar PDF
             </a>
@@ -49,6 +57,10 @@
                             <span class="badge badge-danger">Rechazada</span>
                         @elseif($quote->status === 'expired')
                             <span class="badge badge-warning">Expirada</span>
+                        @elseif($quote->status === 'invoiced')
+                            <span class="badge" style="background-color: #17a2b8; color: white;">Facturada</span>
+                        @elseif($quote->status === 'paid')
+                            <span class="badge" style="background-color: #28a745; color: white;">Pagada</span>
                         @endif
                     </div>
                 </div>
@@ -253,6 +265,12 @@
                         <strong>Partner:</strong><br>
                         {{ $quote->partner->name }}
                     </p>
+                    @if($entity)
+                        <p class="mb-2">
+                            <strong>Razón Social usada:</strong><br>
+                            {{ $entity->razon_social }}
+                        </p>
+                    @endif
                     <p class="mb-0">
                         <strong>Total de items:</strong><br>
                         {{ $quote->items->sum('quantity') }} productos

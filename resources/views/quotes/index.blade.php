@@ -42,6 +42,7 @@
                                 <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rechazada</option>
                                 <option value="expired" {{ request('status') == 'expired' ? 'selected' : '' }}>Expirada</option>
                                 <option value="invoiced" {{ request('status') == 'invoiced' ? 'selected' : '' }}>Facturada</option>
+                                <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Pagada</option>
                             </select>
                         </div>
                         <div class="form-group mr-2 mb-2">
@@ -54,7 +55,7 @@
                         <button type="submit" class="btn btn-sm btn-primary mr-2 mb-2">
                             <i class="feather icon-search"></i> Buscar
                         </button>
-                        <a href="{{ route('quotes.index') }}" class="btn btn-sm btn-outline-secondary mb-2">
+                        <a href="{{ route('quotes.index') }}" class="btn btn-sm btn-outline-secondary mb-2" id="btn-clear-filters">
                             Limpiar
                         </a>
                     </form>
@@ -144,9 +145,19 @@
                                                 @elseif($quote->status === 'rejected')
                                                     <span class="badge badge-danger">Rechazada</span>
                                                 @elseif($quote->status === 'expired')
-                                                    <span class="badge badge-warning">Expirada</span>
+                                                    <span class="badge badge-warning" style="cursor: pointer;"
+                                                          onclick="openStatusSelector('{{ $quote->id }}', '{{ $quote->quote_number }}', 'expired')"
+                                                          title="Clic para cambiar estado">
+                                                        Expirada <i class="feather icon-chevron-down" style="font-size: 10px;"></i>
+                                                    </span>
                                                 @elseif($quote->status === 'invoiced')
-                                                    <span class="badge" style="background-color: #17a2b8; color: white;">Facturada</span>
+                                                    <span class="badge" style="background-color: #17a2b8; color: white; cursor: pointer;"
+                                                          onclick="openStatusSelector('{{ $quote->id }}', '{{ $quote->quote_number }}', 'invoiced')"
+                                                          title="Clic para cambiar estado">
+                                                        Facturada <i class="feather icon-chevron-down" style="font-size: 10px;"></i>
+                                                    </span>
+                                                @elseif($quote->status === 'paid')
+                                                    <span class="badge" style="background-color: #28a745; color: white;">Pagada</span>
                                                 @endif
                                             </td>
                                             <td>{{ $quote->items->count() }}</td>
@@ -250,6 +261,14 @@
         <form id="invoice-form-{{ $quote->id }}" action="{{ route('quotes.invoice', $quote) }}" method="POST" style="display: none;">
             @csrf
         </form>
+    @elseif($quote->status === 'expired')
+        <form id="accept-form-{{ $quote->id }}" action="{{ route('quotes.accept', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+    @elseif($quote->status === 'invoiced')
+        <form id="paid-form-{{ $quote->id }}" action="{{ route('quotes.paid', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
     @endif
 @endforeach
 
@@ -257,6 +276,28 @@
 
 @section('scripts')
 <script>
+// Persistencia de filtros con sessionStorage
+(function() {
+    var params = window.location.search;
+    if (params && params !== '?') {
+        sessionStorage.setItem('quotes_filters', params);
+    }
+
+    // Si no hay filtros en URL pero sí en sessionStorage, redirigir
+    if (!params || params === '?') {
+        var saved = sessionStorage.getItem('quotes_filters');
+        if (saved) {
+            window.location.replace('{{ route("quotes.index") }}' + saved);
+            return;
+        }
+    }
+
+    // Botón Limpiar: borrar sessionStorage
+    document.getElementById('btn-clear-filters').addEventListener('click', function(e) {
+        sessionStorage.removeItem('quotes_filters');
+    });
+})();
+
 function openStatusSelector(quoteId, quoteNumber, currentStatus) {
     var selectHtml = '<select id="status-select" class="form-control">';
 
@@ -268,6 +309,12 @@ function openStatusSelector(quoteId, quoteNumber, currentStatus) {
     } else if (currentStatus === 'accepted') {
         selectHtml += '<option value="">-- Seleccionar estado --</option>';
         selectHtml += '<option value="invoice">Facturada</option>';
+    } else if (currentStatus === 'expired') {
+        selectHtml += '<option value="">-- Seleccionar estado --</option>';
+        selectHtml += '<option value="accept">Aceptada</option>';
+    } else if (currentStatus === 'invoiced') {
+        selectHtml += '<option value="">-- Seleccionar estado --</option>';
+        selectHtml += '<option value="paid">Pagada</option>';
     }
 
     selectHtml += '</select>';
@@ -308,7 +355,8 @@ function openStatusSelector(quoteId, quoteNumber, currentStatus) {
                 'accept': 'Aceptada',
                 'reject': 'Rechazada',
                 'expired': 'Expirada',
-                'invoice': 'Facturada'
+                'invoice': 'Facturada',
+                'paid': 'Pagada'
             };
 
             swal({

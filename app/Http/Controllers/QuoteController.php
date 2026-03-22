@@ -53,6 +53,12 @@ class QuoteController extends Controller
         $user = Auth::user();
         $isSuperAdmin = $user->hasRole('super admin');
 
+        // Auto-expirar cotizaciones cuya fecha de validez ya pasó
+        Quote::whereNotNull('valid_until')
+            ->where('valid_until', '<', now()->startOfDay())
+            ->whereNotIn('status', ['expired', 'accepted', 'rejected', 'invoiced', 'paid'])
+            ->update(['status' => 'expired']);
+
         $query = Quote::with(['items.variant.product', 'partner', 'user', 'client'])
             ->orderBy('created_at', 'desc');
 
@@ -417,7 +423,7 @@ class QuoteController extends Controller
         }
 
         if (!$quote->canBeAccepted()) {
-            return back()->with('error', 'Esta cotización no puede ser aceptada. Debe estar en estado "Enviada" y no estar expirada.');
+            return back()->with('error', 'Esta cotización no puede ser aceptada. Debe estar en estado "Enviada" o "Expirada".');
         }
 
         if ($quote->accept()) {
@@ -465,6 +471,26 @@ class QuoteController extends Controller
         }
 
         return back()->with('error', 'Error al facturar la cotización.');
+    }
+
+    /**
+     * Marcar cotización como pagada
+     */
+    public function paid(Quote $quote)
+    {
+        if (!$this->canAccessQuote($quote)) {
+            abort(403);
+        }
+
+        if (!$quote->canBePaid()) {
+            return back()->with('error', 'Solo se pueden marcar como pagadas cotizaciones en estado "Facturada".');
+        }
+
+        if ($quote->markAsPaid()) {
+            return back()->with('success', 'Cotización marcada como pagada.');
+        }
+
+        return back()->with('error', 'Error al marcar la cotización como pagada.');
     }
 
     /**
