@@ -104,7 +104,10 @@
                     <!-- Items -->
                     <h6 class="mt-4 mb-3">Productos</h6>
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
+                        <table class="table table-sm table-bordered quote-items-table" style="font-size: 0.85rem;">
+                            <style>
+                                .quote-items-table td, .quote-items-table th { padding: 0.3rem 0.5rem; }
+                            </style>
                             <thead class="thead-light">
                                 <tr>
                                     <th style="width: 60px;">Img</th>
