@@ -32,6 +32,7 @@ class Quote extends Model
         'valid_until',
         'sent_at',
         'sent_to_email',
+        'source',
     ];
 
     protected $casts = [
@@ -149,7 +150,7 @@ class Quote extends Model
      */
     public function canBeAccepted(): bool
     {
-        return in_array($this->status, ['sent', 'expired']);
+        return in_array($this->status, ['sent', 'expired', 'pending']);
     }
 
     /**
@@ -157,7 +158,7 @@ class Quote extends Model
      */
     public function canBeRejected(): bool
     {
-        return $this->status === 'sent';
+        return in_array($this->status, ['sent', 'pending']);
     }
 
     /**
@@ -262,6 +263,7 @@ class Quote extends Model
             'expired' => 'Expirada',
             'invoiced' => 'Facturada',
             'paid' => 'Pagada',
+            'pending' => 'Pendiente',
             default => $this->status,
         };
     }

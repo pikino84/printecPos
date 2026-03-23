@@ -3,12 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WebsiteQuoteNotification;
+use App\Models\Client;
 use App\Models\Partner;
 use App\Models\PricingSetting;
 use App\Models\PrintecCategory;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Quote;
+use App\Models\QuoteItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class PublicCatalogController extends Controller
@@ -335,5 +341,139 @@ class PublicCatalogController extends Controller
         ];
 
         return response()->json(['data' => $data]);
+    }
+
+    /**
+     * Create a quote request from website
+     *
+     * POST /api/public/catalog/quote
+     */
+    public function createQuote(Request $request)
+    {
+        $partner = $this->getPartner($request);
+
+        $validated = $request->validate([
+            'customer.first_name' => 'required|string|max:100',
+            'customer.last_name' => 'required|string|max:100',
+            'customer.email' => 'required|email|max:255',
+            'customer.phone' => 'required|string|max:20',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|integer',
+            'items.*.variant_id' => 'required|integer',
+            'items.*.quantity' => 'required|integer|min:1',
+            'comments' => 'nullable|string|max:2000',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Buscar o crear cliente
+            $client = Client::where('email', $validated['customer']['email'])->first();
+
+            if ($client) {
+                // Asociar al partner si no existe la relación
+                if (!$client->hasContactWith($partner->id)) {
+                    $client->addPartner($partner->id);
+                }
+            } else {
+                $client = Client::create([
+                    'nombre' => $validated['customer']['first_name'],
+                    'apellido' => $validated['customer']['last_name'],
+                    'email' => $validated['customer']['email'],
+                    'telefono' => $validated['customer']['phone'],
+                    'source' => 'website',
+                ]);
+
+                $client->partners()->attach($partner->id, [
+                    'first_contact_at' => now(),
+                ]);
+            }
+
+            // Obtener entidad default del partner
+            $partnerEntityId = $partner->default_entity_id;
+
+            // Crear cotización
+            $quote = Quote::create([
+                'user_id' => $partner->users()->first()->id ?? 1,
+                'partner_id' => $partner->id,
+                'partner_entity_id' => $partnerEntityId,
+                'client_id' => $client->id,
+                'quote_number' => Quote::generateQuoteNumber($partner->id),
+                'status' => 'pending',
+                'source' => 'website',
+                'customer_notes' => $validated['comments'] ?? null,
+                'valid_until' => now()->addDays(15),
+            ]);
+
+            // Agregar items
+            foreach ($validated['items'] as $item) {
+                $variant = \App\Models\ProductVariant::find($item['variant_id']);
+                if (!$variant) continue;
+
+                $unitPrice = $this->calculateSalePrice(
+                    (float) $variant->price,
+                    $partner,
+                    true
+                );
+
+                QuoteItem::create([
+                    'quote_id' => $quote->id,
+                    'variant_id' => $item['variant_id'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $unitPrice,
+                ]);
+            }
+
+            $quote->calculateTotals();
+
+            // Enviar notificación por email
+            $entity = $quote->partnerEntity ?? $partner->defaultEntity;
+            if ($entity && $entity->hasMailConfig()) {
+                $mailerName = 'entity_' . $entity->id;
+                config([
+                    "mail.mailers.{$mailerName}" => [
+                        'transport' => 'smtp',
+                        'host' => $entity->smtp_host,
+                        'port' => $entity->smtp_port,
+                        'encryption' => $entity->smtp_encryption === 'none' ? null : $entity->smtp_encryption,
+                        'username' => $entity->smtp_username,
+                        'password' => $entity->smtp_password_decrypted,
+                    ],
+                ]);
+
+                $fromAddress = $entity->mail_from_address;
+                $fromName = $entity->mail_from_name ?: $entity->razon_social;
+
+                Mail::mailer($mailerName)
+                    ->to($fromAddress)
+                    ->send((new WebsiteQuoteNotification($quote))->from($fromAddress, $fromName));
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Solicitud de cotización recibida correctamente',
+                'data' => [
+                    'quote_reference' => $quote->quote_number,
+                    'client_id' => $client->id,
+                    'is_new_client' => $client->wasRecentlyCreated,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Error al crear cotización desde website', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar la solicitud',
+            ], 500);
+        }
     }
 }

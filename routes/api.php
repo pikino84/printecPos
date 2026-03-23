@@ -30,6 +30,7 @@ Route::prefix('public/catalog')->middleware('partner.api')->group(function () {
     Route::get('/categories', [PublicCatalogController::class, 'categories']);
     Route::get('/products', [PublicCatalogController::class, 'index']);
     Route::get('/products/{id}', [PublicCatalogController::class, 'show']);
+    Route::post('/quote', [PublicCatalogController::class, 'createQuote']);
 });
 
 /*

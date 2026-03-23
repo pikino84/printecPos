@@ -47,7 +47,12 @@
                 <div class="card-header">
                     <h5>Detalles de la Cotización</h5>
                     <div class="card-header-right">
-                        @if($quote->status === 'draft')
+                        @if($quote->status === 'pending')
+                            <span class="badge" style="background-color: #fd7e14; color: white;">Pendiente</span>
+                            @if($quote->source === 'website')
+                                <span class="badge badge-info">Sitio Web</span>
+                            @endif
+                        @elseif($quote->status === 'draft')
                             <span class="badge badge-secondary">Borrador</span>
                         @elseif($quote->status === 'sent')
                             <span class="badge badge-primary">Enviada</span>

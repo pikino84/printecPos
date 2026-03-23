@@ -20,6 +20,7 @@ class Client extends Model
         'direccion',
         'notas',
         'is_active',
+        'source',
     ];
 
     protected $casts = [

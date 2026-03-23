@@ -56,7 +56,7 @@ class QuoteController extends Controller
         // Auto-expirar cotizaciones cuya fecha de validez ya pasó
         Quote::whereNotNull('valid_until')
             ->where('valid_until', '<', now()->startOfDay())
-            ->whereNotIn('status', ['expired', 'accepted', 'rejected', 'invoiced', 'paid'])
+            ->whereNotIn('status', ['expired', 'accepted', 'rejected', 'invoiced', 'paid', 'pending'])
             ->update(['status' => 'expired']);
 
         $query = Quote::with(['items.variant.product', 'partner', 'user', 'client'])

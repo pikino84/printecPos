@@ -36,6 +36,7 @@
                         <div class="form-group mr-2 mb-2">
                             <select name="status" class="form-control form-control-sm">
                                 <option value="">Todos los estados</option>
+                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pendiente</option>
                                 <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Borrador</option>
                                 <option value="sent" {{ request('status') == 'sent' ? 'selected' : '' }}>Enviada</option>
                                 <option value="accepted" {{ request('status') == 'accepted' ? 'selected' : '' }}>Aceptada</option>
@@ -105,6 +106,9 @@
                                         <tr>
                                             <td>
                                                 <strong>{{ $quote->quote_number }}</strong>
+                                                @if($quote->source === 'website')
+                                                    <br><span class="badge badge-info" style="font-size: 9px;">Sitio Web</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 {{ $quote->client->nombre_completo ?? $quote->client_name ?? 'N/A' }}
@@ -128,7 +132,13 @@
                                                 <small>{{ $quote->created_at->format('d/m/Y H:i') }}</small>
                                             </td>
                                             <td>
-                                                @if($quote->status === 'draft')
+                                                @if($quote->status === 'pending')
+                                                    <span class="badge" style="background-color: #fd7e14; color: white; cursor: pointer;"
+                                                          onclick="openStatusSelector('{{ $quote->id }}', '{{ $quote->quote_number }}', 'pending')"
+                                                          title="Clic para cambiar estado">
+                                                        Pendiente <i class="feather icon-chevron-down" style="font-size: 10px;"></i>
+                                                    </span>
+                                                @elseif($quote->status === 'draft')
                                                     <span class="badge badge-info">Borrador</span>
                                                 @elseif($quote->status === 'sent')
                                                     <span class="badge badge-primary" style="cursor: pointer;"
@@ -247,7 +257,14 @@
 
 <!-- Formularios ocultos para cambio de estado -->
 @foreach($quotes as $quote)
-    @if($quote->status === 'sent')
+    @if($quote->status === 'pending')
+        <form id="accept-form-{{ $quote->id }}" action="{{ route('quotes.accept', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+        <form id="reject-form-{{ $quote->id }}" action="{{ route('quotes.reject', $quote) }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+    @elseif($quote->status === 'sent')
         <form id="accept-form-{{ $quote->id }}" action="{{ route('quotes.accept', $quote) }}" method="POST" style="display: none;">
             @csrf
         </form>
@@ -301,7 +318,11 @@
 function openStatusSelector(quoteId, quoteNumber, currentStatus) {
     var selectHtml = '<select id="status-select" class="form-control">';
 
-    if (currentStatus === 'sent') {
+    if (currentStatus === 'pending') {
+        selectHtml += '<option value="">-- Seleccionar estado --</option>';
+        selectHtml += '<option value="accept">Aceptada</option>';
+        selectHtml += '<option value="reject">Rechazada</option>';
+    } else if (currentStatus === 'sent') {
         selectHtml += '<option value="">-- Seleccionar estado --</option>';
         selectHtml += '<option value="accept">Aceptada</option>';
         selectHtml += '<option value="reject">Rechazada</option>';
