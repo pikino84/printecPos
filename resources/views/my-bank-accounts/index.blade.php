@@ -9,7 +9,7 @@
             <p class="text-muted mb-0">{{ $partner->name }}</p>
         </div>
         <div class="col-md-4 text-right">
-            @if(auth()->user()->hasRole('Asociado Administrador|super admin'))
+            @if(auth()->user()->hasRole('Asociado Administrador|super admin|admin'))
             <a href="{{ route('my-bank-accounts.create') }}" class="btn btn-primary">
                 <i class="feather icon-plus"></i> Agregar Cuenta
             </a>
@@ -98,7 +98,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if(auth()->user()->hasRole('Asociado Administrador|super admin'))
+                                    @if(auth()->user()->hasRole('Asociado Administrador|super admin|admin'))
                                     <div class="btn-group btn-group-sm">
                                         <a href="{{ route('my-bank-accounts.edit', $account->id) }}" 
                                            class="btn btn-warning"
@@ -140,7 +140,7 @@
         <div class="text-center py-5">
             <i class="feather icon-credit-card" style="font-size: 48px; color: #ccc;"></i>
             <p class="text-muted mt-3">No tienes cuentas bancarias registradas.</p>
-            @if(auth()->user()->hasRole('Asociado Administrador|super admin'))
+            @if(auth()->user()->hasRole('Asociado Administrador|super admin|admin'))
             <a href="{{ route('my-bank-accounts.create') }}" class="btn btn-primary">
                 <i class="feather icon-plus"></i> Agregar primera cuenta
             </a>
