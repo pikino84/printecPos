@@ -45,5 +45,5 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('js/catalog.js') }}"></script>
+<script src="{{ asset('js/catalog.js') }}?v={{ filemtime(public_path('js/catalog.js')) }}"></script>
 @endsection
