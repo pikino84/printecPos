@@ -80,6 +80,9 @@
                                     <th>Img</th>
                                     <th>Stock Total</th>
                                     <th>Color</th>
+                                    @if($producto->partner->slug === 'doble-vela')
+                                    <th>Status</th>
+                                    @endif
                                     @if(auth()->user()->isPrintec())
                                     <th>Precio Proveedor</th>
                                     @endif
@@ -115,11 +118,54 @@
                                         </td>
                                         <td class="stock-total" data-sku="{{ $variant->sku }}">
                                             {{ number_format($variant->totalStock()) }}
+                                            @if($variant->por_llegar_1 > 0)
+                                                <br>
+                                                <small class="text-info" title="Por llegar: {{ number_format($variant->por_llegar_1) }} pzas aprox. {{ $variant->fecha_llegada_1 ? $variant->fecha_llegada_1->format('d/m/Y') : '' }}">
+                                                    +{{ number_format($variant->por_llegar_1) }}
+                                                    @if($variant->fecha_llegada_1)
+                                                        ({{ $variant->fecha_llegada_1->format('d/m') }})
+                                                    @endif
+                                                </small>
+                                            @endif
+                                            @if($variant->por_llegar_2 > 0)
+                                                <br>
+                                                <small class="text-info" title="Por llegar 2: {{ number_format($variant->por_llegar_2) }} pzas aprox. {{ $variant->fecha_llegada_2 ? $variant->fecha_llegada_2->format('d/m/Y') : '' }}">
+                                                    +{{ number_format($variant->por_llegar_2) }}
+                                                    @if($variant->fecha_llegada_2)
+                                                        ({{ $variant->fecha_llegada_2->format('d/m') }})
+                                                    @endif
+                                                </small>
+                                            @endif
                                         </td>
                                         <td class="wrapper_color" title="{{ $variant->color_name }}">
                                             {{ $variant->color_name ?? 'no_color' }}
                                             <div class="color-icon {{ $variant->color_name ?? 'no_color' }}" ></div>
                                         </td>
+                                        @if($producto->partner->slug === 'doble-vela')
+                                        <td class="text-center">
+                                            @php
+                                                $statusMap = [
+                                                    'A'   => ['label' => 'Activo',          'class' => 'bg-success'],
+                                                    'N'   => ['label' => 'Nuevo',           'class' => 'bg-primary'],
+                                                    'D'   => ['label' => 'Descontinuado',   'class' => 'bg-danger'],
+                                                    'NC'  => ['label' => 'Nuevo catálogo',  'class' => 'bg-primary'],
+                                                    'AA'  => ['label' => 'Alta demanda',    'class' => 'bg-warning text-dark'],
+                                                    'X'   => ['label' => 'Baja',            'class' => 'bg-dark'],
+                                                    'P'   => ['label' => 'Próximamente',    'class' => 'bg-secondary'],
+                                                ];
+                                                $st = $variant->status ?? '';
+                                                // Detectar ofertas (O5%, O10%, etc.)
+                                                if (preg_match('/^O(\d+)%$/', $st, $m)) {
+                                                    $statusInfo = ['label' => "Oferta {$m[1]}%", 'class' => 'bg-warning text-dark'];
+                                                } else {
+                                                    $statusInfo = $statusMap[$st] ?? ['label' => $st, 'class' => 'bg-secondary'];
+                                                }
+                                            @endphp
+                                            @if($st)
+                                                <span class="badge {{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
+                                            @endif
+                                        </td>
+                                        @endif
                                         @if(auth()->user()->isPrintec())
                                         <td>
                                             ${{ number_format($variant->price, 2) }}

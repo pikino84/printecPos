@@ -36,7 +36,6 @@ class DobleVelaSeeder extends Seeder
     private int $variantsUpdated = 0;
     private int $variantsDeactivated = 0;
     private int $stocksUpdated = 0;
-    private int $additionalImagesDownloaded = 0;
 
     public function run(): void
     {
@@ -165,9 +164,6 @@ class DobleVelaSeeder extends Seeder
                     );
                     $product->update(['main_image' => $mainLocalPath]);
 
-                    // Imágenes adicionales (producto en uso)
-                    $this->downloadAdditionalImages($model);
-
                     // Técnicas de impresión
                     $this->upsertImpressionTechniques($product->id, trim($first['Tipo Impresion'] ?? ''));
                 }
@@ -257,39 +253,8 @@ class DobleVelaSeeder extends Seeder
         $this->command?->info("   Variantes actualizadas: {$this->variantsUpdated}");
         $this->command?->info("   Variantes desactivadas: {$this->variantsDeactivated}");
         $this->command?->info("   Stocks actualizados:    {$this->stocksUpdated}");
-        $this->command?->info("   Imágenes adicionales:   {$this->additionalImagesDownloaded}");
         $this->command?->info("   Almacenes oficiales:    " . implode(', ', self::OFFICIAL_WAREHOUSES));
         $this->command?->info("═══════════════════════════════════════════════════════");
-    }
-
-    /**
-     * Descargar imágenes adicionales (producto en uso).
-     * URL: https://doblevela.com/images/additional/_{MODELO}_{N}.jpg
-     * Se prueban hasta 10 imágenes consecutivas.
-     */
-    private function downloadAdditionalImages(string $model): void
-    {
-        $maxAdditional = 10;
-
-        for ($i = 1; $i <= $maxAdditional; $i++) {
-            $imageName = "_{$model}_{$i}.jpg";
-            $localPath = "products/doblevela/additional/{$imageName}";
-            $destPath = storage_path("app/public/{$localPath}");
-
-            if (file_exists($destPath)) {
-                continue;
-            }
-
-            $url = self::IMAGE_BASE_URL . "/additional/" . rawurlencode($imageName);
-            $downloaded = $this->downloadImageIfNeeded($url, $destPath);
-
-            if (!$downloaded) {
-                // Si la imagen N no existe, las siguientes probablemente tampoco
-                break;
-            }
-
-            $this->additionalImagesDownloaded++;
-        }
     }
 
     /**
