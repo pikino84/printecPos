@@ -122,6 +122,18 @@ class ProductCatalogController extends Controller
             });
         }
 
+        // Filtro por status de variante (DobleVela)
+        if ($request->filled('status')) {
+            $status = $request->status;
+            $query->whereHas('variants', function ($q) use ($status) {
+                if ($status === 'oferta') {
+                    $q->where('status', 'like', 'O%');
+                } else {
+                    $q->where('status', $status);
+                }
+            });
+        }
+
         // Filtro por ciudad
         if ($request->filled('city_id')) {
             $cityId = $request->city_id;

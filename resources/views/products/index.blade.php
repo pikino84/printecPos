@@ -13,6 +13,14 @@
                     <option value="{{ $category->slug }}" data-type="{{ $category->type }}">{{ $category->name }}</option>
                 @endforeach
             </select>
+            <select id="statusFilter" class="form-control">
+                <option value="">Status</option>
+                <option value="A">Activo</option>
+                <option value="N">Nuevo</option>
+                <option value="oferta">Oferta</option>
+                <option value="D">Descontinuado</option>
+                <option value="NC">Nuevo catálogo</option>
+            </select>
             <select id="cityFilter" class="form-control">
                 <option value="">Ciudades</option>
                 @foreach($cities as $city)

@@ -11,9 +11,10 @@ function loadMoreProducts() {
     const categoryType = $('#categoryFilter option:selected').data('type') || 'printec';
     const search = $('#searchInput').val();
     const city = $('#cityFilter').val();
+    const status = $('#statusFilter').val();
 
     page++;
-    $.get(`?page=${page}&category=${encodeURIComponent(category)}&category_type=${encodeURIComponent(categoryType)}&search=${encodeURIComponent(search)}&city_id=${encodeURIComponent(city)}`, function (data) {
+    $.get(`?page=${page}&category=${encodeURIComponent(category)}&category_type=${encodeURIComponent(categoryType)}&search=${encodeURIComponent(search)}&city_id=${encodeURIComponent(city)}&status=${encodeURIComponent(status)}`, function (data) {
         if (data.trim().length > 0) {
             $('#productGrid').append(data);
         } else {
@@ -30,14 +31,15 @@ $(window).scroll(function () {
     }
 });
 
-$('#categoryFilter, #searchInput, #cityFilter').on('change keyup', function () {
+$('#categoryFilter, #searchInput, #cityFilter, #statusFilter').on('change keyup', function () {
     page = 1;
     const category = $('#categoryFilter').val();
     const categoryType = $('#categoryFilter option:selected').data('type') || 'printec';
     const search = $('#searchInput').val();
     const city = $('#cityFilter').val();
+    const status = $('#statusFilter').val();
 
-    $.get(`?page=1&category=${encodeURIComponent(category)}&category_type=${encodeURIComponent(categoryType)}&search=${encodeURIComponent(search)}&city_id=${encodeURIComponent(city)}`, function (data) {
+    $.get(`?page=1&category=${encodeURIComponent(category)}&category_type=${encodeURIComponent(categoryType)}&search=${encodeURIComponent(search)}&city_id=${encodeURIComponent(city)}&status=${encodeURIComponent(status)}`, function (data) {
         if ($.trim(data).length === 0) {
             $('#productGrid').html(`
                 <div class="col-12 text-center mt-4">
