@@ -7,6 +7,7 @@
                 <li class="pcoded-hasmenu {{ menuActive([
                     'partners.*', 'users.*', 'my-users.*', 'permissions.*', 'roles.*',
                     'activity.logs.*', 'clients.*', 'warehouses.*', 'my-warehouses.*',
+                    'suspicious-quotes.*',
                     'pricing-dashboard.*', 'pricing-tiers.*', 'partner-pricing.*',
                     'pricing-reports.*', 'pricing-settings.*',
                     'printec-cities*', 'activity-logs*'
@@ -97,6 +98,15 @@
                             </a>
                         </li>
                         @endif
+
+                        {{-- ========== MONITOR DE COTIZACIONES (solo super admin) ========== --}}
+                        @role('super admin')
+                        <li class="{{ request()->routeIs('suspicious-quotes.*') ? 'active' : '' }}">
+                            <a href="{{ route('suspicious-quotes.index') }}" class="waves-effect waves-dark">
+                                <span class="pcoded-mtext">Monitor de Cotizaciones</span>
+                            </a>
+                        </li>
+                        @endrole
 
                         {{-- ========== PRICING ========== --}}
                         @can('pricing-dashboard.view')

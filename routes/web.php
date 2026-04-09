@@ -28,6 +28,7 @@ use App\Http\Controllers\PricingDashboardController;
 use App\Http\Controllers\PricingReportController;
 use App\Http\Controllers\PartnerRegistrationController;
 use App\Http\Controllers\PricingSettingController;
+use App\Http\Controllers\SuspiciousQuotesController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\PartnerWebsiteController;
 
@@ -158,6 +159,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/razones-sociales/{id}/mail-config', [PartnerEntityController::class, 'mailConfig'])->name('my-entities.mail-config');
         Route::put('/razones-sociales/{id}/mail-config', [PartnerEntityController::class, 'mailConfigUpdate'])->name('my-entities.mail-config.update');
         Route::post('/razones-sociales/{id}/mail-config/test', [PartnerEntityController::class, 'mailConfigTest'])->name('my-entities.mail-config.test');
+    });
+
+    // ========================================================================
+    // MONITOR DE COTIZACIONES (solo super admin)
+    // ========================================================================
+    Route::middleware(['role:super admin'])->group(function () {
+        Route::get('monitor-cotizaciones', [SuspiciousQuotesController::class, 'index'])->name('suspicious-quotes.index');
     });
 
     // ========================================================================

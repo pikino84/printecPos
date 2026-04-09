@@ -50,11 +50,9 @@ class UserController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole('Asociado Administrador')) {
-            // Usa la constante para filtrar los roles disponibles
             $roles = collect(array_combine(self::ASOCIADO_ROLES, self::ASOCIADO_ROLES));
         } else {
-            // Admin o super admin: todos los roles
-            $roles = Role::pluck('name', 'name');
+            $roles = Role::where('name', '!=', 'super admin')->pluck('name', 'name');
         }
 
         $partners = null;
@@ -72,10 +70,9 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        // Definir roles permitidos según el rol del usuario
         $allowedRoles = $user->hasRole('Asociado Administrador')
             ? self::ASOCIADO_ROLES
-            : Role::pluck('name')->toArray();
+            : Role::where('name', '!=', 'super admin')->pluck('name')->toArray();
 
         $request->validate([
             'name'     => 'required|string|max:255',
@@ -118,7 +115,12 @@ class UserController extends Controller
 
         $roles = $auth->hasRole('Asociado Administrador')
             ? collect(array_combine(self::ASOCIADO_ROLES, self::ASOCIADO_ROLES))
-            : Role::pluck('name', 'name');
+            : Role::where('name', '!=', 'super admin')->pluck('name', 'name');
+
+        // No permitir editar un super admin
+        if ($user->hasRole('super admin') && !$auth->hasRole('super admin')) {
+            abort(403);
+        }
 
         $partners = $auth->partner_id === 1 ? \App\Models\Partner::all() : null;
 
@@ -133,10 +135,14 @@ class UserController extends Controller
         $userToUpdate = User::findOrFail($id);
         $auth = auth()->user();
 
-        // Determinar qué roles puede asignar el usuario autenticado
+        // No permitir editar un super admin
+        if ($userToUpdate->hasRole('super admin') && !$auth->hasRole('super admin')) {
+            abort(403);
+        }
+
         $allowedRoles = $auth->hasRole('Asociado Administrador')
             ? self::ASOCIADO_ROLES
-            : Role::pluck('name')->toArray();
+            : Role::where('name', '!=', 'super admin')->pluck('name')->toArray();
 
         $request->validate([
             'name'  => 'required|string|max:255',
