@@ -97,6 +97,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/partners/{partner}/warehouses', [ProductCatalogController::class, 'getWarehousesByPartner'])
         ->name('api.partners.warehouses');
 
+    // API: Stock en tiempo real Doble Vela (GetExistencia, disponible 24hrs)
+    Route::get('/api/catalogo/{product}/stock-realtime', [ProductCatalogController::class, 'getRealtimeStock'])
+        ->name('api.catalogo.stock-realtime');
+
     // Rutas para la gestión de categorías de Printec
     Route::get('/printec-categories', [PrintecCategoryController::class, 'index']);
     Route::post('/printec-categories', [PrintecCategoryController::class, 'store']);

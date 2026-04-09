@@ -14,16 +14,29 @@ class ProductVariant extends Model
 
     protected $fillable = [
         'product_id',
-        'sku',           
+        'sku',
         'slug',
         'code_name',
         'color_name',
         'image',
-        'price'
+        'price',
+        'price_list',
+        'status',
+        'apartado',
+        'por_llegar_1',
+        'fecha_llegada_1',
+        'por_llegar_2',
+        'fecha_llegada_2',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2'
+        'price' => 'decimal:2',
+        'price_list' => 'integer',
+        'apartado' => 'integer',
+        'por_llegar_1' => 'integer',
+        'fecha_llegada_1' => 'date',
+        'por_llegar_2' => 'integer',
+        'fecha_llegada_2' => 'date',
     ];
 
     public function product()

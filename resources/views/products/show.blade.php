@@ -104,7 +104,7 @@
                                             ? $partnerPricing->calculateSalePrice($variant->price, $isPrintecProduct)
                                             : $variant->price;
                                     @endphp
-                                    <tr>
+                                    <tr data-sku="{{ $variant->sku }}">
                                         <td class="col_sku">{{ $variant->sku }}</td>
                                         <td class="col_img">
                                             @if($variant->image)
@@ -113,7 +113,7 @@
                                                 <span class="text-muted">N/A</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="stock-total" data-sku="{{ $variant->sku }}">
                                             {{ number_format($variant->totalStock()) }}
                                         </td>
                                         <td class="wrapper_color" title="{{ $variant->color_name }}">
@@ -217,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
 });
 </script>
 @endsection

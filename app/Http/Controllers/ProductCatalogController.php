@@ -11,6 +11,7 @@ use App\Models\ProductStock;
 use App\Models\ProductWarehousesCities;
 use App\Models\Partner;
 use App\Models\ProductWarehouse;
+use App\Services\DobleVela\DobleVelaService;
 
 class ProductCatalogController extends Controller
 {
@@ -256,5 +257,47 @@ class ProductCatalogController extends Controller
         }
 
         return response()->json($response);
+    }
+
+    /**
+     * API: Stock en tiempo real de un producto Doble Vela (GetExistencia, 24hrs).
+     * Retorna existencias actualizadas al momento para cada variante.
+     */
+    public function getRealtimeStock(int $productId, DobleVelaService $dvService)
+    {
+        $product = Product::with('partner')->findOrFail($productId);
+
+        // Solo aplica para productos de Doble Vela
+        if ($product->partner->slug !== 'doble-vela') {
+            return response()->json(['error' => 'Solo disponible para productos Doble Vela'], 400);
+        }
+
+        $modelo = $product->model_code;
+        if (!$modelo) {
+            return response()->json(['error' => 'Producto sin código de modelo'], 400);
+        }
+
+        $stockData = $dvService->getRealtimeStock($modelo);
+
+        if ($stockData === null) {
+            return response()->json(['error' => 'No se pudo consultar el stock en tiempo real'], 503);
+        }
+
+        // Mapear respuesta: CLAVE => { EXISTENCIAS, Price, Apartado }
+        $result = collect($stockData)->map(function ($item) {
+            return [
+                'clave'       => $item['CLAVE'] ?? null,
+                'nombre'      => $item['NOMBRE'] ?? null,
+                'color'       => $item['COLOR'] ?? null,
+                'existencias' => (int) ($item['EXISTENCIAS'] ?? 0),
+                'price'       => (float) ($item['Price'] ?? 0),
+                'apartado'    => (int) ($item['Apartado'] ?? 0),
+            ];
+        })->keyBy('clave');
+
+        return response()->json([
+            'modelo' => $modelo,
+            'stock'  => $result,
+        ]);
     }
 }

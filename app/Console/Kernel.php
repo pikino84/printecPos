@@ -19,47 +19,47 @@ class Kernel extends ConsoleKernel
     {
         // ═══════════════════════════════════════════════════════
         // SINCRONIZACIÓN DOBLE VELA
-        // Horarios disponibles API (CDMX): 
-        //   09:00-10:00, 13:00-14:00, 17:00-18:00
+        // API GetExistenciaAll disponible SOLO de 8PM a 8AM CDMX
+        // Se ejecuta 3 veces en horario nocturno
         // ═══════════════════════════════════════════════════════
-        
-        // Ventana 1: 09:05 CDMX (10:05 Cancún)
+
+        // Sync 1: 20:30 CDMX (primera oportunidad después de apertura)
         $schedule->command('sync:doblevela-products')
-            ->dailyAt('09:05')
+            ->dailyAt('20:30')
             ->timezone('America/Mexico_City')
             ->runInBackground()
             ->withoutOverlapping(30)
             ->onSuccess(function () {
-                Log::info('✅ Sync Doble Vela 09:05 CDMX exitoso');
+                Log::info('Sync Doble Vela 20:30 CDMX exitoso');
             })
             ->onFailure(function () {
-                Log::error('❌ Sync Doble Vela 09:05 CDMX falló');
+                Log::error('Sync Doble Vela 20:30 CDMX falló');
             });
-        
-        // Ventana 2: 13:05 CDMX (14:05 Cancún)
+
+        // Sync 2: 00:30 CDMX (medianoche, captura cambios de fin de día)
         $schedule->command('sync:doblevela-products')
-            ->dailyAt('13:05')
+            ->dailyAt('00:30')
             ->timezone('America/Mexico_City')
             ->runInBackground()
             ->withoutOverlapping(30)
             ->onSuccess(function () {
-                Log::info('✅ Sync Doble Vela 13:05 CDMX exitoso');
+                Log::info('Sync Doble Vela 00:30 CDMX exitoso');
             })
             ->onFailure(function () {
-                Log::error('❌ Sync Doble Vela 13:05 CDMX falló');
+                Log::error('Sync Doble Vela 00:30 CDMX falló');
             });
-        
-        // Ventana 3: 17:05 CDMX (18:05 Cancún)
+
+        // Sync 3: 05:30 CDMX (antes de apertura, datos frescos para el día)
         $schedule->command('sync:doblevela-products')
-            ->dailyAt('17:05')
+            ->dailyAt('05:30')
             ->timezone('America/Mexico_City')
             ->runInBackground()
             ->withoutOverlapping(30)
             ->onSuccess(function () {
-                Log::info('✅ Sync Doble Vela 17:05 CDMX exitoso');
+                Log::info('Sync Doble Vela 05:30 CDMX exitoso');
             })
             ->onFailure(function () {
-                Log::error('❌ Sync Doble Vela 17:05 CDMX falló');
+                Log::error('Sync Doble Vela 05:30 CDMX falló');
             });
 
         // ═══════════════════════════════════════════════════════════
