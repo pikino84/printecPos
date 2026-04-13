@@ -128,6 +128,9 @@ class QuoteController extends Controller
      */
     private function getQuoteStats(Request $request)
     {
+        // Verificar si la columna cost_price existe (migración puede no haberse corrido aún)
+        $hasCostPrice = \Schema::hasColumn('quote_items', 'cost_price');
+
         $statsQuery = Quote::query();
 
         // Aplicar mismos filtros
@@ -152,13 +155,25 @@ class QuoteController extends Controller
         ")->first();
 
         // Costo proveedor: suma de (cost_price * quantity) de los items
-        $costoProveedor = DB::table('quote_items')
-            ->join('quotes', 'quotes.id', '=', 'quote_items.quote_id')
+        // Si cost_price no existe aún, calcular desde products.price
+        $costColumn = $hasCostPrice
+            ? 'quote_items.cost_price'
+            : 'products.price';
+
+        $costoQuery = DB::table('quote_items')
+            ->join('quotes', 'quotes.id', '=', 'quote_items.quote_id');
+
+        if (!$hasCostPrice) {
+            $costoQuery->join('product_variants', 'product_variants.id', '=', 'quote_items.variant_id')
+                       ->join('products', 'products.id', '=', 'product_variants.product_id');
+        }
+
+        $costoProveedor = $costoQuery
             ->when($request->filled('partner_id'), fn($q) => $q->where('quotes.partner_id', $request->partner_id))
             ->when($request->filled('status'), fn($q) => $q->where('quotes.status', $request->status))
             ->when($request->filled('date_from'), fn($q) => $q->whereDate('quotes.created_at', '>=', $request->date_from))
             ->when($request->filled('date_to'), fn($q) => $q->whereDate('quotes.created_at', '<=', $request->date_to))
-            ->selectRaw('SUM(quote_items.cost_price * quote_items.quantity) as total_costo')
+            ->selectRaw("SUM({$costColumn} * quote_items.quantity) as total_costo")
             ->value('total_costo') ?? 0;
 
         // Desglose por status
@@ -182,7 +197,7 @@ class QuoteController extends Controller
                 partners.name as supplier_name,
                 COUNT(DISTINCT quotes.id) as total_quotes,
                 SUM(quote_items.unit_price * quote_items.quantity) as total_venta,
-                SUM(quote_items.cost_price * quote_items.quantity) as total_costo
+                SUM({$costColumn} * quote_items.quantity) as total_costo
             ")
             ->groupBy('partners.id', 'partners.name')
             ->orderByDesc('total_venta')
