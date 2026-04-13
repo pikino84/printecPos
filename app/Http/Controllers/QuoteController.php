@@ -104,9 +104,124 @@ class QuoteController extends Controller
             });
         }
 
+        // Filtro por rango de fechas
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Estadísticas para super admin
+        $stats = null;
+        if ($isSuperAdmin) {
+            $stats = $this->getQuoteStats($request);
+        }
+
         $quotes = $query->paginate(15);
 
-        return view('quotes.index', compact('quotes', 'isSuperAdmin', 'partners'));
+        return view('quotes.index', compact('quotes', 'isSuperAdmin', 'partners', 'stats'));
+    }
+
+    /**
+     * Obtener estadísticas de cotizaciones para el super admin
+     */
+    private function getQuoteStats(Request $request)
+    {
+        $statsQuery = Quote::query();
+
+        // Aplicar mismos filtros
+        if ($request->filled('partner_id')) {
+            $statsQuery->where('partner_id', $request->partner_id);
+        }
+        if ($request->filled('status')) {
+            $statsQuery->where('status', $request->status);
+        }
+        if ($request->filled('date_from')) {
+            $statsQuery->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $statsQuery->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Totales generales
+        $general = (clone $statsQuery)->selectRaw("
+            COUNT(*) as total_quotes,
+            SUM(subtotal) as total_subtotal,
+            SUM(total) as total_venta
+        ")->first();
+
+        // Costo proveedor: suma de (cost_price * quantity) de los items
+        $costoProveedor = DB::table('quote_items')
+            ->join('quotes', 'quotes.id', '=', 'quote_items.quote_id')
+            ->when($request->filled('partner_id'), fn($q) => $q->where('quotes.partner_id', $request->partner_id))
+            ->when($request->filled('status'), fn($q) => $q->where('quotes.status', $request->status))
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('quotes.created_at', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('quotes.created_at', '<=', $request->date_to))
+            ->selectRaw('SUM(quote_items.cost_price * quote_items.quantity) as total_costo')
+            ->value('total_costo') ?? 0;
+
+        // Desglose por status
+        $byStatus = (clone $statsQuery)->selectRaw("
+            status,
+            COUNT(*) as count,
+            SUM(total) as total_venta
+        ")->groupBy('status')->get()->keyBy('status');
+
+        // Desglose por proveedor (supplier = product.partner)
+        $bySupplier = DB::table('quote_items')
+            ->join('quotes', 'quotes.id', '=', 'quote_items.quote_id')
+            ->join('product_variants', 'product_variants.id', '=', 'quote_items.variant_id')
+            ->join('products', 'products.id', '=', 'product_variants.product_id')
+            ->join('partners', 'partners.id', '=', 'products.partner_id')
+            ->when($request->filled('partner_id'), fn($q) => $q->where('quotes.partner_id', $request->partner_id))
+            ->when($request->filled('status'), fn($q) => $q->where('quotes.status', $request->status))
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('quotes.created_at', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('quotes.created_at', '<=', $request->date_to))
+            ->selectRaw("
+                partners.name as supplier_name,
+                COUNT(DISTINCT quotes.id) as total_quotes,
+                SUM(quote_items.unit_price * quote_items.quantity) as total_venta,
+                SUM(quote_items.cost_price * quote_items.quantity) as total_costo
+            ")
+            ->groupBy('partners.id', 'partners.name')
+            ->orderByDesc('total_venta')
+            ->get();
+
+        // Desglose por partner (asociado que cotiza)
+        $byPartner = (clone $statsQuery)
+            ->join('partners', 'partners.id', '=', 'quotes.partner_id')
+            ->selectRaw("
+                partners.name as partner_name,
+                COUNT(*) as total_quotes,
+                SUM(quotes.total) as total_venta
+            ")
+            ->groupBy('partners.id', 'partners.name')
+            ->orderByDesc('total_venta')
+            ->get();
+
+        $statusLabels = [
+            'pending' => 'Pendiente',
+            'draft' => 'Borrador',
+            'sent' => 'Enviada',
+            'accepted' => 'Aceptada',
+            'rejected' => 'Rechazada',
+            'expired' => 'Expirada',
+            'invoiced' => 'Facturada',
+            'paid' => 'Pagada',
+        ];
+
+        return (object) [
+            'total_quotes' => $general->total_quotes ?? 0,
+            'total_subtotal' => $general->total_subtotal ?? 0,
+            'total_venta' => $general->total_venta ?? 0,
+            'total_costo' => $costoProveedor,
+            'comision' => ($general->total_venta ?? 0) - $costoProveedor,
+            'by_status' => $byStatus,
+            'by_supplier' => $bySupplier,
+            'by_partner' => $byPartner,
+            'status_labels' => $statusLabels,
+        ];
     }
 
 
@@ -639,6 +754,7 @@ class QuoteController extends Controller
                     'warehouse_id' => $cartItem->warehouse_id,
                     'quantity' => $cartItem->quantity,
                     'unit_price' => $cartItem->effective_price, // Usar precio del carrito (ya tiene tier aplicado)
+                    'cost_price' => $cartItem->variant->product->price ?? null, // Precio base del proveedor
                 ]);
             }
 

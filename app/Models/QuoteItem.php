@@ -15,12 +15,14 @@ class QuoteItem extends Model
         'warehouse_id',
         'quantity',
         'unit_price',
+        'cost_price',
         'subtotal',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
 
