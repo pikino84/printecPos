@@ -140,6 +140,11 @@
             font-size: 10px;
             font-weight: bold;
         }
+        .bank-info p {
+            margin: 2px 0;
+            font-size: 10px;
+            line-height: 1.2;
+        }
         .status-draft { background-color: #6c757d; color: white; }
         .status-sent { background-color: #1F4C94; color: white; }
         .status-accepted { background-color: #28a745; color: white; }
@@ -314,7 +319,7 @@
     @endphp
     @if($bankAccount)
     <div class="section-title">DATOS PARA REALIZAR PAGO</div>
-    <div style="padding: 10px; background-color: #f8f9fa;">
+    <div class="bank-info" style="padding: 10px; background-color: #f8f9fa;">
         <p><strong>BENEFICIARIO:</strong> {{ $bankAccount->account_holder ?: $entity->razon_social }}</p>
         @if($entity->rfc)
         <p><strong>RFC:</strong> {{ $entity->rfc }}</p>
@@ -340,7 +345,7 @@
     {{-- Cuenta en Dólares (USD) --}}
     @if($usdBankAccount)
     <div class="section-title" style="margin-top: 15px;">CUENTA EN DÓLARES (USD)</div>
-    <div style="padding: 10px; background-color: #f8f9fa;">
+    <div class="bank-info" style="padding: 10px; background-color: #f8f9fa;">
         <p><strong>BENEFICIARIO:</strong> {{ $usdBankAccount->account_holder ?: $entity->razon_social }}</p>
         <p><strong>BANCO:</strong> {{ $usdBankAccount->bank_name }}</p>
         @if($usdBankAccount->account_number)
