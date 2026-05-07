@@ -141,10 +141,10 @@ class QuoteController extends Controller
             $statsQuery->where('status', $request->status);
         }
         if ($request->filled('date_from')) {
-            $statsQuery->whereDate('created_at', '>=', $request->date_from);
+            $statsQuery->whereDate('quotes.created_at', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $statsQuery->whereDate('created_at', '<=', $request->date_to);
+            $statsQuery->whereDate('quotes.created_at', '<=', $request->date_to);
         }
 
         // Totales generales
