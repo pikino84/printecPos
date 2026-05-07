@@ -329,6 +329,12 @@
         @if($bankAccount->clabe)
         <p><strong>CLABE:</strong> {{ $bankAccount->clabe }}</p>
         @endif
+        @if($bankAccount->swift)
+        <p><strong>SWIFT:</strong> {{ $bankAccount->swift }}</p>
+        @endif
+        @if($bankAccount->iban)
+        <p><strong>IBAN:</strong> {{ $bankAccount->iban }}</p>
+        @endif
     </div>
 
     {{-- Cuenta en Dólares (USD) --}}
