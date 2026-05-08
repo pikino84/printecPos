@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use App\Models\PartnerPricing;
+use App\Services\Partner\ProfileCompletionService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-
 
 class Partner extends Model
 {
@@ -35,17 +34,25 @@ class Partner extends Model
         'site_accent_color',
         'site_header_footer_bg',
         'site_catalog_bg',
+        'profile_deadline_at',
+        'vetoed_until',
+        'reminder_7d_sent_at',
+        'reminder_3d_sent_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'api_show_prices' => 'boolean',
+        'profile_deadline_at' => 'date',
+        'vetoed_until' => 'date',
+        'reminder_7d_sent_at' => 'date',
+        'reminder_3d_sent_at' => 'date',
     ];
 
     // ========================================================================
     // RELACIONES
     // ========================================================================
-    
+
     /**
      * Relación con usuarios
      */
@@ -71,6 +78,7 @@ class Partner extends Model
     {
         return $this->hasMany(PartnerEntity::class);
     }
+
     /**
      * Relación con la entidad predeterminada del partner
      */
@@ -114,7 +122,7 @@ class Partner extends Model
     // ========================================================================
     // SCOPES
     // ========================================================================
-    
+
     /**
      * Scope para obtener solo partners activos
      */
@@ -170,7 +178,7 @@ class Partner extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
-              ->orWhere('contact_name', 'like', "%{$search}%");
+                ->orWhere('contact_name', 'like', "%{$search}%");
         });
     }
 
@@ -185,7 +193,7 @@ class Partner extends Model
     // ========================================================================
     // ACCESSORS Y MUTATORS
     // ========================================================================
-    
+
     /**
      * Obtener el badge de tipo con color
      */
@@ -197,7 +205,7 @@ class Partner extends Model
             'Proveedor' => '<span class="badge bg-secondary">Proveedor</span>',
         ];
 
-        return $badges[$this->type] ?? '<span class="badge bg-secondary">' . $this->type . '</span>';
+        return $badges[$this->type] ?? '<span class="badge bg-secondary">'.$this->type.'</span>';
     }
 
     /**
@@ -205,7 +213,7 @@ class Partner extends Model
      */
     public function getStatusBadgeAttribute()
     {
-        return $this->is_active 
+        return $this->is_active
             ? '<span class="badge bg-success">Activo</span>'
             : '<span class="badge bg-danger">Inactivo</span>';
     }
@@ -213,7 +221,7 @@ class Partner extends Model
     // ========================================================================
     // MÉTODOS AUXILIARES
     // ========================================================================
-    
+
     /**
      * Verificar si el partner es de tipo Asociado
      */
@@ -297,7 +305,7 @@ class Partner extends Model
     // ========================================================================
     // MÉTODOS DE ESTADÍSTICAS
     // ========================================================================
-    
+
     /**
      * Obtener estadísticas del partner
      */
@@ -319,8 +327,8 @@ class Partner extends Model
      */
     public function hasRelatedData()
     {
-        return $this->users()->exists() 
-            || $this->clients()->exists() 
+        return $this->users()->exists()
+            || $this->clients()->exists()
             || $this->products()->exists()
             || $this->quotes()->exists();
     }
@@ -359,9 +367,9 @@ class Partner extends Model
         $labels = [
             'Proveedor' => 'Proveedor',
             'Asociado' => 'Asociado',
-            'Mixto' => 'Mixto'
+            'Mixto' => 'Mixto',
         ];
-        
+
         return $labels[$this->type] ?? $this->type;
     }
 
@@ -373,7 +381,7 @@ class Partner extends Model
         $descriptions = [
             'Proveedor' => 'Solo provee productos, requiere almacén',
             'Asociado' => 'Vende productos, no requiere almacén',
-            'Mixto' => 'Provee y vende, requiere almacén'
+            'Mixto' => 'Provee y vende, requiere almacén',
         ];
 
         return $descriptions[$this->type] ?? '';
@@ -386,6 +394,7 @@ class Partner extends Model
     {
         $apiKey = bin2hex(random_bytes(32));
         $this->update(['api_key' => $apiKey]);
+
         return $apiKey;
     }
 
@@ -403,14 +412,14 @@ class Partner extends Model
     public function getPricingConfig()
     {
         // Asegurarnos de que el partner tiene un ID
-        if (!$this->id) {
+        if (! $this->id) {
             throw new \Exception('El partner debe estar guardado antes de obtener su configuración de pricing');
         }
-        
+
         // Buscar o crear usando el método estático directamente
         $pricing = PartnerPricing::where('partner_id', $this->id)->first();
-        
-        if (!$pricing) {
+
+        if (! $pricing) {
             $pricing = PartnerPricing::create([
                 'partner_id' => $this->id,
                 'markup_percentage' => 0,
@@ -420,7 +429,7 @@ class Partner extends Model
                 'manual_tier_override' => false,
             ]);
         }
-        
+
         return $pricing;
     }
 
@@ -430,8 +439,58 @@ class Partner extends Model
     public function calculateProductPrice($basePrice, $isOwnProduct = false)
     {
         $pricing = $this->getPricingConfig();
-        
+
         // isPrintecProduct = true cuando NO es producto propio del partner
-        return $pricing->calculatePrice($basePrice, !$isOwnProduct);
+        return $pricing->calculatePrice($basePrice, ! $isOwnProduct);
+    }
+
+    // ========================================================================
+    // PERFIL: COMPLETITUD (Épica 05)
+    // ========================================================================
+
+    /**
+     * % de completitud del perfil (0-100). Pesos: Fiscal 40 / Bancario 30 / Contacto 20 / Logo 10.
+     * El distribuidor pierde descuento y comisión mientras esto sea < 100.
+     */
+    public function profileCompletionPercentage(): int
+    {
+        return app(ProfileCompletionService::class)->percentageFor($this);
+    }
+
+    /**
+     * Faltantes agrupados por bloque: fiscal, bank, contact, logo.
+     *
+     * @return array{fiscal: array<int,string>, bank: array<int,string>, contact: array<int,string>, logo: array<int,string>}
+     */
+    public function missingProfileFields(): array
+    {
+        return app(ProfileCompletionService::class)->missingFieldsFor($this);
+    }
+
+    public function hasCompleteProfile(): bool
+    {
+        return $this->profileCompletionPercentage() === 100;
+    }
+
+    /**
+     * Verifica si el partner está vetado a la fecha actual.
+     * Bloquea login y cualquier flujo que dependa del partner.
+     */
+    public function isVetoed(): bool
+    {
+        return $this->vetoed_until !== null && $this->vetoed_until->isFuture();
+    }
+
+    /**
+     * Días que faltan para que venza el plazo (negativo = venció).
+     * Devuelve null si no hay plazo configurado.
+     */
+    public function daysUntilDeadline(): ?int
+    {
+        if (! $this->profile_deadline_at) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays($this->profile_deadline_at, false);
     }
 }

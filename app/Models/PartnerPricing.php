@@ -82,20 +82,40 @@ class PartnerPricing extends Model
      * Este es el precio que el partner paga a Printec
      * Fórmula: (Price + Markup del Tier) - Descuento del Tier
      * Nota: Todos los productos (propios y de proveedores) reciben los mismos aumentos
+     *
+     * Épica 05: si el partner es Asociado/Mixto y su perfil < 100%, pierde el descuento
+     * de distribuidor y cotiza al precio público (solo Markup Printec, sin tier ni descuento).
      */
     public function calculateCostPrice($basePrice, $isPrintecProduct = true)
     {
-        // Todos los productos reciben los mismos aumentos (propios y de proveedores)
-        $tier = $this->getEffectiveTier();
+        $printecMarkup = PricingSetting::get('printec_markup', 52);
+        $publicPrice = $basePrice * (1 + $printecMarkup / 100);
 
-        if (!$tier) {
-            // Fallback: si no hay tiers configurados, usar markup Printec de settings
-            $printecMarkup = PricingSetting::get('printec_markup', 52);
-            return $basePrice * (1 + $printecMarkup / 100);
+        if ($this->shouldChargePublicPrice()) {
+            return $publicPrice;
         }
 
-        // Aplicar markup y descuento del tier
+        $tier = $this->getEffectiveTier();
+        if (! $tier) {
+            return $publicPrice;
+        }
+
         return $tier->calculatePrice($basePrice);
+    }
+
+    /**
+     * El distribuidor pierde el descuento si es Asociado/Mixto con perfil incompleto.
+     * Proveedores y Printec no están sujetos a esta regla.
+     */
+    public function shouldChargePublicPrice(): bool
+    {
+        $partner = $this->partner;
+
+        if (! $partner || ! $partner->isAsociadoOMixto()) {
+            return false;
+        }
+
+        return ! $partner->hasCompleteProfile();
     }
 
     /**
@@ -105,6 +125,7 @@ class PartnerPricing extends Model
     public function calculateSalePrice($basePrice, $isPrintecProduct = true)
     {
         $costPrice = $this->calculateCostPrice($basePrice, $isPrintecProduct);
+
         return $this->applyMarkup($costPrice);
     }
 
@@ -114,6 +135,7 @@ class PartnerPricing extends Model
     public function calculateCostPriceWithTax($basePrice, $isPrintecProduct = true, $taxRate = 16)
     {
         $costPrice = $this->calculateCostPrice($basePrice, $isPrintecProduct);
+
         return $costPrice * (1 + $taxRate / 100);
     }
 
@@ -123,6 +145,7 @@ class PartnerPricing extends Model
     public function calculateSalePriceWithTax($basePrice, $isPrintecProduct = true, $taxRate = 16)
     {
         $salePrice = $this->calculateSalePrice($basePrice, $isPrintecProduct);
+
         return $salePrice * (1 + $taxRate / 100);
     }
 
@@ -136,8 +159,29 @@ class PartnerPricing extends Model
         $tier = $this->getEffectiveTier();
         $printecMarkup = PricingSetting::get('printec_markup', 52);
 
-        if (!$tier) {
+        // Épica 05: perfil incompleto fuerza precio público.
+        if ($this->shouldChargePublicPrice()) {
+            $publicPrice = $basePrice * (1 + $printecMarkup / 100);
+
+            return [
+                'base_price' => $basePrice,
+                'tier_name' => null,
+                'printec_markup' => $printecMarkup,
+                'tier_markup' => 0,
+                'discount_percentage' => 0,
+                'after_printec_markup' => $publicPrice,
+                'after_tier_markup' => $publicPrice,
+                'after_discount' => $publicPrice,
+                'cost_price' => $publicPrice,
+                'partner_markup' => $this->markup_percentage,
+                'sale_price' => $this->applyMarkup($publicPrice),
+                'profile_blocked' => true,
+            ];
+        }
+
+        if (! $tier) {
             $afterPrintecMarkup = $basePrice * (1 + $printecMarkup / 100);
+
             return [
                 'base_price' => $basePrice,
                 'tier_name' => null,

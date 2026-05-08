@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\SyncInnovationStock::class,
         \App\Console\Commands\SyncDobleVelaProducts::class,
         \App\Console\Commands\EvaluatePartnerTiers::class,
+        \App\Console\Commands\CheckProfileDeadlines::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -60,6 +61,20 @@ class Kernel extends ConsoleKernel
             })
             ->onFailure(function () {
                 Log::error('Sync Doble Vela 05:30 CDMX falló');
+            });
+
+        // ═══════════════════════════════════════════════════════════
+        // PERFIL DE DISTRIBUIDOR (ÉPICA 05)
+        // Recordatorios al día 7 y deadline-3, veto 1 año si llega al deadline
+        // con perfil < 100%. Se ejecuta diario a las 09:00 CDMX.
+        // ═══════════════════════════════════════════════════════════
+        $schedule->command('partners:check-profile-deadlines')
+            ->dailyAt('09:00')
+            ->timezone('America/Mexico_City')
+            ->runInBackground()
+            ->withoutOverlapping(15)
+            ->onFailure(function () {
+                Log::error('❌ partners:check-profile-deadlines falló');
             });
 
         // ═══════════════════════════════════════════════════════════

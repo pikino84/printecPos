@@ -21,9 +21,51 @@
             </script>
             @endif
             <a href="{{ route('partners.create') }}" class="btn btn-primary float-right">Agregar Partner</a>
+            <a href="{{ route('partners.profile-progress.export', request()->only(['profile_min', 'profile_max'])) }}"
+               class="btn btn-outline-success float-right me-2"
+               title="Descargar CSV de partners con perfil incompleto">
+                <i class="feather icon-download"></i> Exportar CSV
+            </a>
         </div>
     </div>
 </div>
+
+{{-- Filtros por completitud de perfil --}}
+<div class="card mb-3">
+    <div class="card-block">
+        <form method="GET" action="{{ route('partners.index') }}" class="row align-items-end g-2">
+            <div class="col-md-3">
+                <label class="form-label small mb-1">% perfil mínimo</label>
+                <input type="number" name="profile_min" min="0" max="100" value="{{ $profileMin }}" class="form-control form-control-sm" placeholder="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">% perfil máximo</label>
+                <input type="number" name="profile_max" min="0" max="100" value="{{ $profileMax }}" class="form-control form-control-sm" placeholder="100">
+            </div>
+            <input type="hidden" name="sort" value="{{ $sort }}">
+            <input type="hidden" name="direction" value="{{ $direction }}">
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-sm btn-primary">Filtrar</button>
+                <a href="{{ route('partners.index') }}" class="btn btn-sm btn-link">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@php
+    // Helper para alternar dirección al hacer click en una columna ordenable.
+    $sortLink = function (string $column, string $label) use ($sort, $direction, $profileMin, $profileMax) {
+        $newDir = ($sort === $column && $direction === 'asc') ? 'desc' : 'asc';
+        $arrow = $sort === $column ? ($direction === 'asc' ? ' ↑' : ' ↓') : '';
+        $url = route('partners.index', array_filter([
+            'sort' => $column,
+            'direction' => $newDir,
+            'profile_min' => $profileMin,
+            'profile_max' => $profileMax,
+        ]));
+        return '<a href="'.$url.'" class="text-dark text-decoration-none">'.$label.$arrow.'</a>';
+    };
+@endphp
 
 <div class="card">
     <div class="card-block table-border-style">
@@ -31,17 +73,27 @@
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
+                        <th>{!! $sortLink('name', 'Nombre') !!}</th>
                         <th>Contacto</th>
                         <th>Correo</th>
                         <th>Teléfono</th>
                         <th>Tipo</th>
                         <th>Activo</th>
+                        <th style="min-width:160px;">{!! $sortLink('profile', '% Perfil') !!}</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($partners as $partner)
+                        @php
+                            $pct = $partner->profile_completion;
+                            $pctClass = match (true) {
+                                $pct === 100 => 'bg-success',
+                                $pct >= 60 => 'bg-info',
+                                $pct >= 30 => 'bg-warning',
+                                default => 'bg-danger',
+                            };
+                        @endphp
                         <tr>
                             <td>{{ $partner->name }}</td>
                             <td>{{ $partner->contact_name }}</td>
@@ -49,6 +101,15 @@
                             <td>{{ $partner->contact_phone }}</td>
                             <td>{{ ucfirst($partner->type) }}</td>
                             <td>{{ $partner->is_active ? 'Sí' : 'No' }}</td>
+                            <td>
+                                <div class="progress" style="height:18px;" title="{{ $pct }}% completo">
+                                    <div class="progress-bar {{ $pctClass }}" role="progressbar"
+                                         style="width: {{ $pct }}%;" aria-valuenow="{{ $pct }}"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        <small>{{ $pct }}%</small>
+                                    </div>
+                                </div>
+                            </td>
                             <td class="d-flex gap-1">
                               {{-- Ver detalle del partner --}}
                               <a href="{{ route('partners.show', $partner) }}" class="btn btn-sm btn-info" title="Ver detalle">
@@ -108,7 +169,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center">No hay partners registrados.</td>
+                            <td colspan="8" class="text-center">No hay partners registrados.</td>
                         </tr>
                     @endforelse
                 </tbody>

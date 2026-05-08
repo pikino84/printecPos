@@ -63,6 +63,10 @@ Route::middleware('auth')->group(function () {
 
     // 👮‍♂️ Rutas para usuarios (solo para rol admin)
     Route::middleware(['auth', 'role:admin|super admin|Asociado Administrador'])->group(function () {
+        // Export CSV de progreso de perfil (épica 05.6) — antes de resource para evitar conflicto con show.
+        Route::get('partners/profile-progress/export', [PartnerController::class, 'exportProfileProgress'])
+            ->name('partners.profile-progress.export');
+
         Route::resource('partners', PartnerController::class);
         //usuarios por socio
         Route::get('partners/{partner}/users', [PartnerController::class, 'users'])->name('partners.users');

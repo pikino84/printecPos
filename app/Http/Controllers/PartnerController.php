@@ -2,21 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use App\Mail\PartnerActivated;
 use App\Models\Partner;
 use App\Models\User;
-use App\Mail\PartnerActivated;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PartnerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('partners_index');
-        $partners = Partner::all();
-        return view('partners.index', compact('partners'));
+
+        $partners = Partner::with(['entities.bankAccounts'])->get();
+
+        // Calcular % de completitud del perfil para cada partner.
+        $partners->each(function ($partner) {
+            $partner->setAttribute('profile_completion', $partner->profileCompletionPercentage());
+        });
+
+        // Filtros por rango de % (útil para campañas — "los que están en 0%").
+        $profileMin = $request->integer('profile_min');
+        $profileMax = $request->integer('profile_max');
+        if ($request->filled('profile_min')) {
+            $partners = $partners->filter(fn ($p) => $p->profile_completion >= $profileMin);
+        }
+        if ($request->filled('profile_max')) {
+            $partners = $partners->filter(fn ($p) => $p->profile_completion <= $profileMax);
+        }
+
+        // Orden por columna `profile` o por nombre (default).
+        $sort = $request->get('sort', 'name');
+        $direction = $request->get('direction', 'asc');
+        $partners = $sort === 'profile'
+            ? $partners->sortBy('profile_completion', SORT_REGULAR, $direction === 'desc')
+            : $partners->sortBy('name', SORT_REGULAR, $direction === 'desc');
+
+        $partners = $partners->values();
+
+        return view('partners.index', compact('partners', 'sort', 'direction', 'profileMin', 'profileMax'));
     }
 
     public function create()
@@ -38,20 +64,21 @@ class PartnerController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
         $data['slug'] = Str::slug($data['name']);
-        
+
         Partner::create($data);
+
         return redirect()->route('partners.index')->with('success', 'Partner creado.');
     }
-    
+
     /**
      * Display the specified resource.
      */
     public function show(Partner $partner)
     {
         $partner->load(['users', 'entities', 'warehouses', 'products', 'pricing.currentTier']);
-        
+
         $stats = $partner->getStats();
-        
+
         return view('partners.show', compact('partner', 'stats'));
     }
 
@@ -63,9 +90,9 @@ class PartnerController extends Controller
     public function update(Request $request, Partner $partner)
     {
         // Guardar estado anterior para detectar activación
-        $wasInactive = !$partner->is_active;
+        $wasInactive = ! $partner->is_active;
         $data = $request->validate([
-            'name' => 'required|unique:partners,name,' . $partner->id,
+            'name' => 'required|unique:partners,name,'.$partner->id,
             'contact_name' => 'nullable',
             'contact_phone' => 'nullable',
             'contact_email' => 'nullable|email',
@@ -78,16 +105,16 @@ class PartnerController extends Controller
 
         $data['slug'] = Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
-        
+
         $partner->update($data);
 
         // Si el partner fue activado, activar también sus usuarios y enviar email
         if ($wasInactive && $partner->is_active) {
             $this->activatePartnerUsers($partner);
         }
-        
+
         // Si el partner fue desactivado, desactivar también sus usuarios
-        if (!$wasInactive && !$partner->is_active) {
+        if (! $wasInactive && ! $partner->is_active) {
             $this->deactivatePartnerUsers($partner);
         }
 
@@ -97,6 +124,7 @@ class PartnerController extends Controller
     public function destroy(Partner $partner)
     {
         $partner->delete();
+
         return redirect()->route('partners.index')->with('success', 'Partner eliminado.');
     }
 
@@ -164,5 +192,63 @@ class PartnerController extends Controller
 
         return redirect()->route('partners.show', $partner)
             ->with('success', 'Configuración de API actualizada.');
+    }
+
+    /**
+     * Export CSV de partners filtrados por % de completitud (épica 05.6).
+     * Usado por el equipo de ventas para campañas dirigidas a partners en 0% / parciales.
+     */
+    public function exportProfileProgress(Request $request): StreamedResponse
+    {
+        $this->authorize('partners_index');
+
+        $partners = Partner::with(['entities.bankAccounts'])
+            ->whereIn('type', ['Asociado', 'Mixto'])
+            ->get()
+            ->map(function (Partner $p) {
+                $missing = $p->missingProfileFields();
+                $missingFlat = collect($missing)->flatMap(fn ($fields) => $fields)->implode(', ');
+
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'type' => $p->type,
+                    'contact_name' => $p->contact_name,
+                    'contact_email' => $p->contact_email,
+                    'contact_phone' => $p->contact_phone,
+                    'profile_completion' => $p->profileCompletionPercentage(),
+                    'missing_fields' => $missingFlat,
+                    'profile_deadline_at' => $p->profile_deadline_at?->format('Y-m-d'),
+                    'days_until_deadline' => $p->daysUntilDeadline(),
+                    'is_active' => $p->is_active ? 'sí' : 'no',
+                    'vetoed_until' => $p->vetoed_until?->format('Y-m-d'),
+                ];
+            });
+
+        $min = $request->integer('profile_min');
+        $max = $request->integer('profile_max');
+        if ($request->filled('profile_min')) {
+            $partners = $partners->filter(fn ($r) => $r['profile_completion'] >= $min);
+        }
+        if ($request->filled('profile_max')) {
+            $partners = $partners->filter(fn ($r) => $r['profile_completion'] <= $max);
+        }
+
+        $filename = 'partners-perfil-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($partners) {
+            $handle = fopen('php://output', 'w');
+            // BOM para que Excel detecte UTF-8.
+            fwrite($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, [
+                'ID', 'Nombre', 'Tipo', 'Contacto', 'Correo', 'Teléfono',
+                '% Perfil', 'Faltantes', 'Deadline', 'Días restantes',
+                'Activo', 'Vetado hasta',
+            ]);
+            foreach ($partners as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }
