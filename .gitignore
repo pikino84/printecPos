@@ -37,3 +37,10 @@ phpinfo.php
 # Vite build artifacts
 /public/build
 /public/hot
+
+# Claude Code — local-only artifacts
+/CLAUDE.local.md
+/.claude/settings.local.json
+/.claude/_backup_*/
+/.claude/**/MEMORY.md
+/temp/
