@@ -97,18 +97,31 @@
                                                 ${{ number_format($item->effective_price, 2) }}
                                             </td>
                                             <td>
+                                                @php
+                                                    $itemPerMeter = optional($item->variant->product)->isPerMeter() ?? false;
+                                                    $itemStep = $itemPerMeter ? '0.01' : '1';
+                                                    $itemMin = $itemPerMeter ? '0.01' : '1';
+                                                    $displayQty = $itemPerMeter ? number_format($item->quantity, 2, '.', '') : (int) $item->quantity;
+                                                @endphp
                                                 <div class="input-group input-group-sm">
-                                                    <button type="button" class="btn btn-outline-secondary btn-minus" 
+                                                    <button type="button" class="btn btn-outline-secondary btn-minus"
                                                             data-item="{{ $item->id }}">-</button>
-                                                    <input type="number" 
-                                                           class="form-control text-center quantity-input" 
-                                                           value="{{ $item->quantity }}"
-                                                           min="1"
+                                                    <input type="number"
+                                                           class="form-control text-center quantity-input"
+                                                           value="{{ $displayQty }}"
+                                                           min="{{ $itemMin }}"
+                                                           step="{{ $itemStep }}"
                                                            data-item="{{ $item->id }}"
-                                                           style="max-width: 60px;">
+                                                           data-step="{{ $itemStep }}"
+                                                           style="max-width: 70px;">
                                                     <button type="button" class="btn btn-outline-secondary btn-plus"
                                                             data-item="{{ $item->id }}">+</button>
                                                 </div>
+                                                @if($itemPerMeter)
+                                                    <small class="text-muted d-block mt-1">
+                                                        {{ $item->variant->product->unit_type === 'metro_cuadrado' ? 'm²' : 'm lineal' }}
+                                                    </small>
+                                                @endif
                                             </td>
                                             <td class="item-subtotal">
                                                 ${{ number_format($item->item_total, 2) }}
@@ -338,35 +351,45 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    // Botones +/-
+    // Cantidad respeta step del input: decimales (0.01) para lonas/viniles, enteros para el resto.
+    const readQty = (input) => {
+        const step = parseFloat(input.attr('data-step') || input.attr('step') || '1');
+        const raw = step < 1 ? parseFloat(input.val()) : parseInt(input.val());
+        return { value: raw, step };
+    };
+    const formatQty = (value, step) => step < 1 ? value.toFixed(2) : Math.round(value).toString();
+
     $('.btn-minus').on('click', function() {
         const itemId = $(this).data('item');
         const input = $(`.quantity-input[data-item="${itemId}"]`);
-        let quantity = parseInt(input.val()) - 1;
-        if (quantity < 1) quantity = 1;
-        input.val(quantity);
-        updateCartItem(itemId, quantity);
+        const { value, step } = readQty(input);
+        const min = parseFloat(input.attr('min')) || (step < 1 ? 0.01 : 1);
+        const next = +(value - step).toFixed(2);
+        const finalQty = next < min ? min : next;
+        input.val(formatQty(finalQty, step));
+        updateCartItem(itemId, finalQty);
     });
 
     $('.btn-plus').on('click', function() {
         const itemId = $(this).data('item');
         const input = $(`.quantity-input[data-item="${itemId}"]`);
-        let quantity = parseInt(input.val()) + 1;
-        input.val(quantity);
-        updateCartItem(itemId, quantity);
+        const { value, step } = readQty(input);
+        const next = +(value + step).toFixed(2);
+        input.val(formatQty(next, step));
+        updateCartItem(itemId, next);
     });
 
-    // Input manual
     $('.quantity-input').on('change', function() {
         const itemId = $(this).data('item');
-        let quantity = parseInt($(this).val());
-        
-        if (isNaN(quantity) || quantity < 1) {
-            $(this).val(1);
+        const { value, step } = readQty($(this));
+        const min = parseFloat($(this).attr('min')) || (step < 1 ? 0.01 : 1);
+
+        if (isNaN(value) || value < min) {
+            $(this).val(formatQty(min, step));
             return;
         }
-        
-        updateCartItem(itemId, quantity);
+
+        updateCartItem(itemId, value);
     });
 
     // Eliminar item

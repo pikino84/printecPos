@@ -178,19 +178,32 @@
                                             ${{ number_format($precioClienteFinal, 2) }}
                                         </td>
                                         <td style="min-width: 130px;">
+                                            @php
+                                                $perMeter = $producto->isPerMeter();
+                                                $stepAttr = $perMeter ? '0.01' : '1';
+                                                $minAttr = $perMeter ? '0.01' : '1';
+                                                $defaultQty = $perMeter ? '1.00' : '1';
+                                            @endphp
                                             <div class="input-group quantity-selector">
                                                 <button type="button" class="btn btn-light btn-sm btn-minus" data-variant="{{ $variant->id }}">−</button>
-                                                <input 
-                                                    type="number" 
-                                                    name="quantity" 
-                                                    value="1" 
-                                                    min="1" 
-                                                    class="form-control form-control-sm text-center quantity-input" 
-                                                    data-variant="{{ $variant->id }}" 
-                                                    style="width: 50px;"
+                                                <input
+                                                    type="number"
+                                                    name="quantity"
+                                                    value="{{ $defaultQty }}"
+                                                    min="{{ $minAttr }}"
+                                                    step="{{ $stepAttr }}"
+                                                    class="form-control form-control-sm text-center quantity-input"
+                                                    data-variant="{{ $variant->id }}"
+                                                    data-step="{{ $stepAttr }}"
+                                                    style="width: 60px;"
                                                 >
                                                 <button type="button" class="btn btn-light btn-sm btn-plus" data-variant="{{ $variant->id }}">+</button>
                                             </div>
+                                            @if($perMeter)
+                                                <small class="text-muted d-block mt-1">
+                                                    Por {{ $producto->unit_type === 'metro_cuadrado' ? 'm²' : 'metro lineal' }}
+                                                </small>
+                                            @endif
                                         </td>
                                         <td>
                                             <button class="btn btn-primary btn-sm btn-add-to-cart"
@@ -224,15 +237,23 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Selectores de cantidad
+    // Helper: lee el valor de un input respetando decimales si su step lo permite.
+    const readQty = (input) => {
+        const step = parseFloat(input.getAttribute('data-step') || input.step || '1');
+        return step < 1 ? parseFloat(input.value) : parseInt(input.value);
+    };
+    const formatQty = (value, step) => step < 1 ? value.toFixed(2) : Math.round(value).toString();
+
     document.querySelectorAll('.btn-minus').forEach(button => {
         button.addEventListener('click', function () {
             const variantId = this.getAttribute('data-variant');
             const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
-            let value = parseInt(input.value);
-            if (value > 1) {
-                input.value = value - 1;
-            }
+            const step = parseFloat(input.getAttribute('data-step') || input.step || '1');
+            const min = parseFloat(input.getAttribute('min') || (step < 1 ? '0.01' : '1'));
+            let value = readQty(input);
+            if (isNaN(value)) value = min;
+            const next = +(value - step).toFixed(2);
+            if (next >= min) input.value = formatQty(next, step);
         });
     });
 
@@ -240,24 +261,23 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', function () {
             const variantId = this.getAttribute('data-variant');
             const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
-            let value = parseInt(input.value);
-            const max = parseInt(input.getAttribute('max')) || 9999;
-            if (value < max) {
-                input.value = value + 1;
-            }
+            const step = parseFloat(input.getAttribute('data-step') || input.step || '1');
+            const max = parseFloat(input.getAttribute('max') || '9999');
+            let value = readQty(input);
+            if (isNaN(value)) value = 0;
+            const next = +(value + step).toFixed(2);
+            if (next <= max) input.value = formatQty(next, step);
         });
     });
 
-    // Botón agregar al carrito
     document.querySelectorAll('.btn-add-to-cart').forEach(button => {
         button.addEventListener('click', function () {
             const variantId = this.getAttribute('data-variant');
             const warehouseId = this.getAttribute('data-warehouse') || null;
             const price = this.getAttribute('data-price');
             const input = document.querySelector(`.quantity-input[data-variant='${variantId}']`);
-            const quantity = parseInt(input.value);
+            const quantity = readQty(input);
 
-            // Usar la función global
             if (typeof addToCart === 'function') {
                 addToCart(variantId, quantity, warehouseId, price);
             }

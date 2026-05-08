@@ -19,29 +19,61 @@ Permitir cantidad decimal **solo** en productos vendidos por metro lineal/cuadra
 - Si no, sigue siendo entero (regla previa).
 - Backend: validar lo mismo en el `StoreQuoteItemRequest` o equivalente.
 
-### 3.3 Reglas de ancho de lona
-Confirmadas por Eduardo:
+### 3.3 Reglas de ancho de lona — ⏸️ PENDIENTE (decisión UX con Eduardo)
+Confirmadas por Eduardo en la junta:
 - Lona ≤ 1 m de alto → toma rollo de 1 m de ancho.
 - Lona > 1 m hasta 1.5 m → toma rollo de 1.5 m de ancho.
 - Vinil siempre 1.5 m por defecto (revisar con Eduardo si hay otro caso).
 
-Cálculo:
+Cálculo deseado:
 ```
 ancho_rollo = (alto <= 1.0) ? 1.0 : 1.5
 costo = largo * ancho_rollo * costo_metro_cuadrado
 ```
 
-Verificar dónde vive hoy el cálculo y modificar para respetar decimales en `largo`. Eduardo notó que el costo redondea — el bug está ahí.
+**Por qué queda pendiente:** la regla requiere capturar **alto + largo** como dos
+inputs separados por línea, pero la junta no decidió la UX (¿se piden ambos al
+agregar al carrito? ¿solo al cotizar lonas con alto > 1m? ¿se asume default y se
+deja editar?). Antes de implementar hace falta:
+- Confirmar con Eduardo cómo capturar alto/largo en el cotizador.
+- Decidir si vinil siempre asume ancho 1.5 sin pedir alto.
+- Decidir si el usuario ve el área calculada al agregar o solo al revisar carrito.
 
-### 3.4 Mostrar el desglose
+El **bug del redondeo** (que era el dolor concreto reportado) ya quedó resuelto
+con 3.1 + 3.2: se aceptan decimales en cantidad para productos `metro_cuadrado` /
+`metro_lineal`, y el cálculo `cantidad × precio_unitario` ya no trunca.
+
+### 3.4 Mostrar el desglose — ⏸️ PENDIENTE (depende de 3.3)
 En la línea del cotizador, además del subtotal mostrar:
 - `1.80 m × 1.50 m = 2.70 m²` → para que el distribuidor vea por qué le da el costo que da.
 
+Depende de 3.3: hay que tener `alto` y `ancho_rollo` modelados primero. Cuando
+3.3 se implemente, este desglose es trivial de agregar.
+
 ## Criterios de aceptación
-- [ ] Ingresar `1.8` como cantidad de lona NO redondea.
-- [ ] Productos no por-metro siguen sin aceptar decimales.
-- [ ] El cálculo aplica el ancho correcto (1.0 vs 1.5) según la regla.
-- [ ] El desglose visible en la línea del cotizador.
+- [x] Ingresar `1.8` como cantidad de lona NO redondea. *(implementado 2026-05-07)*
+- [x] Productos no por-metro siguen sin aceptar decimales. *(implementado 2026-05-07)*
+- [ ] El cálculo aplica el ancho correcto (1.0 vs 1.5) según la regla. *(pendiente 3.3)*
+- [ ] El desglose visible en la línea del cotizador. *(pendiente 3.4, depende de 3.3)*
 
 ## Notas
 Eduardo aceptó relajar la validación para todos los productos *"al final son usuarios serios, no creo que alguien te pida 1.8 termos"* — pero igual conviene mantenerlo restringido por `unit_type` para evitar errores de captura accidental que metan ruido a producción.
+
+## Estado de implementación
+
+**PR1 (2026-05-07) — bug del redondeo resuelto:**
+- Migración `2026_05_07_213200_add_unit_type_to_products_and_decimal_quantity` agrega
+  `products.unit_type` (nullable) y cambia `quote_items.quantity` y
+  `cart_sessions.quantity` de `integer` a `decimal(10,2)`.
+- `Product` tiene constantes `UNIT_TYPE_METRO_CUADRADO` / `UNIT_TYPE_METRO_LINEAL`
+  y helper `isPerMeter()`.
+- `CartController::add` y `CartController::update` validan `numeric|min:0.01`
+  cuando el producto es por-metro, `integer|min:1` cuando no.
+- Vista `products/show.blade.php` y `cart/index.blade.php`: input `step="0.01"`
+  y JS con `parseFloat` cuando `data-step < 1`.
+
+**Para activar la funcionalidad por producto:** marcar `products.unit_type` =
+`metro_cuadrado` o `metro_lineal` desde super-admin (o seed manual) en los SKUs
+de lonas y viniles.
+
+**Pendiente para PR2:** subtareas 3.3 y 3.4 — requieren decisión UX con Eduardo.

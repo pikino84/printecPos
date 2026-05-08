@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartSession;
-use App\Models\ProductVariant;
+use App\Models\Client;
 use App\Models\Partner;
 use App\Models\PartnerEntity;
-use App\Models\Client;
+use App\Models\ProductVariant;
 use App\Models\Quote;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class CartController extends Controller
 {
@@ -47,13 +47,20 @@ class CartController extends Controller
     {
         $request->validate([
             'variant_id' => 'required|exists:product_variants,id',
-            'quantity' => 'required|integer|min:1',
             'warehouse_id' => 'nullable|exists:product_warehouses,id',
             'unit_price' => 'nullable|numeric|min:0',
         ]);
 
         try {
             $variant = ProductVariant::with('product', 'stocks')->findOrFail($request->variant_id);
+
+            // Productos por metro (lonas, viniles) aceptan decimales; el resto enteros.
+            $isPerMeter = $variant->product?->isPerMeter() ?? false;
+            $request->validate([
+                'quantity' => $isPerMeter
+                    ? 'required|numeric|min:0.01'
+                    : 'required|integer|min:1',
+            ]);
 
             // Verificar si el usuario es del partner Printec (no aplica validación de stock)
             $user = Auth::user();
@@ -62,10 +69,10 @@ class CartController extends Controller
 
             // Verificar stock disponible (excepto para partner Printec)
             $totalStock = $variant->stocks->sum('stock');
-            if (!$isPrintecPartner && $totalStock < $request->quantity) {
+            if (! $isPrintecPartner && $totalStock < $request->quantity) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Stock insuficiente. Disponible: {$totalStock}"
+                    'message' => "Stock insuficiente. Disponible: {$totalStock}",
                 ], 400);
             }
 
@@ -85,13 +92,13 @@ class CartController extends Controller
                 // Si ya existe, sumar la cantidad
                 $newQuantity = $cartItem->quantity + $request->quantity;
 
-                if (!$isPrintecPartner && $totalStock < $newQuantity) {
+                if (! $isPrintecPartner && $totalStock < $newQuantity) {
                     return response()->json([
                         'success' => false,
-                        'message' => "Stock insuficiente. Ya tienes {$cartItem->quantity} en el carrito. Disponible: {$totalStock}"
+                        'message' => "Stock insuficiente. Ya tienes {$cartItem->quantity} en el carrito. Disponible: {$totalStock}",
                     ], 400);
                 }
-                
+
                 $cartItem->quantity = $newQuantity;
                 // Actualizar precio por si cambió el tier
                 $cartItem->unit_price = $unitPrice;
@@ -120,7 +127,7 @@ class CartController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al agregar al carrito: ' . $e->getMessage()
+                'message' => 'Error al agregar al carrito: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -134,7 +141,7 @@ class CartController extends Controller
         $user = Auth::user();
         $partner = Partner::find($user->partner_id);
 
-        if (!$partner) {
+        if (! $partner) {
             return $variant->price;
         }
 
@@ -155,8 +162,11 @@ class CartController extends Controller
             return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
         }
 
+        $isPerMeter = $item->variant->product?->isPerMeter() ?? false;
         $request->validate([
-            'quantity' => 'required|integer|min:1',
+            'quantity' => $isPerMeter
+                ? 'required|numeric|min:0.01'
+                : 'required|integer|min:1',
         ]);
 
         // Verificar si el usuario es del partner Printec (no aplica validación de stock)
@@ -166,10 +176,10 @@ class CartController extends Controller
 
         // Verificar stock (excepto para partner Printec)
         $totalStock = $item->variant->stocks->sum('stock');
-        if (!$isPrintecPartner && $totalStock < $request->quantity) {
+        if (! $isPrintecPartner && $totalStock < $request->quantity) {
             return response()->json([
                 'success' => false,
-                'message' => "Stock insuficiente. Disponible: {$totalStock}"
+                'message' => "Stock insuficiente. Disponible: {$totalStock}",
             ], 400);
         }
 
@@ -218,7 +228,7 @@ class CartController extends Controller
     public function count()
     {
         return response()->json([
-            'count' => CartSession::getCartCount(Auth::id())
+            'count' => CartSession::getCartCount(Auth::id()),
         ]);
     }
 
@@ -290,7 +300,7 @@ class CartController extends Controller
         if ($request->client_id) {
             $client = Client::find($request->client_id);
             if ($client) {
-                $clientData = (object)[
+                $clientData = (object) [
                     'nombre' => $client->nombre,
                     'apellido' => $client->apellido,
                     'email' => $client->email,
@@ -299,7 +309,7 @@ class CartController extends Controller
             }
         } else {
             // Cliente manual desde el formulario
-            $clientData = (object)[
+            $clientData = (object) [
                 'nombre' => $request->client_name,
                 'apellido' => $request->client_apellido,
                 'email' => $request->client_email,
@@ -308,8 +318,8 @@ class CartController extends Controller
         }
 
         // Crear objeto Quote temporal (sin guardar en BD)
-        $quote = new Quote();
-        $quote->quote_number = 'PREVIEW-' . now()->format('YmdHis');
+        $quote = new Quote;
+        $quote->quote_number = 'PREVIEW-'.now()->format('YmdHis');
         $quote->created_at = now();
         $quote->valid_until = now()->addDays(15);
         $quote->status = 'draft';
@@ -335,13 +345,14 @@ class CartController extends Controller
 
         // Crear items temporales
         $tempItems = $cartItems->map(function ($cartItem) {
-            $item = new \stdClass();
+            $item = new \stdClass;
             $item->variant = $cartItem->variant;
             $item->product = $cartItem->product;
             $item->warehouse = $cartItem->warehouse;
             $item->quantity = $cartItem->quantity;
             $item->unit_price = $cartItem->effective_price;
             $item->subtotal = $cartItem->quantity * $cartItem->effective_price;
+
             return $item;
         });
 
@@ -350,7 +361,7 @@ class CartController extends Controller
         // Generar PDF
         $pdf = PDF::loadView('quotes.pdf', compact('quote', 'clientData'));
 
-        return $pdf->stream("preview-cotizacion.pdf");
+        return $pdf->stream('preview-cotizacion.pdf');
     }
 
     /**
@@ -369,7 +380,7 @@ class CartController extends Controller
         $request->validate([
             'json_file' => 'required_without:json_data|file|mimes:json,txt|max:2048',
             'json_data' => 'required_without:json_file|nullable|string',
-            'clear_existing' => 'boolean'
+            'clear_existing' => 'boolean',
         ]);
 
         try {
@@ -383,11 +394,11 @@ class CartController extends Controller
             $data = json_decode($jsonContent, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                return back()->with('error', 'El archivo JSON no es válido: ' . json_last_error_msg());
+                return back()->with('error', 'El archivo JSON no es válido: '.json_last_error_msg());
             }
 
             // Validar estructura
-            if (!isset($data['version']) || !isset($data['items']) || !is_array($data['items'])) {
+            if (! isset($data['version']) || ! isset($data['items']) || ! is_array($data['items'])) {
                 return back()->with('error', 'El formato del JSON no es válido. Asegúrate de usar un archivo exportado del widget.');
             }
 
@@ -397,12 +408,12 @@ class CartController extends Controller
                 ->where('is_active', true)
                 ->first();
 
-            if (!$partner) {
+            if (! $partner) {
                 return back()->with('error', 'API key del partner inválida o partner inactivo.');
             }
 
             // Verificar permisos
-            if ($user->partner_id !== $partner->id && !$user->hasAnyRole(['super admin', 'Asociado Administrador'])) {
+            if ($user->partner_id !== $partner->id && ! $user->hasAnyRole(['super admin', 'Asociado Administrador'])) {
                 return back()->with('error', 'No tienes permiso para importar carritos de este partner.');
             }
 
@@ -418,15 +429,17 @@ class CartController extends Controller
             foreach ($data['items'] as $item) {
                 $variant = ProductVariant::with(['product', 'stocks'])->find($item['variant_id']);
 
-                if (!$variant) {
-                    $skippedItems[] = ($item['name'] ?? "Variante {$item['variant_id']}") . ' - Producto no encontrado';
+                if (! $variant) {
+                    $skippedItems[] = ($item['name'] ?? "Variante {$item['variant_id']}").' - Producto no encontrado';
+
                     continue;
                 }
 
                 // Verificar stock
                 $totalStock = $variant->stocks->sum('stock');
-                if (!$isPrintecPartner && $totalStock < $item['quantity']) {
-                    $skippedItems[] = ($item['name'] ?? $variant->product->name) . " - Stock insuficiente (disponible: {$totalStock})";
+                if (! $isPrintecPartner && $totalStock < $item['quantity']) {
+                    $skippedItems[] = ($item['name'] ?? $variant->product->name)." - Stock insuficiente (disponible: {$totalStock})";
+
                     continue;
                 }
 
@@ -453,7 +466,7 @@ class CartController extends Controller
 
             $message = "Se importaron {$importedCount} productos al carrito.";
             if (count($skippedItems) > 0) {
-                $message .= ' ' . count($skippedItems) . ' productos fueron omitidos.';
+                $message .= ' '.count($skippedItems).' productos fueron omitidos.';
                 session()->flash('skipped_items', $skippedItems);
             }
 
@@ -461,7 +474,7 @@ class CartController extends Controller
                 ->with('success', $message);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al procesar la importación: ' . $e->getMessage());
+            return back()->with('error', 'Error al procesar la importación: '.$e->getMessage());
         }
     }
 }

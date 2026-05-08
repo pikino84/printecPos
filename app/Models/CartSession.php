@@ -18,7 +18,7 @@ class CartSession extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
     ];
 

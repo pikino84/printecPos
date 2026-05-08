@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Product extends Model
 {
@@ -44,7 +44,26 @@ class Product extends Model
         // NUEVOS CAMPOS
         'is_own_product',
         'is_public',
+        'unit_type',
     ];
+
+    public const UNIT_TYPE_METRO_CUADRADO = 'metro_cuadrado';
+
+    public const UNIT_TYPE_METRO_LINEAL = 'metro_lineal';
+
+    public const PER_METER_UNIT_TYPES = [
+        self::UNIT_TYPE_METRO_CUADRADO,
+        self::UNIT_TYPE_METRO_LINEAL,
+    ];
+
+    /**
+     * Producto se vende por unidad lineal o de área (lonas, viniles).
+     * Cuando es true, la cantidad acepta decimales y la UI muestra step="0.01".
+     */
+    public function isPerMeter(): bool
+    {
+        return in_array($this->unit_type, self::PER_METER_UNIT_TYPES, true);
+    }
 
     protected $casts = [
         'price' => 'decimal:2',
@@ -57,7 +76,9 @@ class Product extends Model
 
     // Activity Log
     protected static $logName = 'producto';
+
     protected static $logAttributes = ['name', 'price', 'is_active', 'is_own_product', 'is_public'];
+
     protected static $logOnlyDirty = true;
 
     public function getActivitylogOptions(): LogOptions
@@ -118,7 +139,6 @@ class Product extends Model
     // SCOPES PARA PRODUCTOS PROPIOS
     // ========================================================================
 
-
     // Scope para productos propios únicamente
     public function scopeOwnProducts($query)
     {
@@ -134,24 +154,24 @@ class Product extends Model
     // Scope alternativo para visibilidad por partner (más detallado)
     public function scopeVisibleFor($query, $user)
     {
-        return $query->where(function($q) use ($user) {
-            $q->where(function($subQuery) use ($user) {
+        return $query->where(function ($q) use ($user) {
+            $q->where(function ($subQuery) use ($user) {
                 // Productos propios del partner del usuario
                 $subQuery->where('partner_id', $user->partner_id)
-                        ->where('is_own_product', true);
+                    ->where('is_own_product', true);
             })
-            ->orWhere(function($subQuery) use ($user) {
-                // Productos públicos de Printec (si el usuario no es de Printec)
-                if ($user->partner_id != 1) {
-                    $subQuery->where('partner_id', 1)
+                ->orWhere(function ($subQuery) use ($user) {
+                    // Productos públicos de Printec (si el usuario no es de Printec)
+                    if ($user->partner_id != 1) {
+                        $subQuery->where('partner_id', 1)
                             ->where('is_public', true);
-                }
-            })
-            ->orWhere(function($subQuery) use ($user) {
-                // Productos de proveedores (no propios) visibles para todos
-                $subQuery->where('is_own_product', false)
+                    }
+                })
+                ->orWhere(function ($subQuery) {
+                    // Productos de proveedores (no propios) visibles para todos
+                    $subQuery->where('is_own_product', false)
                         ->where('is_active', true);
-            });
+                });
         });
     }
 
@@ -171,27 +191,32 @@ class Product extends Model
             'user_partner_id' => $user->partner_id,
         ]);
 
-        if (!$this->is_own_product) {
+        if (! $this->is_own_product) {
             \Log::info('→ Not own product, returning TRUE');
+
             return true;
         }
 
         if ($this->partner_id === $user->partner_id) {
             \Log::info('→ Same partner, returning TRUE');
+
             return true;
         }
 
         if ($this->partner_id === 1 && $this->is_public) {
             \Log::info('→ Public Printec product, returning TRUE');
+
             return true;
         }
 
         if ($user->partner_id === 1) {
             \Log::info('→ User is Printec, returning TRUE');
+
             return true;
         }
 
         \Log::info('→ No condition met, returning FALSE');
+
         return false;
     }
 
@@ -220,6 +245,7 @@ class Product extends Model
                 $images[] = Storage::disk('public')->url($v->image);
             }
         }
+
         return array_values(array_unique($images));
     }
 
@@ -231,7 +257,7 @@ class Product extends Model
 
     public function getDisplayPriceAttribute()
     {
-        return '$' . number_format($this->price, 2);
+        return '$'.number_format($this->price, 2);
     }
 
     public function scopeActive($query)
@@ -241,10 +267,11 @@ class Product extends Model
 
     public function getTotalStockAttribute()
     {
-        return $this->variants->sum(function($variant) {
+        return $this->variants->sum(function ($variant) {
             return $variant->stocks->sum('stock');
         });
     }
+
     // Métodos auxiliares
     public function hasVariants()
     {
@@ -253,7 +280,7 @@ class Product extends Model
 
     public function getActiveVariants()
     {
-        return $this->variants()->whereHas('stocks', function($query) {
+        return $this->variants()->whereHas('stocks', function ($query) {
             $query->where('stock', '>', 0);
         })->get();
     }
