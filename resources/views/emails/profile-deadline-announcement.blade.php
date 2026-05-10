@@ -32,7 +32,7 @@ Hoy tu perfil está al **{{ $percentage }}%**.
 Completar mi perfil
 </x-mail::button>
 
-Si tienes dudas, responde a este correo.
+Si tienes dudas, escríbenos a [vendors@printec.mx](mailto:vendors@printec.mx).
 
 Gracias,
 {{ config('app.name') }}

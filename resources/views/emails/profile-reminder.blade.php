@@ -28,7 +28,7 @@ Tu perfil en Printec todavía no está completo (**{{ $percentage }}%**) y queda
 Completar mi perfil
 </x-mail::button>
 
-Si tienes dudas, responde a este correo.
+Si tienes dudas, escríbenos a [vendors@printec.mx](mailto:vendors@printec.mx).
 
 Gracias,
 {{ config('app.name') }}
