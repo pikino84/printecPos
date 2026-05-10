@@ -23,8 +23,10 @@ class CheckProfileDeadlines extends Command
     {
         $today = now()->startOfDay();
 
+        // Solo Asociados puros entran al flujo de recordatorio/veto.
+        // Mixto y Proveedor son socios estratégicos exentos de la regla de los 15 días.
         $partners = Partner::query()
-            ->whereIn('type', ['Asociado', 'Mixto'])
+            ->where('type', 'Asociado')
             ->whereNotNull('profile_deadline_at')
             ->whereNull('vetoed_until')
             ->get();

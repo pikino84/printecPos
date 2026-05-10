@@ -79,7 +79,7 @@
                         <th>Teléfono</th>
                         <th>Tipo</th>
                         <th>Activo</th>
-                        <th style="min-width:160px;">{!! $sortLink('profile', '% Perfil') !!}</th>
+                        <th style="min-width:200px;">{!! $sortLink('profile', '% Perfil') !!}</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -93,22 +93,48 @@
                                 $pct >= 30 => 'bg-warning',
                                 default => 'bg-danger',
                             };
+                            // Solo Asociado puro está sujeto a deadline/veto. Mixto y Proveedor
+                            // muestran solo la barra (informativa) sin countdown.
+                            $appliesDeadline = $partner->type === 'Asociado';
+                            $days = $appliesDeadline ? $partner->daysUntilDeadline() : null;
+                            $countdownClass = match (true) {
+                                $days === null => '',
+                                $days <= 0 => 'text-danger fw-semibold',
+                                $days <= 3 => 'text-danger',
+                                $days <= 7 => 'text-warning',
+                                default => 'text-muted',
+                            };
                         @endphp
                         <tr>
                             <td>{{ $partner->name }}</td>
                             <td>{{ $partner->contact_name }}</td>
                             <td>{{ $partner->contact_email }}</td>
                             <td>{{ $partner->contact_phone }}</td>
-                            <td>{{ ucfirst($partner->type) }}</td>
+                            <td>{!! $partner->type_badge !!}</td>
                             <td>{{ $partner->is_active ? 'Sí' : 'No' }}</td>
                             <td>
-                                <div class="progress" style="height:18px;" title="{{ $pct }}% completo">
+                                <div class="progress" style="height:18px;" title="{{ $partner->type }} — {{ $pct }}% completo">
                                     <div class="progress-bar {{ $pctClass }}" role="progressbar"
                                          style="width: {{ $pct }}%;" aria-valuenow="{{ $pct }}"
                                          aria-valuemin="0" aria-valuemax="100">
                                         <small>{{ $pct }}%</small>
                                     </div>
                                 </div>
+                                @if ($partner->isVetoed())
+                                    <small class="d-block mt-1 text-danger fw-semibold">
+                                        🚫 Vetado hasta {{ $partner->vetoed_until->format('Y-m-d') }}
+                                    </small>
+                                @elseif ($appliesDeadline && $days !== null && $pct < 100)
+                                    <small class="d-block mt-1 {{ $countdownClass }}">
+                                        @if ($days > 0)
+                                            ⏱ {{ $days }} {{ $days === 1 ? 'día restante' : 'días restantes' }}
+                                        @else
+                                            ⚠ Vencido hace {{ abs($days) }} {{ abs($days) === 1 ? 'día' : 'días' }}
+                                        @endif
+                                    </small>
+                                @elseif (! $appliesDeadline)
+                                    <small class="d-block mt-1 text-muted">— exento de deadline</small>
+                                @endif
                             </td>
                             <td class="d-flex gap-1">
                               {{-- Ver detalle del partner --}}

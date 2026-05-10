@@ -202,8 +202,9 @@ class PartnerController extends Controller
     {
         $this->authorize('partners_index');
 
+        // Solo Asociados puros: Mixto y Proveedor están exentos de la regla de perfil con deadline.
         $partners = Partner::with(['entities.bankAccounts'])
-            ->whereIn('type', ['Asociado', 'Mixto'])
+            ->where('type', 'Asociado')
             ->get()
             ->map(function (Partner $p) {
                 $missing = $p->missingProfileFields();

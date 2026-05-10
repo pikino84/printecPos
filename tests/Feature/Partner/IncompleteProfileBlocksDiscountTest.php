@@ -70,6 +70,17 @@ class IncompleteProfileBlocksDiscountTest extends TestCase
             'Proveedores no están sujetos a la regla de perfil completo');
     }
 
+    public function test_mixto_perfil_incompleto_no_se_bloquea(): void
+    {
+        $partner = Partner::factory()->create(['type' => 'Mixto']);
+        $pricing = PartnerPricing::factory()->create([
+            'partner_id' => $partner->id,
+        ]);
+
+        $this->assertFalse($pricing->shouldChargePublicPrice(),
+            'Mixto está exento del bloqueo de descuento por perfil incompleto');
+    }
+
     public function test_breakdown_marca_profile_blocked_cuando_aplica(): void
     {
         $partner = Partner::factory()->asociado()->create();

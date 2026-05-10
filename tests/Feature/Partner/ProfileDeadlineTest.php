@@ -126,6 +126,23 @@ class ProfileDeadlineTest extends TestCase
         $this->assertFalse($partner->fresh()->isVetoed());
     }
 
+    public function test_mixto_no_se_vetea_ni_recibe_recordatorios(): void
+    {
+        Carbon::setTestNow('2026-05-08');
+
+        $partner = Partner::factory()->create([
+            'type' => 'Mixto',
+            'profile_deadline_at' => '2026-05-05', // ya pasó
+            'contact_email' => 'm@printec.test',
+        ]);
+
+        $this->artisan('partners:check-profile-deadlines')->assertSuccessful();
+
+        $this->assertFalse($partner->fresh()->isVetoed());
+        Mail::assertNotQueued(ProfileDeadlineExceededMail::class);
+        Mail::assertNotQueued(ProfileReminderMail::class);
+    }
+
     public function test_login_bloqueado_si_partner_vetado(): void
     {
         $partner = Partner::factory()->asociado()->create([

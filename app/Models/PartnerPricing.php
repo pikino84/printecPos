@@ -83,8 +83,9 @@ class PartnerPricing extends Model
      * Fórmula: (Price + Markup del Tier) - Descuento del Tier
      * Nota: Todos los productos (propios y de proveedores) reciben los mismos aumentos
      *
-     * Épica 05: si el partner es Asociado/Mixto y su perfil < 100%, pierde el descuento
+     * Épica 05: si el partner es Asociado puro y su perfil < 100%, pierde el descuento
      * de distribuidor y cotiza al precio público (solo Markup Printec, sin tier ni descuento).
+     * Mixto y Proveedor están exentos por ser socios estratégicos que también proveen producto.
      */
     public function calculateCostPrice($basePrice, $isPrintecProduct = true)
     {
@@ -104,14 +105,14 @@ class PartnerPricing extends Model
     }
 
     /**
-     * El distribuidor pierde el descuento si es Asociado/Mixto con perfil incompleto.
-     * Proveedores y Printec no están sujetos a esta regla.
+     * El distribuidor pierde el descuento solo si es Asociado puro con perfil incompleto.
+     * Mixto, Proveedor y Printec están exentos.
      */
     public function shouldChargePublicPrice(): bool
     {
         $partner = $this->partner;
 
-        if (! $partner || ! $partner->isAsociadoOMixto()) {
+        if (! $partner || ! $partner->isAsociado()) {
             return false;
         }
 

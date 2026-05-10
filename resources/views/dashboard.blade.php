@@ -10,8 +10,10 @@
             @php
                 $user = auth()->user();
                 $partner = $user?->partner;
-                // Mostrar barra de progreso solo a Asociados/Mixtos (no a Printec ni a Proveedores puros).
-                $shouldShowProfileProgress = $partner && $partner->isAsociadoOMixto() && ! $user->isPrintec();
+                // Mostrar barra a todos los partners (Asociado/Mixto/Proveedor) excepto Printec.
+                // El componente decide internamente si muestra deadline/veto (solo Asociado puro)
+                // o si es informativa (Mixto/Proveedor).
+                $shouldShowProfileProgress = $partner && ! $user->isPrintec();
             @endphp
 
             @if ($shouldShowProfileProgress)
