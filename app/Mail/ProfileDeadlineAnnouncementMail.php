@@ -27,7 +27,7 @@ class ProfileDeadlineAnnouncementMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.profile-deadline-announcement',
+            markdown: 'emails.profile-deadline-announcement',
             with: [
                 'partner' => $this->partner,
                 'percentage' => $this->partner->profileCompletionPercentage(),

@@ -25,7 +25,7 @@ class ProfileDeadlineExceededMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.profile-deadline-exceeded',
+            markdown: 'emails.profile-deadline-exceeded',
             with: [
                 'partner' => $this->partner,
                 'vetoedUntil' => $this->partner->vetoed_until,

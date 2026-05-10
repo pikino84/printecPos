@@ -30,7 +30,7 @@ class ProfileReminderMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.profile-reminder',
+            markdown: 'emails.profile-reminder',
             with: [
                 'partner' => $this->partner,
                 'daysRemaining' => $this->daysRemaining,
