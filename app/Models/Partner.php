@@ -38,6 +38,7 @@ class Partner extends Model
         'vetoed_until',
         'reminder_7d_sent_at',
         'reminder_3d_sent_at',
+        'deadline_announcement_sent_at',
     ];
 
     protected $casts = [
@@ -47,6 +48,7 @@ class Partner extends Model
         'vetoed_until' => 'date',
         'reminder_7d_sent_at' => 'date',
         'reminder_3d_sent_at' => 'date',
+        'deadline_announcement_sent_at' => 'datetime',
     ];
 
     // ========================================================================
