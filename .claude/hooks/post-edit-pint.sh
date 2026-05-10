@@ -3,8 +3,12 @@
 # Silent on success, silent on failure (must never break the edit).
 set +e
 
-# Extract file_path from stdin JSON. Python is on PATH (used by other tooling here).
-file=$(python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" 2>/dev/null)
+# Read full stdin once (small JSON payload from harness).
+input=$(cat)
+
+# Parse "file_path" from JSON via sed (no python/jq dependency — both are unreliable
+# on Windows + Git Bash: python3 is hijacked by Microsoft Store, jq not installed).
+file=$(printf '%s' "$input" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
 
 # Bail conditions
 [ -z "$file" ] && exit 0
@@ -17,18 +21,18 @@ file=$(python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_in
 cd "${CLAUDE_PROJECT_DIR:-$(pwd)}" || exit 0
 [ -f vendor/bin/pint ] || exit 0
 
-# PHP isn't on Git Bash PATH on Windows — locate the latest 8.x in Laragon.
-PHP_DIR=""
-for major in 8.4 8.3 8.2 8.1; do
-    candidate=$(ls -d /c/laragon/bin/php/php-${major}.*/ 2>/dev/null | sort -V | tail -1)
-    if [ -n "$candidate" ]; then
-        PHP_DIR="$candidate"
+# Locate PHP. Project is validated on 8.3 (Laravel 10 + PHPUnit 10).
+# Prefer 8.3, fall back to 8.2 only — newer 8.4/8.5 are unverified.
+PHP_BIN=""
+for major in 8.3 8.2; do
+    candidate=$(ls -d /c/laragon/bin/php/php-${major}.*-Win32-*/ 2>/dev/null | sort -V | tail -1)
+    if [ -n "$candidate" ] && [ -f "${candidate}php.exe" ]; then
+        PHP_BIN="${candidate}php.exe"
         break
     fi
 done
 
-PHP_BIN="${PHP_DIR}php.exe"
-[ ! -f "$PHP_BIN" ] && exit 0
+[ -z "$PHP_BIN" ] && exit 0
 
 # Run Pint silently
 "$PHP_BIN" vendor/bin/pint "$file" > /dev/null 2>&1
