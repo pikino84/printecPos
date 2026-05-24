@@ -74,15 +74,15 @@ class PricingTier extends Model
     public function qualifiesForAmount($amount)
     {
         $amount = (float) $amount;
-        
+
         if ($amount < $this->min_monthly_purchases) {
             return false;
         }
-        
+
         if ($this->max_monthly_purchases && $amount > $this->max_monthly_purchases) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -94,9 +94,21 @@ class PricingTier extends Model
         return self::active()
             ->ordered()
             ->get()
-            ->first(function($tier) use ($amount) {
+            ->first(function ($tier) use ($amount) {
                 return $tier->qualifiesForAmount($amount);
             });
+    }
+
+    /**
+     * Nivel público / de entrada: el primero por orden.
+     *
+     * Lo pagan los partners sin nivel de distribuidor asignado y los
+     * Asociados con perfil incompleto que pierden su nivel (Épica 05).
+     * Es la misma definición que usa el fallback de PartnerPricing::getEffectiveTier().
+     */
+    public static function publicTier()
+    {
+        return self::active()->ordered()->first();
     }
 
     /**
@@ -105,6 +117,7 @@ class PricingTier extends Model
     public function applyPrintecMarkup($price)
     {
         $printecMarkup = PricingSetting::get('printec_markup', 52);
+
         return $price * (1 + $printecMarkup / 100);
     }
 
@@ -146,7 +159,7 @@ class PricingTier extends Model
     public function calculatePriceWithTax($basePrice, $taxRate = 16)
     {
         $priceBeforeTax = $this->calculatePrice($basePrice);
-        
+
         return $priceBeforeTax * (1 + $taxRate / 100);
     }
 
@@ -158,7 +171,7 @@ class PricingTier extends Model
         if ($this->discount_percentage > 0) {
             return "(Price +{$this->markup_percentage}%) - {$this->discount_percentage}% + IVA";
         }
-        
+
         return "Price + {$this->markup_percentage}% + IVA";
     }
 }

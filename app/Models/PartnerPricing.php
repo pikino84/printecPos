@@ -48,16 +48,27 @@ class PartnerPricing extends Model
     // ========================================================================
 
     /**
-     * Obtener el tier actual o el tier por defecto (Junior)
+     * Obtener el tier actual o, si no tiene, el nivel público (primero por orden).
      */
     public function getEffectiveTier()
     {
-        if ($this->currentTier) {
-            return $this->currentTier;
+        return $this->currentTier ?? PricingTier::publicTier();
+    }
+
+    /**
+     * Nivel que realmente aplica al partner al cotizar.
+     *
+     * Épica 05: un Asociado puro con perfil < 100% pierde su nivel de
+     * distribuidor y cotiza al nivel público. Mixto y Proveedor conservan
+     * su nivel por ser socios estratégicos que también proveen producto.
+     */
+    protected function resolvePricingTier()
+    {
+        if ($this->shouldChargePublicPrice()) {
+            return PricingTier::publicTier();
         }
 
-        // Si no tiene tier asignado, usar Junior (el primero por orden)
-        return PricingTier::active()->ordered()->first();
+        return $this->getEffectiveTier();
     }
 
     /**
@@ -83,22 +94,19 @@ class PartnerPricing extends Model
      * Fórmula: (Price + Markup del Tier) - Descuento del Tier
      * Nota: Todos los productos (propios y de proveedores) reciben los mismos aumentos
      *
-     * Épica 05: si el partner es Asociado puro y su perfil < 100%, pierde el descuento
-     * de distribuidor y cotiza al precio público (solo Markup Printec, sin tier ni descuento).
+     * Épica 05: si el partner es Asociado puro y su perfil < 100%, pierde su nivel de
+     * distribuidor y cotiza al nivel público (el de entrada, primero por orden).
      * Mixto y Proveedor están exentos por ser socios estratégicos que también proveen producto.
      */
     public function calculateCostPrice($basePrice, $isPrintecProduct = true)
     {
-        $printecMarkup = PricingSetting::get('printec_markup', 52);
-        $publicPrice = $basePrice * (1 + $printecMarkup / 100);
+        $tier = $this->resolvePricingTier();
 
-        if ($this->shouldChargePublicPrice()) {
-            return $publicPrice;
-        }
-
-        $tier = $this->getEffectiveTier();
+        // Sin niveles configurados: cae al Markup Printec global.
         if (! $tier) {
-            return $publicPrice;
+            $printecMarkup = PricingSetting::get('printec_markup', 52);
+
+            return $basePrice * (1 + $printecMarkup / 100);
         }
 
         return $tier->calculatePrice($basePrice);
@@ -157,29 +165,12 @@ class PartnerPricing extends Model
      */
     public function getPriceBreakdown($basePrice, $isPrintecProduct = true)
     {
-        $tier = $this->getEffectiveTier();
         $printecMarkup = PricingSetting::get('printec_markup', 52);
+        // Perfil incompleto (Épica 05): el nivel resuelto será el público.
+        $blocked = $this->shouldChargePublicPrice();
+        $tier = $this->resolvePricingTier();
 
-        // Épica 05: perfil incompleto fuerza precio público.
-        if ($this->shouldChargePublicPrice()) {
-            $publicPrice = $basePrice * (1 + $printecMarkup / 100);
-
-            return [
-                'base_price' => $basePrice,
-                'tier_name' => null,
-                'printec_markup' => $printecMarkup,
-                'tier_markup' => 0,
-                'discount_percentage' => 0,
-                'after_printec_markup' => $publicPrice,
-                'after_tier_markup' => $publicPrice,
-                'after_discount' => $publicPrice,
-                'cost_price' => $publicPrice,
-                'partner_markup' => $this->markup_percentage,
-                'sale_price' => $this->applyMarkup($publicPrice),
-                'profile_blocked' => true,
-            ];
-        }
-
+        // Sin niveles configurados: solo Markup Printec global.
         if (! $tier) {
             $afterPrintecMarkup = $basePrice * (1 + $printecMarkup / 100);
 
@@ -195,6 +186,7 @@ class PartnerPricing extends Model
                 'cost_price' => $afterPrintecMarkup,
                 'partner_markup' => $this->markup_percentage,
                 'sale_price' => $this->applyMarkup($afterPrintecMarkup),
+                'profile_blocked' => $blocked,
             ];
         }
 
@@ -217,6 +209,7 @@ class PartnerPricing extends Model
             'cost_price' => $afterDiscount,
             'partner_markup' => $this->markup_percentage,
             'sale_price' => $this->applyMarkup($afterDiscount),
+            'profile_blocked' => $blocked,
         ];
     }
 
