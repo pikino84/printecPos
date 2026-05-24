@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cómo se arma el precio del widget — PrintecPOS</title>
+<style>
+  :root {
+    --brand: #2457aa;
+    --brand-dark: #1a4080;
+    --brand-soft: #e8eef9;
+    --ink: #1f2430;
+    --muted: #5b6472;
+    --line: #e1e5ec;
+    --ok: #1f9d57;
+    --warn: #c47d00;
+    --warn-soft: #fff6e3;
+    --code-bg: #f4f6fa;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: #f7f8fb;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 80px; }
+  header {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+    color: #fff;
+    padding: 40px 0 48px;
+  }
+  header .wrap { padding-bottom: 0; }
+  header h1 { margin: 0 0 8px; font-size: 28px; color: #fff; }
+  header p { margin: 0; color: rgba(255,255,255,.92); max-width: 760px; }
+  .badge {
+    display: inline-block; background: rgba(255,255,255,.18); color:#fff;
+    font-size: 12px; padding: 4px 10px; border-radius: 999px; margin-bottom: 16px;
+    letter-spacing: .3px;
+  }
+  h2 {
+    font-size: 20px; margin: 48px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--brand-soft);
+  }
+  h2 .n {
+    display: inline-flex; width: 26px; height: 26px; border-radius: 6px;
+    background: var(--brand); color: #fff; font-size: 14px;
+    align-items: center; justify-content: center; margin-right: 10px;
+    vertical-align: middle;
+  }
+  h3 { font-size: 15px; margin: 24px 0 8px; }
+  p { color: var(--ink); }
+  code, .mono {
+    font-family: "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+  }
+  code {
+    background: var(--code-bg); padding: 2px 6px; border-radius: 5px;
+    color: var(--brand-dark); border: 1px solid var(--line);
+  }
+  .url { white-space: nowrap; }
+
+  /* ---- Pipeline / flujo ---- */
+  .pipe { margin: 24px 0; }
+  .group-label {
+    font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+    color: var(--muted); margin: 18px 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  .group-label::after { content:""; flex:1; height:1px; background: var(--line); }
+  .group-cost .group-label { color: var(--brand); }
+  .group-margin .group-label { color: var(--ok); }
+
+  .step {
+    background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--brand);
+    border-radius: var(--radius); padding: 14px 18px; margin: 10px 0;
+    display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center;
+  }
+  .step.margin-step { border-left-color: var(--ok); }
+  .step.base-step { border-left-color: var(--muted); }
+  .step.key-step { border-left-width: 6px; background: #fcfdff; }
+  .step .num {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--brand-soft);
+    color: var(--brand-dark); font-weight: 700; display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .margin-step .num { background: #e3f5ea; color: var(--ok); }
+  .base-step .num { background: #eceef2; color: var(--muted); }
+  .step .label { font-weight: 600; }
+  .step .label .chip { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .chip.var { background: #fff1d6; color: var(--warn); }
+  .chip.zero { background: #eceef2; color: var(--muted); }
+  .step .formula { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .step .src { font-size: 12px; text-align: right; color: var(--muted); white-space: nowrap; }
+  .step .src a { color: var(--brand); text-decoration: none; }
+  .step .src a:hover { text-decoration: underline; }
+  .arrow { text-align: center; color: var(--line); font-size: 18px; line-height: 1; margin: -2px 0; }
+  .result-step {
+    background: var(--brand); color: #fff; border: none; border-radius: var(--radius);
+    padding: 16px 20px; margin: 14px 0 4px; text-align: center; font-weight: 700; font-size: 16px;
+  }
+  .cost-result {
+    background: var(--brand-soft); color: var(--brand-dark); font-weight: 700;
+    border-radius: var(--radius); padding: 12px 18px; margin: 6px 0; text-align:center;
+    border: 1px dashed var(--brand);
+  }
+
+  /* ---- Tabla ---- */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; background:#fff; border-radius: var(--radius); overflow:hidden; box-shadow: 0 1px 2px rgba(0,0,0,.04);}
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--brand); color: #fff; font-weight: 600; font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: #fafbfd; }
+  td .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-dark); white-space: nowrap; }
+  td .tag.printec { background:#e7edf9; color: var(--brand-dark); }
+  td .tag.dist { background:#e3f5ea; color: var(--ok); }
+  td .tag.catalog { background:#eceef2; color: var(--muted); }
+
+  /* ---- Cards de reglas ---- */
+  .rule { border-radius: var(--radius); padding: 16px 18px; margin: 14px 0; border: 1px solid var(--line); background:#fff; }
+  .rule h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
+  .rule .icon { font-size: 18px; }
+  .rule.warn { background: var(--warn-soft); border-color: #f0dca8; }
+  .rule.warn h3 { color: var(--warn); }
+  .rule.info { background: var(--brand-soft); border-color: #cdddf6; }
+  .rule.info h3 { color: var(--brand-dark); }
+  .rule p { margin: 6px 0; font-size: 14px; }
+  .rule ul { margin: 6px 0; padding-left: 20px; font-size: 14px; }
+
+  /* ---- Callout ---- */
+  .callout { background: #eaf6ef; border: 1px solid #bfe3cd; border-left: 4px solid var(--ok); border-radius: var(--radius); padding: 14px 18px; margin: 18px 0; font-size: 14px; }
+  .callout strong { color: #157a43; }
+
+  /* ---- Calculadora ---- */
+  .calc { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin: 18px 0; box-shadow: 0 2px 8px rgba(36,87,170,.06); }
+  .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .field input[type="number"] { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .field input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .field.public-only { display: none; }
+  .field.public-only.show { display: block; }
+  .toggle-row { display:flex; align-items:center; gap: 10px; margin: 18px 0 4px; padding: 10px 12px; background: var(--code-bg); border-radius: 8px; }
+  .toggle-row input { width: 18px; height: 18px; }
+  .toggle-row label { font-size: 14px; cursor: pointer; }
+  .breakdown { margin-top: 20px; border-top: 1px dashed var(--line); padding-top: 16px; }
+  .breakdown .line { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; border-bottom: 1px solid #f1f3f7; }
+  .breakdown .line .lbl { color: var(--muted); }
+  .breakdown .line .val { font-weight: 600; font-family: "SF Mono", Consolas, monospace; }
+  .breakdown .line.cost { background: var(--brand-soft); margin: 6px -10px; padding: 8px 10px; border-radius: 6px; border:none; }
+  .breakdown .line.cost .lbl, .breakdown .line.cost .val { color: var(--brand-dark); }
+  .breakdown .line.final { background: var(--brand); color:#fff; margin: 10px -12px 0; padding: 12px; border-radius: 8px; border:none; font-size: 16px; }
+  .breakdown .line.final .lbl, .breakdown .line.final .val { color:#fff; }
+  .blocked-note { display:none; background: var(--warn-soft); color: var(--warn); padding: 8px 12px; border-radius: 8px; margin-top: 12px; font-size: 13px; }
+  .blocked-note.show { display:block; }
+
+  footer { color: var(--muted); font-size: 12px; margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .pill-legend { display:flex; gap:16px; flex-wrap:wrap; margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+  .pill-legend span { display:inline-flex; align-items:center; gap:6px; }
+  .dot { width:10px;height:10px;border-radius:50%; display:inline-block;}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="badge">PrintecPOS · Guía para vendedores</span>
+    <h1>Cómo se arma el precio que muestra el widget</h1>
+    <p>Del precio base del catálogo al precio final que ve el cliente del distribuidor. Incluye las reglas de negocio (perfil &lt;100%, visibilidad de precios) y las páginas donde se configura cada valor.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ 1. FLUJO ============ -->
+  <h2><span class="n">1</span>El flujo de cálculo</h2>
+  <p>Así se arma el precio, paso a paso, de arriba hacia abajo:</p>
+
+  <div class="pipe">
+
+    <div class="group-cost">
+      <div class="group-label">Costo que el distribuidor le paga a Printec</div>
+
+      <div class="step base-step">
+        <div class="num">0</div>
+        <div><div class="label">Precio base del producto</div><div class="formula">El precio del catálogo / proveedor, antes de cualquier aumento.</div></div>
+        <div class="src">Lo define el catálogo</div>
+      </div>
+      <div class="arrow">▼</div>
+
+      <div class="step">
+        <div class="num">1</div>
+        <div><div class="label">+ Markup Printec <span class="chip zero">hoy 0%</span></div><div class="formula">Aumento general de Printec sobre el precio base. Hoy está configurado en 0%, así que no suma nada.</div></div>
+        <div class="src"><a href="https://posprintec.com/pricing-settings" target="_blank" rel="noopener" class="url">posprintec.com/pricing-settings</a></div>
+      </div>
+      <div class="arrow">▼</div>
+
+      <div class="step key-step">
+        <div class="num">2</div>
+        <div><div class="label">+ Markup del Nivel <span class="chip var">varía por nivel</span></div><div class="formula">El aumento principal. Cada nivel (Público, Distribuidor, etc.) tiene su propio porcentaje. A mejor nivel, menor markup.</div></div>
+        <div class="src"><a href="https://posprintec.com/pricing-tiers" target="_blank" rel="noopener" class="url">posprintec.com/pricing-tiers</a></div>
+      </div>
+      <div class="arrow">▼</div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div><div class="label">− Descuento del Nivel <span class="chip var">varía por nivel</span></div><div class="formula">Algunos niveles aplican un descuento extra. Hoy los niveles activos no lo usan (0%), pero es configurable.</div></div>
+        <div class="src"><a href="https://posprintec.com/pricing-tiers" target="_blank" rel="noopener" class="url">posprintec.com/pricing-tiers</a></div>
+      </div>
+
+      <div class="cost-result">= COSTO PARA EL DISTRIBUIDOR (lo que le paga a Printec)</div>
+    </div>
+
+    <div class="group-margin">
+      <div class="group-label">Margen de ganancia del distribuidor</div>
+
+      <div class="step margin-step">
+        <div class="num">4</div>
+        <div><div class="label">+ Margen del Distribuidor</div><div class="formula">costo × (1 + margen% ) &nbsp;·&nbsp; lo define el propio distribuidor</div></div>
+        <div class="src"><a href="https://posprintec.com/mi-ganancia" target="_blank" rel="noopener" class="url">posprintec.com/mi-ganancia</a></div>
+      </div>
+    </div>
+
+    <div class="result-step">= PRECIO MOSTRADO EN EL WIDGET &nbsp;(sin IVA)</div>
+  </div>
+
+  <div class="pill-legend">
+    <span><span class="dot" style="background:var(--muted)"></span> lo pone el catálogo</span>
+    <span><span class="dot" style="background:var(--brand)"></span> lo controla Printec</span>
+    <span><span class="dot" style="background:var(--ok)"></span> lo controla el distribuidor</span>
+  </div>
+
+  <div class="callout">
+    <strong>Lo importante:</strong> el "descuento" de un distribuidor no viene de un porcentaje de descuento, sino de tener asignado un <strong>nivel con menor markup</strong>. El nivel Público es el más caro; conforme un distribuidor compra más volumen, sube de nivel y su markup baja, así que paga menos por el mismo producto.
+  </div>
+
+  <h3>Fórmula completa</h3>
+  <p class="mono" style="background:var(--code-bg);border:1px solid var(--line);padding:14px;border-radius:8px;overflow-x:auto;">
+    precio_widget = ( ( ( base × (1 + printec% ) ) × (1 + nivel_markup% ) ) × (1 − nivel_desc% ) ) × (1 + margen_distribuidor% )
+  </p>
+
+  <!-- ============ 2. CAMPOS Y URLS ============ -->
+  <h2><span class="n">2</span>Dónde se configura cada valor</h2>
+  <table>
+    <thead>
+      <tr><th>Componente</th><th>Quién lo controla</th><th>Valor actual</th><th>Página de edición</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Precio base</td>
+        <td><span class="tag catalog">Catálogo</span></td>
+        <td>Según el producto</td>
+        <td>Edición del producto</td>
+      </tr>
+      <tr>
+        <td>Markup Printec (global)</td>
+        <td><span class="tag printec">Printec</span></td>
+        <td>0% (hoy no suma)</td>
+        <td><span class="url">posprintec.com/pricing-settings</span></td>
+      </tr>
+      <tr>
+        <td>Markup del nivel</td>
+        <td><span class="tag printec">Printec (por nivel)</span></td>
+        <td>Varía por nivel</td>
+        <td><span class="url">posprintec.com/pricing-tiers</span></td>
+      </tr>
+      <tr>
+        <td>Descuento del nivel</td>
+        <td><span class="tag printec">Printec (por nivel)</span></td>
+        <td>Varía por nivel</td>
+        <td><span class="url">posprintec.com/pricing-tiers</span></td>
+      </tr>
+      <tr>
+        <td>Nivel asignado al distribuidor</td>
+        <td><span class="tag printec">Printec</span></td>
+        <td>Según volumen de compra</td>
+        <td><span class="url">posprintec.com/partner-pricing/{partner}/edit</span></td>
+      </tr>
+      <tr>
+        <td><strong>Margen del distribuidor</strong></td>
+        <td><span class="tag dist">Distribuidor</span> o <span class="tag printec">Printec</span></td>
+        <td>Lo define el distribuidor</td>
+        <td>Distribuidor: <span class="url">posprintec.com/mi-ganancia</span><br>Admin: <span class="url">posprintec.com/partner-pricing/{partner}/edit</span></td>
+      </tr>
+      <tr>
+        <td>¿Mostrar precio en widget?</td>
+        <td><span class="tag printec">Printec</span></td>
+        <td>Sí</td>
+        <td><span class="url">posprintec.com/partners/{partner}/api-settings</span></td>
+      </tr>
+      <tr>
+        <td>API key del widget</td>
+        <td><span class="tag printec">Printec</span></td>
+        <td>—</td>
+        <td><span class="url">posprintec.com/partners/{partner}</span> (generar / revocar)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:13px;color:var(--muted)">Los porcentajes de cada nivel cambian con el tiempo; para ver los valores vigentes entra a <span class="url">posprintec.com/pricing-tiers</span>.</p>
+
+  <!-- ============ 3. REGLAS ============ -->
+  <h2><span class="n">3</span>Reglas de negocio</h2>
+
+  <div class="rule warn">
+    <h3><span class="icon">⚠️</span> Perfil &lt; 100% → se cobra el nivel Público</h3>
+    <p>Si el distribuidor es <strong>Asociado puro</strong> y su perfil está incompleto (&lt; 100%), <strong>pierde el nivel de distribuidor que tenga asignado</strong> y se le cobra el <strong>nivel Público</strong> (el de entrada, el de mayor markup) hasta que complete su perfil.</p>
+    <ul>
+      <li>En cuanto completa su perfil al 100%, recupera automáticamente su nivel y su mejor precio.</li>
+      <li><strong>Asociado mixto</strong> y <strong>Proveedor</strong> están exentos: son socios estratégicos que también proveen producto, así que conservan su nivel aunque el perfil esté incompleto.</li>
+    </ul>
+  </div>
+
+  <div class="rule info">
+    <h3><span class="icon">👁️</span> Mostrar u ocultar el precio en el widget</h3>
+    <p>El widget muestra el precio solo si está activado el interruptor <strong>"Mostrar precios en el catálogo"</strong>. Si está apagado, el widget muestra los productos sin precio.</p>
+    <p>Se activa o desactiva en <span class="url">posprintec.com/partners/{partner}/api-settings</span>.</p>
+  </div>
+
+  <div class="rule">
+    <h3><span class="icon">🧾</span> El widget muestra el precio <strong>sin IVA</strong></h3>
+    <p>El precio que aparece en el widget no incluye IVA. El IVA (16%) se agrega más adelante, en la cotización.</p>
+  </div>
+
+  <div class="rule">
+    <h3><span class="icon">🟰</span> Productos propios y de proveedores reciben el mismo aumento</h3>
+    <p>Hoy todos los productos pasan por la misma fórmula: tanto los propios de Printec como los de proveedores (DobleVela / Innovation) reciben exactamente los mismos aumentos. No hay un markup distinto por origen del producto.</p>
+  </div>
+
+  <div class="rule warn">
+    <h3><span class="icon">🧮</span> Ojo con el simulador de la pantalla de configuración</h3>
+    <p>El "Simulador de Precio" que aparece en <span class="url">posprintec.com/pricing-settings</span> está simplificado: <strong>no muestra el Markup del Nivel</strong> y deja el descuento y el margen como "variable". Es solo una ayuda visual aproximada; el precio real del widget sí aplica el markup del nivel como se explica en este documento.</p>
+  </div>
+
+  <!-- ============ 4. CALCULADORA ============ -->
+  <h2><span class="n">4</span>Calculadora — prueba los valores</h2>
+  <p>Edita los porcentajes y observa cómo cambia el precio final. Refleja la fórmula real del sistema. Consulta los porcentajes vigentes de cada nivel en <span class="url">posprintec.com/pricing-tiers</span>.</p>
+  <div class="calc">
+    <div class="calc-grid">
+      <div class="field"><label>Precio base ($)</label><input type="number" id="base" value="100" step="0.01"></div>
+      <div class="field"><label>Markup Printec global (%)</label><input type="number" id="printec" value="0" step="0.01"></div>
+      <div class="field"><label>Markup del nivel (%)</label><input type="number" id="tierMk" value="25" step="0.01"></div>
+      <div class="field"><label>Descuento del nivel (%)</label><input type="number" id="tierDc" value="0" step="0.01"></div>
+      <div class="field"><label>Margen del distribuidor (%)</label><input type="number" id="partner" value="30" step="0.01"></div>
+      <div class="field public-only" id="publicField"><label>Markup del nivel Público (%)</label><input type="number" id="publicMk" value="54" step="0.01"></div>
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="incomplete">
+      <label for="incomplete">Asociado puro con perfil &lt; 100% (se cobra el nivel Público en lugar de su nivel asignado)</label>
+    </div>
+
+    <div class="breakdown" id="breakdown">
+      <div class="line"><span class="lbl">Precio base</span><span class="val" id="r0">$0.00</span></div>
+      <div class="line"><span class="lbl" id="l1">+ Markup Printec</span><span class="val" id="r1">$0.00</span></div>
+      <div class="line"><span class="lbl" id="l2">+ Markup del nivel</span><span class="val" id="r2">$0.00</span></div>
+      <div class="line"><span class="lbl" id="l3">− Descuento del nivel</span><span class="val" id="r3">$0.00</span></div>
+      <div class="line cost"><span class="lbl">= Costo para el distribuidor</span><span class="val" id="rcost">$0.00</span></div>
+      <div class="line"><span class="lbl">+ Margen del distribuidor</span><span class="val" id="r4">$0.00</span></div>
+      <div class="line final"><span class="lbl">PRECIO EN EL WIDGET (sin IVA)</span><span class="val" id="rfinal">$0.00</span></div>
+    </div>
+    <div class="blocked-note" id="blockedNote">⚠️ Perfil incompleto: se ignora el nivel asignado y se cobra el nivel Público (sin descuento).</div>
+  </div>
+
+  <footer>
+    Documento de referencia · PrintecPOS · 2026-05-24.
+  </footer>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const money = n => '$' + (isFinite(n) ? n : 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  function recalc() {
+    const base    = parseFloat($('base').value)    || 0;
+    const printec = parseFloat($('printec').value) || 0;
+    const nivelMk = parseFloat($('tierMk').value)  || 0;
+    const nivelDc = parseFloat($('tierDc').value)  || 0;
+    const partner = parseFloat($('partner').value) || 0;
+    const publicMk = parseFloat($('publicMk').value) || 0;
+    const incomplete = $('incomplete').checked;
+
+    // Perfil <100%: se cobra el nivel Público (su markup, sin descuento de nivel).
+    const mkUsado  = incomplete ? publicMk : nivelMk;
+    const dcUsado  = incomplete ? 0        : nivelDc;
+
+    const afterPrintec = base * (1 + printec / 100);
+    const afterNivel   = afterPrintec * (1 + mkUsado / 100);
+    const afterDisc    = afterNivel * (1 - dcUsado / 100);
+    const cost         = afterDisc;
+    const finalPrice   = cost * (1 + partner / 100);
+
+    $('r0').textContent = money(base);
+    $('r1').textContent = money(afterPrintec);
+    $('r2').textContent = money(afterNivel);
+    $('r3').textContent = money(afterDisc);
+    $('rcost').textContent = money(cost);
+    $('r4').textContent = money(finalPrice);
+    $('rfinal').textContent = money(finalPrice);
+
+    $('l2').textContent = incomplete ? '+ Markup del nivel Público' : '+ Markup del nivel';
+    $('publicField').classList.toggle('show', incomplete);
+    $('tierMk').parentElement.style.opacity = incomplete ? .4 : 1;
+    $('tierDc').parentElement.style.opacity = incomplete ? .4 : 1;
+    $('blockedNote').classList.toggle('show', incomplete);
+  }
+
+  document.querySelectorAll('.calc input').forEach(el => {
+    el.addEventListener('input', recalc);
+    el.addEventListener('change', recalc);
+  });
+  recalc();
+</script>
+</body>
+</html>
