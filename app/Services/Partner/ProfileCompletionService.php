@@ -87,7 +87,15 @@ class ProfileCompletionService
 
     private function logoComplete(Partner $partner): bool
     {
-        return ! empty($partner->logo);
+        // El logo cuenta tanto si está en el branding del sitio (partners.logo)
+        // como si el distribuidor ya lo subió en su razón social (entity.logo_path).
+        if (! empty($partner->logo)) {
+            return true;
+        }
+
+        $entity = $this->primaryEntity($partner);
+
+        return $entity !== null && ! empty($entity->logo_path);
     }
 
     /**

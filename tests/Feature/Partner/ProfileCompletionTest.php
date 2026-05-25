@@ -162,6 +162,26 @@ class ProfileCompletionTest extends TestCase
         $this->assertContains('logo', $partner->missingProfileFields()['logo']);
     }
 
+    public function test_logo_en_entidad_cuenta_aunque_partner_logo_este_vacio(): void
+    {
+        // Caso real: el distribuidor subió su logo en la razón social (entity.logo_path)
+        // pero nunca llenó el branding del sitio (partners.logo). Debe contar igual.
+        $partner = Partner::factory()->create([
+            'contact_name' => null,
+            'contact_phone' => null,
+            'contact_email' => null,
+            'direccion' => null,
+            'logo' => null,
+        ]);
+        PartnerEntity::factory()->fiscalIncomplete()->create([
+            'partner_id' => $partner->id,
+            'logo_path' => 'partners/logos/ejemplo.png',
+        ]);
+
+        $this->assertSame(10, $partner->profileCompletionPercentage());
+        $this->assertEmpty($partner->missingProfileFields()['logo']);
+    }
+
     public function test_se_usa_default_entity_id_cuando_existe(): void
     {
         $partner = Partner::factory()->create();
