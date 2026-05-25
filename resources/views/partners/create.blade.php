@@ -42,7 +42,7 @@
       {{-- Dirección --}}
       <div class="form-group mt-3">
         <label>Dirección</label>
-        <textarea name="address" class="form-control" rows="2">{{ old('address') }}</textarea>
+        <textarea name="direccion" class="form-control" rows="2">{{ old('direccion') }}</textarea>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
