@@ -161,4 +161,76 @@ class ProfileDeadlineTest extends TestCase
         $response->assertSessionHasErrors('email');
         $this->assertGuest();
     }
+
+    public function test_cron_levanta_veto_si_perfil_quedo_completo(): void
+    {
+        Carbon::setTestNow('2026-05-25');
+
+        $partner = $this->completeProfilePartner([
+            'vetoed_until' => '2027-05-25',
+            'is_active' => false,
+            'profile_deadline_at' => '2026-05-10',
+        ]);
+        $this->assertTrue($partner->fresh()->isVetoed());
+
+        $this->artisan('partners:check-profile-deadlines')->assertSuccessful();
+
+        $partner->refresh();
+        $this->assertNull($partner->vetoed_until);
+        $this->assertFalse($partner->isVetoed());
+        $this->assertTrue($partner->is_active);
+    }
+
+    public function test_cron_no_levanta_veto_si_perfil_sigue_incompleto(): void
+    {
+        Carbon::setTestNow('2026-05-25');
+
+        $partner = Partner::factory()->asociado()->create([
+            'vetoed_until' => '2027-05-25',
+            'is_active' => false,
+        ]);
+
+        $this->artisan('partners:check-profile-deadlines')->assertSuccessful();
+
+        $partner->refresh();
+        $this->assertTrue($partner->isVetoed());
+        $this->assertFalse($partner->is_active);
+    }
+
+    public function test_lift_veto_no_hace_nada_si_no_estaba_vetado(): void
+    {
+        $partner = $this->completeProfilePartner(['vetoed_until' => null, 'is_active' => true]);
+
+        $this->assertFalse($partner->liftVetoIfProfileComplete());
+    }
+
+    /**
+     * Crea un Asociado con perfil 100% completo (fiscal + bancario + contacto + logo).
+     */
+    private function completeProfilePartner(array $overrides = []): Partner
+    {
+        $partner = Partner::factory()->asociado()->create(array_merge([
+            'contact_name' => 'Frank',
+            'contact_phone' => '5555555555',
+            'contact_email' => 'frank@printec.test',
+            'direccion' => 'Av. 1',
+            'logo' => 'logos/p.png',
+        ], $overrides));
+
+        $entity = PartnerEntity::factory()->create([
+            'partner_id' => $partner->id,
+            'rfc' => 'XAXX010101000',
+            'razon_social' => 'Test SA',
+            'telefono' => '5555555555',
+            'direccion' => 'Fiscal 1',
+        ]);
+        PartnerEntityBankAccount::factory()->create([
+            'partner_entity_id' => $entity->id,
+            'bank_name' => 'BBVA',
+            'account_holder' => 'Test',
+            'clabe' => '012180001234567890',
+        ]);
+
+        return $partner;
+    }
 }

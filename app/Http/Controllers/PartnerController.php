@@ -108,7 +108,11 @@ class PartnerController extends Controller
 
         $partner->update($data);
 
-        // Si el partner fue activado, activar también sus usuarios y enviar email
+        // Épica 05: si estaba vetado y el admin acaba de completar su perfil al 100%,
+        // levantar el veto y reactivar (el distribuidor vetado no puede hacerlo él mismo).
+        $vetoLifted = $partner->liftVetoIfProfileComplete();
+
+        // Si el partner fue activado (por el form o al levantar el veto), activar sus usuarios
         if ($wasInactive && $partner->is_active) {
             $this->activatePartnerUsers($partner);
         }
@@ -118,7 +122,11 @@ class PartnerController extends Controller
             $this->deactivatePartnerUsers($partner);
         }
 
-        return redirect()->route('partners.index')->with('success', 'Partner actualizado.');
+        $message = $vetoLifted
+            ? 'Partner actualizado. Perfil completo al 100%: se levantó el veto y se reactivó la cuenta.'
+            : 'Partner actualizado.';
+
+        return redirect()->route('partners.index')->with('success', $message);
     }
 
     public function destroy(Partner $partner)

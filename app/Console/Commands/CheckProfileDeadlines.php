@@ -35,6 +35,21 @@ class CheckProfileDeadlines extends Command
         $reminded3 = 0;
         $vetoed = 0;
 
+        // Respaldo: levantar el veto a quienes ya completaron el perfil (p. ej. cuando
+        // Printec lo completó por ellos vía razón social, banco o branding). El método
+        // es idempotente y valida el 100% internamente.
+        $lifted = 0;
+        $vetoedPartners = Partner::query()
+            ->where('type', 'Asociado')
+            ->whereNotNull('vetoed_until')
+            ->get();
+
+        foreach ($vetoedPartners as $partner) {
+            if ($partner->liftVetoIfProfileComplete()) {
+                $lifted++;
+            }
+        }
+
         foreach ($partners as $partner) {
             // Si ya tiene perfil completo, limpiar deadline y seguir.
             if ($partner->hasCompleteProfile()) {
@@ -78,7 +93,7 @@ class CheckProfileDeadlines extends Command
             }
         }
 
-        $this->info("Recordatorio 7d: {$reminded7} | Recordatorio 3d: {$reminded3} | Vetados: {$vetoed}");
+        $this->info("Recordatorio 7d: {$reminded7} | Recordatorio 3d: {$reminded3} | Vetados: {$vetoed} | Veto levantado: {$lifted}");
 
         return self::SUCCESS;
     }

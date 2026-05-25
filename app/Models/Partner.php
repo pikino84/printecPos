@@ -484,6 +484,31 @@ class Partner extends Model
     }
 
     /**
+     * Levanta el veto y reactiva la cuenta si el perfil ya está al 100%.
+     * Pensado para cuando Printec completa el perfil por un distribuidor vetado
+     * (que no puede loguear para hacerlo él mismo). Idempotente: no hace nada si
+     * no estaba vetado o si el perfil sigue incompleto. Devuelve true solo si
+     * efectivamente levantó el veto.
+     */
+    public function liftVetoIfProfileComplete(): bool
+    {
+        if ($this->vetoed_until === null) {
+            return false;
+        }
+
+        if (! $this->hasCompleteProfile()) {
+            return false;
+        }
+
+        $this->update([
+            'vetoed_until' => null,
+            'is_active' => true,
+        ]);
+
+        return true;
+    }
+
+    /**
      * Días que faltan para que venza el plazo (negativo = venció).
      * Devuelve null si no hay plazo configurado.
      */
