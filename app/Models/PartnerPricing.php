@@ -14,7 +14,9 @@ class PartnerPricing extends Model
     protected $fillable = [
         'partner_id',
         'markup_percentage',
+        'api_markup_percentage',
         'current_tier_id',
+        'api_tier_id',
         'last_month_purchases',
         'current_month_purchases',
         'tier_assigned_at',
@@ -23,6 +25,7 @@ class PartnerPricing extends Model
 
     protected $casts = [
         'markup_percentage' => 'decimal:2',
+        'api_markup_percentage' => 'decimal:2',
         'last_month_purchases' => 'decimal:2',
         'current_month_purchases' => 'decimal:2',
         'tier_assigned_at' => 'date',
@@ -43,6 +46,14 @@ class PartnerPricing extends Model
         return $this->belongsTo(PricingTier::class, 'current_tier_id');
     }
 
+    /**
+     * Nivel propio del widget/API. NULL = hereda el del catálogo (currentTier).
+     */
+    public function apiTier()
+    {
+        return $this->belongsTo(PricingTier::class, 'api_tier_id');
+    }
+
     // ========================================================================
     // MÉTODOS
     // ========================================================================
@@ -58,25 +69,46 @@ class PartnerPricing extends Model
     /**
      * Nivel que realmente aplica al partner al cotizar.
      *
+     * @param  bool  $forApi  Contexto widget/API: usa api_tier_id si está
+     *                        configurado; si es NULL hereda el del catálogo.
+     *
      * Épica 05: un Asociado puro con perfil < 100% pierde su nivel de
-     * distribuidor y cotiza al nivel público. Mixto y Proveedor conservan
-     * su nivel por ser socios estratégicos que también proveen producto.
+     * distribuidor y cotiza al nivel público, tanto en el POS como en el
+     * widget. Mixto y Proveedor conservan su nivel por ser socios
+     * estratégicos que también proveen producto.
      */
-    protected function resolvePricingTier()
+    protected function resolvePricingTier(bool $forApi = false)
     {
         if ($this->shouldChargePublicPrice()) {
             return PricingTier::publicTier();
+        }
+
+        if ($forApi && $this->api_tier_id !== null) {
+            return $this->apiTier;
         }
 
         return $this->getEffectiveTier();
     }
 
     /**
+     * % de ganancia que aplica según el contexto.
+     * En el widget/API usa api_markup_percentage; si es NULL hereda el del catálogo.
+     */
+    public function effectiveMarkup(bool $forApi = false)
+    {
+        if ($forApi && $this->api_markup_percentage !== null) {
+            return (float) $this->api_markup_percentage;
+        }
+
+        return (float) $this->markup_percentage;
+    }
+
+    /**
      * Aplicar markup del partner a un precio
      */
-    public function applyMarkup($price)
+    public function applyMarkup($price, bool $forApi = false)
     {
-        return $price * (1 + $this->markup_percentage / 100);
+        return $price * (1 + $this->effectiveMarkup($forApi) / 100);
     }
 
     /**
@@ -100,9 +132,23 @@ class PartnerPricing extends Model
      */
     public function calculateCostPrice($basePrice, $isPrintecProduct = true)
     {
-        $tier = $this->resolvePricingTier();
+        return $this->costPriceForTier($this->resolvePricingTier(), $basePrice);
+    }
 
-        // Sin niveles configurados: cae al Markup Printec global.
+    /**
+     * Precio de costo para el widget/API (usa el nivel propio del API o lo hereda).
+     */
+    public function calculateApiCostPrice($basePrice)
+    {
+        return $this->costPriceForTier($this->resolvePricingTier(true), $basePrice);
+    }
+
+    /**
+     * Núcleo de cálculo de costo dado un nivel ya resuelto.
+     * Sin nivel: cae al Markup Printec global.
+     */
+    protected function costPriceForTier($tier, $basePrice)
+    {
         if (! $tier) {
             $printecMarkup = PricingSetting::get('printec_markup', 52);
 
@@ -136,6 +182,17 @@ class PartnerPricing extends Model
         $costPrice = $this->calculateCostPrice($basePrice, $isPrintecProduct);
 
         return $this->applyMarkup($costPrice);
+    }
+
+    /**
+     * Precio de venta sugerido para el widget/API (sin IVA).
+     * Usa el nivel y markup propios del API; cada uno hereda del catálogo si es NULL.
+     */
+    public function calculateApiSalePrice($basePrice)
+    {
+        $costPrice = $this->calculateApiCostPrice($basePrice);
+
+        return $this->applyMarkup($costPrice, true);
     }
 
     /**

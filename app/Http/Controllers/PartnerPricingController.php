@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdatePartnerPricingRequest;
 use App\Models\CartSession;
 use App\Models\Partner;
 use App\Models\PartnerPricing;
 use App\Models\PricingTier;
-use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 
 class PartnerPricingController extends Controller
@@ -23,7 +23,7 @@ class PartnerPricingController extends Controller
     public function index(Request $request)
     {
         $query = PartnerPricing::with(['partner', 'currentTier'])
-            ->whereHas('partner', function($q) {
+            ->whereHas('partner', function ($q) {
                 $q->whereIn('type', ['Asociado', 'Mixto']);
             });
 
@@ -35,7 +35,7 @@ class PartnerPricingController extends Controller
         // Filtro por búsqueda
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('partner', function($q) use ($search) {
+            $query->whereHas('partner', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
             });
         }
@@ -74,31 +74,28 @@ class PartnerPricingController extends Controller
     {
         $pricing = $partner->getPricingConfig();
         $tiers = PricingTier::active()->ordered()->get();
-        
+
         return view('partner-pricing.edit', compact('partner', 'pricing', 'tiers'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Partner $partner)
+    public function update(UpdatePartnerPricingRequest $request, Partner $partner)
     {
-        $request->validate([
-            'markup_percentage' => 'required|numeric|min:0|max:100',
-            'current_tier_id' => 'nullable|exists:pricing_tiers,id',
-            'manual_tier_override' => 'boolean',
-        ]);
-
         $pricing = $partner->getPricingConfig();
-        
+
         $oldTierId = $pricing->current_tier_id;
         $newTierId = $request->current_tier_id;
-        
+
         $pricing->update([
             'markup_percentage' => $request->markup_percentage,
             'current_tier_id' => $request->current_tier_id,
             'manual_tier_override' => $request->boolean('manual_tier_override'),
             'tier_assigned_at' => $newTierId != $oldTierId ? now() : $pricing->tier_assigned_at,
+            // Pricing independiente del widget/API (NULL = hereda del catálogo).
+            'api_markup_percentage' => $request->input('api_markup_percentage'),
+            'api_tier_id' => $request->input('api_tier_id'),
         ]);
 
         // Si cambió el tier manualmente, registrar en historial
@@ -124,7 +121,7 @@ class PartnerPricingController extends Controller
     public function history(Partner $partner)
     {
         $pricing = $partner->getPricingConfig();
-        
+
         $history = \App\Models\PartnerTierHistory::where('partner_id', $partner->id)
             ->with('tier')
             ->orderBy('period_start', 'desc')
@@ -153,7 +150,7 @@ class PartnerPricingController extends Controller
         $user = auth()->user();
         $partner = $user->partner;
 
-        if (!$partner) {
+        if (! $partner) {
             abort(403, 'No tienes un partner asociado.');
         }
 
@@ -174,7 +171,7 @@ class PartnerPricingController extends Controller
         $user = auth()->user();
         $partner = $user->partner;
 
-        if (!$partner) {
+        if (! $partner) {
             abort(403, 'No tienes un partner asociado.');
         }
 

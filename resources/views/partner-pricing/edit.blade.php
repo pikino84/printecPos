@@ -97,6 +97,62 @@
 
                     <hr class="my-4">
 
+                    <h6 class="mb-1">Pricing del Widget / API <span class="badge bg-info">opcional</span></h6>
+                    <p class="text-muted small">
+                        Configuración independiente para el sitio web público del partner (widget/API).
+                        Si dejas un campo vacío, ese valor se hereda del catálogo (POS) configurado arriba.
+                    </p>
+
+                    <!-- Markup del Widget/API -->
+                    <div class="mb-4">
+                        <label for="api_markup_percentage" class="form-label">
+                            Porcentaje de Markup (Widget/API)
+                        </label>
+                        <div class="input-group">
+                            <input type="number"
+                                   class="form-control @error('api_markup_percentage') is-invalid @enderror"
+                                   id="api_markup_percentage"
+                                   name="api_markup_percentage"
+                                   value="{{ old('api_markup_percentage', $pricing->api_markup_percentage) }}"
+                                   step="0.01"
+                                   min="0"
+                                   max="100"
+                                   placeholder="Hereda del catálogo ({{ number_format($pricing->markup_percentage, 2) }}%)">
+                            <span class="input-group-text">%</span>
+                            @error('api_markup_percentage')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <small class="form-text text-muted">
+                            Déjalo vacío para usar el markup del catálogo.
+                        </small>
+                    </div>
+
+                    <!-- Nivel del Widget/API -->
+                    <div class="mb-4">
+                        <label for="api_tier_id" class="form-label">Nivel de Precio (Widget/API)</label>
+                        <select class="form-control @error('api_tier_id') is-invalid @enderror"
+                                id="api_tier_id"
+                                name="api_tier_id">
+                            <option value="">Usar nivel del catálogo</option>
+                            @foreach($tiers as $tier)
+                                <option value="{{ $tier->id }}"
+                                    {{ old('api_tier_id', $pricing->api_tier_id) == $tier->id ? 'selected' : '' }}>
+                                    {{ $tier->name }}
+                                    ({{ number_format($tier->discount_percentage, 2) }}% descuento)
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('api_tier_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">
+                            Déjalo en "Usar nivel del catálogo" para heredar el nivel de arriba.
+                        </small>
+                    </div>
+
+                    <hr class="my-4">
+
                     <button type="submit" class="btn btn-primary">
                         <i class="feather icon-save"></i> Guardar Configuración
                     </button>
@@ -241,61 +297,74 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const markupInput = document.getElementById('markup_percentage');
-    const tierSelect = document.getElementById('current_tier_id');
+    const catalogMarkupInput = document.getElementById('markup_percentage');
+    const catalogTierSelect = document.getElementById('current_tier_id');
+    const apiMarkupInput = document.getElementById('api_markup_percentage');
+    const apiTierSelect = document.getElementById('api_tier_id');
     const priceInput = document.getElementById('simulate_price');
     const breakdown = document.getElementById('price-breakdown');
-    
+
     const printecMarkup = {{ \App\Models\PricingSetting::get('printec_markup', 52) }};
     const taxRate = {{ \App\Models\PricingSetting::get('tax_rate', 16) }};
-    
+
     const tiers = @json($tiers->keyBy('id'));
-    
+
+    // Misma fórmula que PartnerPricing/PricingTier::calculatePrice (sin IVA):
+    // base × (1 + printec%) × (1 + tierMarkup%) × (1 − tierDesc%) × (1 + markupPartner%)
+    function salePrice(basePrice, partnerMarkup, tier) {
+        let price = basePrice * (1 + printecMarkup / 100);
+        if (tier) {
+            price = price * (1 + parseFloat(tier.markup_percentage) / 100);
+            price = price * (1 - parseFloat(tier.discount_percentage) / 100);
+        }
+        return price * (1 + partnerMarkup / 100);
+    }
+
+    // Fallback por campo: si el del widget está vacío, hereda el del catálogo.
+    function effectiveApiMarkup() {
+        return apiMarkupInput.value === ''
+            ? (parseFloat(catalogMarkupInput.value) || 0)
+            : (parseFloat(apiMarkupInput.value) || 0);
+    }
+    function effectiveApiTier() {
+        const id = apiTierSelect.value || catalogTierSelect.value;
+        return id ? tiers[id] : null;
+    }
+
+    function column(label, basePrice, markup, tier, highlight) {
+        const sale = salePrice(basePrice, markup, tier);
+        const withTax = sale * (1 + taxRate / 100);
+        return `
+            <table class="table table-sm mb-0">
+                <thead><tr><th colspan="2">${label}</th></tr></thead>
+                <tr><td>Nivel:</td><td class="text-right">${tier ? tier.name : 'Sin nivel'}</td></tr>
+                <tr><td>Markup partner:</td><td class="text-right">${markup.toFixed(2)}%</td></tr>
+                <tr><td>Precio sin IVA:</td><td class="text-right"><strong>$${sale.toFixed(2)}</strong></td></tr>
+                <tr class="${highlight}"><td><strong>Con IVA (${taxRate}%):</strong></td><td class="text-right"><strong class="text-success">$${withTax.toFixed(2)}</strong></td></tr>
+            </table>`;
+    }
+
     function updateSimulation() {
         const basePrice = parseFloat(priceInput.value) || 0;
-        const partnerMarkup = parseFloat(markupInput.value) || 0;
-        const tierId = tierSelect.value;
-        const tier = tierId ? tiers[tierId] : null;
-        const discount = tier ? parseFloat(tier.discount_percentage) : 0;
-        
-        // Cálculos
-        const withPrintecMarkup = basePrice + (basePrice * printecMarkup / 100);
-        const afterDiscount = withPrintecMarkup - (withPrintecMarkup * discount / 100);
-        const withPartnerMarkup = afterDiscount + (afterDiscount * partnerMarkup / 100);
-        const withTax = withPartnerMarkup * (1 + taxRate / 100);
-        
+
+        const catalogTierId = catalogTierSelect.value;
+        const catalogTier = catalogTierId ? tiers[catalogTierId] : null;
+        const catalogMarkup = parseFloat(catalogMarkupInput.value) || 0;
+
         breakdown.innerHTML = `
-            <table class="table table-sm mb-0">
-                <tr>
-                    <td>Precio Base:</td>
-                    <td class="text-right"><strong>$${basePrice.toFixed(2)}</strong></td>
-                </tr>
-                <tr>
-                    <td>+ Markup Printec (${printecMarkup}%):</td>
-                    <td class="text-right">$${withPrintecMarkup.toFixed(2)}</td>
-                </tr>
-                ${tier ? `
-                <tr class="table-success">
-                    <td>- Descuento ${tier.name} (${discount}%):</td>
-                    <td class="text-right"><strong>$${afterDiscount.toFixed(2)}</strong></td>
-                </tr>
-                ` : ''}
-                <tr>
-                    <td>+ Markup Partner (${partnerMarkup}%):</td>
-                    <td class="text-right"><strong>$${withPartnerMarkup.toFixed(2)}</strong></td>
-                </tr>
-                <tr class="table-info">
-                    <td><strong>+ IVA (${taxRate}%):</strong></td>
-                    <td class="text-right"><strong class="text-success">$${withTax.toFixed(2)}</strong></td>
-                </tr>
-            </table>
-        `;
+            <div class="row">
+                <div class="col-6 border-end">
+                    ${column('Catálogo (POS)', basePrice, catalogMarkup, catalogTier, 'table-info')}
+                </div>
+                <div class="col-6">
+                    ${column('Widget / API', basePrice, effectiveApiMarkup(), effectiveApiTier(), 'table-warning')}
+                </div>
+            </div>`;
     }
-    
-    markupInput.addEventListener('input', updateSimulation);
-    tierSelect.addEventListener('change', updateSimulation);
-    priceInput.addEventListener('input', updateSimulation);
-    
+
+    [catalogMarkupInput, apiMarkupInput, priceInput].forEach(el => el.addEventListener('input', updateSimulation));
+    [catalogTierSelect, apiTierSelect].forEach(el => el.addEventListener('change', updateSimulation));
+
     // Inicializar
     updateSimulation();
 });

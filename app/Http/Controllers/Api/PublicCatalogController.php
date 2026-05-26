@@ -72,13 +72,13 @@ class PublicCatalogController extends Controller
     }
 
     /**
-     * Calculate the sale price for a product
-     * Applies: Printec Markup + Tier Markup - Tier Discount + Partner Markup
+     * Calculate the sale price for a product (widget/API context).
+     * Uses the partner's API-specific tier and markup, each falling back
+     * to the catalog value when not configured.
      */
     protected function calculateSalePrice(float $basePrice, Partner $partner, bool $isPrintecProduct): float
     {
-        $partnerPricing = $partner->getPricingConfig();
-        return $partnerPricing->calculateSalePrice($basePrice, $isPrintecProduct);
+        return $partner->getPricingConfig()->calculateApiSalePrice($basePrice);
     }
 
     /**
@@ -108,7 +108,7 @@ class PublicCatalogController extends Controller
         // Get categories
         $categories = [];
         if ($product->productCategory && $product->productCategory->printecCategories) {
-            $categories = $product->productCategory->printecCategories->map(fn($cat) => [
+            $categories = $product->productCategory->printecCategories->map(fn ($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,
@@ -216,7 +216,7 @@ class PublicCatalogController extends Controller
         $products = $query->paginate($perPage);
 
         return response()->json([
-            'data' => $products->map(fn($product) => $this->transformProduct($product, $partner)),
+            'data' => $products->map(fn ($product) => $this->transformProduct($product, $partner)),
             'meta' => [
                 'current_page' => $products->currentPage(),
                 'last_page' => $products->lastPage(),
@@ -238,10 +238,10 @@ class PublicCatalogController extends Controller
 
         $product = $query->find($id);
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'error' => 'Product not found',
-                'code' => 'PRODUCT_NOT_FOUND'
+                'code' => 'PRODUCT_NOT_FOUND',
             ], 404);
         }
 
@@ -269,7 +269,7 @@ class PublicCatalogController extends Controller
         })
             ->orderBy('name')
             ->get()
-            ->map(fn($cat) => (object)[
+            ->map(fn ($cat) => (object) [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,
@@ -280,7 +280,7 @@ class PublicCatalogController extends Controller
         $ownCategories = ProductCategory::where('partner_id', $partner->id)
             ->orderBy('name')
             ->get()
-            ->map(fn($cat) => (object)[
+            ->map(fn ($cat) => (object) [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,
@@ -291,7 +291,7 @@ class PublicCatalogController extends Controller
         $categories = $printecCategories->concat($ownCategories)
             ->sortBy('name')
             ->values()
-            ->map(fn($cat) => [
+            ->map(fn ($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,
@@ -372,7 +372,7 @@ class PublicCatalogController extends Controller
 
             if ($client) {
                 // Asociar al partner si no existe la relación
-                if (!$client->hasContactWith($partner->id)) {
+                if (! $client->hasContactWith($partner->id)) {
                     $client->addPartner($partner->id);
                 }
             } else {
@@ -408,7 +408,9 @@ class PublicCatalogController extends Controller
             // Agregar items
             foreach ($validated['items'] as $item) {
                 $variant = \App\Models\ProductVariant::find($item['variant_id']);
-                if (!$variant) continue;
+                if (! $variant) {
+                    continue;
+                }
 
                 $unitPrice = $this->calculateSalePrice(
                     (float) $variant->price,
@@ -429,7 +431,7 @@ class PublicCatalogController extends Controller
             // Enviar notificación por email
             $entity = $quote->partnerEntity ?? $partner->defaultEntity;
             if ($entity && $entity->hasMailConfig()) {
-                $mailerName = 'entity_' . $entity->id;
+                $mailerName = 'entity_'.$entity->id;
                 config([
                     "mail.mailers.{$mailerName}" => [
                         'transport' => 'smtp',
