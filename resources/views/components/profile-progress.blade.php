@@ -3,7 +3,8 @@
 @php
     $percentage = $partner->profileCompletionPercentage();
     $missing = $partner->missingProfileFields();
-    $isComplete = $percentage === 100;
+    $threshold = \App\Services\Partner\ProfileCompletionService::COMPLETION_THRESHOLD;
+    $isComplete = $partner->hasCompleteProfile();
 
     // Solo Asociado puro está sujeto a deadline/veto/pérdida de descuento.
     // Mixto y Proveedor son socios estratégicos: la barra es solo informativa.
@@ -11,15 +12,13 @@
     $daysRemaining = $isAsociado ? $partner->daysUntilDeadline() : null;
 
     $barColor = match (true) {
-        $percentage === 100 => 'bg-green-500',
-        $percentage >= 60 => 'bg-blue-500',
+        $percentage >= $threshold => 'bg-green-500',
         $percentage >= 30 => 'bg-yellow-500',
         default => 'bg-red-500',
     };
 
     $textColor = match (true) {
-        $percentage === 100 => 'text-green-700',
-        $percentage >= 60 => 'text-blue-700',
+        $percentage >= $threshold => 'text-green-700',
         $percentage >= 30 => 'text-yellow-700',
         default => 'text-red-700',
     };

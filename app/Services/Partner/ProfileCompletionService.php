@@ -16,6 +16,14 @@ use App\Models\PartnerEntity;
  */
 class ProfileCompletionService
 {
+    /**
+     * Umbral mínimo de completitud para considerar el perfil "completo":
+     * a partir de aquí el Asociado conserva su descuento, no se vetea y se
+     * levanta el veto si lo tenía. Bajado de 100 a 70 el 2026-06-01 —
+     * basta con cubrir Fiscal (40) + Bancario (30) para llegar al umbral.
+     */
+    public const COMPLETION_THRESHOLD = 70;
+
     public const WEIGHT_FISCAL = 40;
 
     public const WEIGHT_BANK = 30;
@@ -67,7 +75,7 @@ class ProfileCompletionService
 
     public function isComplete(Partner $partner): bool
     {
-        return $this->percentageFor($partner) === 100;
+        return $this->percentageFor($partner) >= self::COMPLETION_THRESHOLD;
     }
 
     private function fiscalComplete(Partner $partner): bool

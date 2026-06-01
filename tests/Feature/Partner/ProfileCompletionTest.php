@@ -138,6 +138,59 @@ class ProfileCompletionTest extends TestCase
         $this->assertEmpty($partner->missingProfileFields()['logo']);
     }
 
+    public function test_perfil_70_fiscal_y_bancario_se_considera_completo(): void
+    {
+        // Umbral nuevo (2026-06-01): Fiscal (40) + Bancario (30) = 70 basta para
+        // que el perfil cuente como "completo" y se levante el veto, aunque falten
+        // contacto y logo.
+        $partner = Partner::factory()->create([
+            'contact_name' => null,
+            'contact_phone' => null,
+            'contact_email' => null,
+            'direccion' => null,
+            'logo' => null,
+        ]);
+        $entity = PartnerEntity::factory()->create([
+            'partner_id' => $partner->id,
+            'rfc' => 'XAXX010101000',
+            'razon_social' => 'Test Razon SA de CV',
+            'telefono' => '5555555555',
+            'direccion' => 'Av. Fiscal 100',
+        ]);
+        PartnerEntityBankAccount::factory()->create([
+            'partner_entity_id' => $entity->id,
+            'bank_name' => 'BBVA',
+            'account_holder' => 'Test Razon SA de CV',
+            'clabe' => '012180001234567890',
+        ]);
+
+        $this->assertSame(70, $partner->profileCompletionPercentage());
+        $this->assertTrue($partner->hasCompleteProfile());
+    }
+
+    public function test_perfil_60_no_se_considera_completo(): void
+    {
+        // 60% (sin cubrir ni fiscal+bancario completos) sigue bajo el umbral.
+        $partner = Partner::factory()->create([
+            'contact_name' => 'Frank',
+            'contact_phone' => '5555555555',
+            'contact_email' => 'frank@printec.mx',
+            'direccion' => 'Av. Siempreviva 123',
+            'logo' => null,
+        ]);
+        PartnerEntity::factory()->create([
+            'partner_id' => $partner->id,
+            'rfc' => 'XAXX010101000',
+            'razon_social' => 'Test Razon SA de CV',
+            'telefono' => '5555555555',
+            'direccion' => 'Av. Fiscal 100',
+        ]);
+
+        // Solo fiscal (40) + contacto (20) = 60, sin bancario ni logo.
+        $this->assertSame(60, $partner->profileCompletionPercentage());
+        $this->assertFalse($partner->hasCompleteProfile());
+    }
+
     public function test_cuenta_bancaria_inactiva_no_aporta(): void
     {
         $partner = Partner::factory()->create();

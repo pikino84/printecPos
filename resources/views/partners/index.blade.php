@@ -87,9 +87,9 @@
                     @forelse ($partners as $partner)
                         @php
                             $pct = $partner->profile_completion;
+                            $threshold = \App\Services\Partner\ProfileCompletionService::COMPLETION_THRESHOLD;
                             $pctClass = match (true) {
-                                $pct === 100 => 'bg-success',
-                                $pct >= 60 => 'bg-info',
+                                $pct >= $threshold => 'bg-success',
                                 $pct >= 30 => 'bg-warning',
                                 default => 'bg-danger',
                             };
@@ -124,7 +124,7 @@
                                     <small class="d-block mt-1 text-danger fw-semibold">
                                         🚫 Vetado hasta {{ $partner->vetoed_until->format('Y-m-d') }}
                                     </small>
-                                @elseif ($appliesDeadline && $days !== null && $pct < 100)
+                                @elseif ($appliesDeadline && $days !== null && $pct < $threshold)
                                     <small class="d-block mt-1 {{ $countdownClass }}">
                                         @if ($days > 0)
                                             ⏱ {{ $days }} {{ $days === 1 ? 'día restante' : 'días restantes' }}

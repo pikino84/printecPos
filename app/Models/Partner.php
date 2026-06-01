@@ -471,7 +471,7 @@ class Partner extends Model
 
     public function hasCompleteProfile(): bool
     {
-        return $this->profileCompletionPercentage() === 100;
+        return $this->profileCompletionPercentage() >= ProfileCompletionService::COMPLETION_THRESHOLD;
     }
 
     /**
