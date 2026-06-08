@@ -345,7 +345,8 @@
             });
 
             const response = await fetch(url.toString(), {
-                headers: { 'X-API-Key': this.config.apiKey }
+                headers: { 'X-API-Key': this.config.apiKey },
+                cache: 'no-store'
             });
 
             if (!response.ok) {
