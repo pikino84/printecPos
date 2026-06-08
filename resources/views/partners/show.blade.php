@@ -202,19 +202,25 @@
                         <pre class="bg-dark text-light p-3 rounded mb-2" style="font-size: 12px; overflow-x: auto;"><code>&lt;!-- Contenedor del catálogo --&gt;
 &lt;div id="printec-catalog"&gt;&lt;/div&gt;
 
-&lt;!-- Script del widget --&gt;
-&lt;script src="{{ url('/js/printec-catalog-widget.js?v=1.0.1') }}"&gt;&lt;/script&gt;
+&lt;!-- Script del widget (carga dinámica: evita caché del navegador/CDN) --&gt;
 &lt;script&gt;
-  PrintecCatalog.init({
-    apiKey: '{{ $partner->api_key }}',
-    apiUrl: '{{ url('/api/public/catalog') }}',
-    container: '#printec-catalog',
-    perPage: 12,
-    showSearch: true,
-    showCategories: true,
-    primaryColor: '#007bff',
-    language: 'es'
-  });
+(function () {
+  var s = document.createElement('script');
+  s.src = '{{ url('/js/printec-catalog-widget.js') }}?v=' + Date.now();
+  s.onload = function () {
+    PrintecCatalog.init({
+      apiKey: '{{ $partner->api_key }}',
+      apiUrl: '{{ url('/api/public/catalog') }}',
+      container: '#printec-catalog',
+      perPage: 12,
+      showSearch: true,
+      showCategories: true,
+      primaryColor: '#007bff',
+      language: 'es'
+    });
+  };
+  document.head.appendChild(s);
+})();
 &lt;/script&gt;</code></pre>
                         <button type="button" class="btn btn-sm btn-primary" onclick="copyWidgetCode()">
                             <i class="feather icon-copy"></i> Copiar código
@@ -418,19 +424,25 @@ function copyWidgetCode() {
     const code = `<!-- Contenedor del catálogo -->
 <div id="printec-catalog"></div>
 
-<!-- Script del widget -->
-<script src="{{ url('/js/printec-catalog-widget.js?v=1.0.1') }}"><\/script>
+<!-- Script del widget (carga dinámica: evita caché del navegador/CDN) -->
 <script>
-  PrintecCatalog.init({
-    apiKey: '{{ $partner->api_key ?? '' }}',
-    apiUrl: '{{ url('/api/public/catalog') }}',
-    container: '#printec-catalog',
-    perPage: 12,
-    showSearch: true,
-    showCategories: true,
-    primaryColor: '#007bff',
-    language: 'es'
-  });
+(function () {
+  var s = document.createElement('script');
+  s.src = '{{ url('/js/printec-catalog-widget.js') }}?v=' + Date.now();
+  s.onload = function () {
+    PrintecCatalog.init({
+      apiKey: '{{ $partner->api_key ?? '' }}',
+      apiUrl: '{{ url('/api/public/catalog') }}',
+      container: '#printec-catalog',
+      perPage: 12,
+      showSearch: true,
+      showCategories: true,
+      primaryColor: '#007bff',
+      language: 'es'
+    });
+  };
+  document.head.appendChild(s);
+})();
 <\/script>`;
     navigator.clipboard.writeText(code).then(() => {
         swal("¡Copiado!", "Código del widget copiado al portapapeles", "success");
