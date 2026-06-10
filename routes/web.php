@@ -31,6 +31,7 @@ use App\Http\Controllers\PricingSettingController;
 use App\Http\Controllers\SuspiciousQuotesController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\PartnerWebsiteController;
+use App\Http\Controllers\FrontendLogController;
 
 
 
@@ -359,6 +360,13 @@ Route::middleware('auth')->group(function () {
 
 
 });
+// ========================================================================
+// LOG DE ERRORES DE FRONTEND (debug de página en blanco / scripts caídos)
+// ========================================================================
+Route::post('/frontend-log', [FrontendLogController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('frontend-log.store');
+
 // ========================================================================
 // REGISTRO PÚBLICO DE PARTNERS
 // ========================================================================

@@ -70,6 +70,14 @@ return [
             'days' => 14,
         ],
 
+        // Errores de JavaScript reportados desde el browser (debug de página en blanco)
+        'frontend' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/frontend.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

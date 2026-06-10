@@ -11,6 +11,92 @@
 
         <title>@yield('title', 'Admindek')</title>
 
+        <!-- Captura de errores JS + watchdog del pre-loader (debug página en blanco) -->
+        <script>
+        (function () {
+            var sent = 0;
+            function report(type, payload) {
+                if (sent >= 5) return; // no inundar el log desde una misma página
+                sent++;
+                payload = payload || {};
+                payload.type = type;
+                payload.url = location.pathname + location.search;
+                try {
+                    fetch('/frontend-log', {
+                        method: 'POST',
+                        keepalive: true,
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (e) { /* sin red o browser viejo: no hay nada que hacer */ }
+            }
+
+            // Errores de ejecución JS y fallas de carga de recursos (capture: true
+            // es necesario para atrapar los error de <script>/<link> externos)
+            window.addEventListener('error', function (e) {
+                if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+                    report('resource-error', {
+                        message: 'No cargó: ' + (e.target.src || e.target.href || '?'),
+                        source: e.target.src || e.target.href || null
+                    });
+                } else if (e.message) {
+                    report('js-error', {
+                        message: String(e.message).slice(0, 2000),
+                        source: e.filename || null,
+                        line: e.lineno || null,
+                        column: e.colno || null,
+                        stack: e.error && e.error.stack ? String(e.error.stack).slice(0, 4000) : null
+                    });
+                }
+            }, true);
+
+            window.addEventListener('unhandledrejection', function (e) {
+                var r = e.reason || {};
+                report('unhandled-rejection', {
+                    message: String(r.message || r).slice(0, 2000),
+                    stack: r.stack ? String(r.stack).slice(0, 4000) : null
+                });
+            });
+
+            // Diagnóstico del estado de la página cuando el loader se queda pegado
+            function diagnostics() {
+                var pending = [];
+                try {
+                    document.querySelectorAll('script[src]').forEach(function (s) {
+                        var loaded = performance.getEntriesByName(s.src).some(function (en) {
+                            return en.responseEnd > 0;
+                        });
+                        if (!loaded) pending.push(s.src);
+                    });
+                } catch (e) { /* performance API no disponible */ }
+                return {
+                    readyState: document.readyState,
+                    jquery: typeof window.jQuery !== 'undefined',
+                    scriptsPendientes: pending.slice(0, 10)
+                };
+            }
+
+            function hideLoaderIfStuck(context) {
+                var bg = document.querySelector('.loader-bg');
+                var stuck = bg && getComputedStyle(bg).display !== 'none';
+                if (stuck || document.readyState === 'loading') {
+                    if (bg) bg.style.display = 'none';
+                    report('loader-stuck', { message: context, diagnostics: diagnostics() });
+                }
+            }
+
+            // Failsafe 1: si jQuery/script.min.js fallaron, el fadeOut() del loader
+            // nunca corre — lo quitamos nosotros 3s después de que el DOM esté listo
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(function () { hideLoaderIfStuck('DOM listo pero loader visible (script.min.js no corrió)'); }, 3000);
+            });
+
+            // Failsafe 2: si un script externo se atoró descargando, el DOM nunca
+            // termina de parsear — este timer corre igual y destapa la página
+            setTimeout(function () { hideLoaderIfStuck('10s sin terminar de cargar la página'); }, 10000);
+        })();
+        </script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
