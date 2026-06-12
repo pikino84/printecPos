@@ -471,6 +471,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const warehouseHelp = document.getElementById('warehouse-help');
     const partnerInfo = document.getElementById('partner-info');
 
+    // El select de partner no se renderiza en esta vista; sin el guard, el
+    // TypeError mataba todo el handler y dejaba muerta la lógica de variantes
+    if (partnerSelect) {
     partnerSelect.addEventListener('change', function() {
         const partnerId = this.value;
         
@@ -541,7 +544,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (partnerSelect.value) {
         partnerSelect.dispatchEvent(new Event('change'));
     }
-    
+    } // fin del guard de partnerSelect
+
     // Warehouse ID actual del producto
     const currentWarehouseId = "{{ old('warehouse_id', $own_product->warehouse_id ?? '') }}";
     

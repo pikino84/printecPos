@@ -93,7 +93,8 @@
 
             // Failsafe 2: si un script externo se atoró descargando, el DOM nunca
             // termina de parsear — este timer corre igual y destapa la página
-            setTimeout(function () { hideLoaderIfStuck('10s sin terminar de cargar la página'); }, 10000);
+            // (5s: el incidente del 2026-06-12 mostró que los usuarios refrescan antes de 10s)
+            setTimeout(function () { hideLoaderIfStuck('5s sin terminar de cargar la página'); }, 5000);
         })();
         </script>
 
@@ -119,11 +120,11 @@
         <link rel="stylesheet" type="text/css" href="{{ asset('css/style.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ asset('css/widget.css' )}}">
         <!-- Select2 CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <link href="{{ asset('vendor/select2/select2.min.css') }}?v={{ filemtime(public_path('vendor/select2/select2.min.css')) }}" rel="stylesheet" />
         <!-- Custom css -->
         <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
         <!-- Intro.js CSS -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/introjs.min.css">
+        <link rel="stylesheet" href="{{ asset('vendor/introjs/introjs.min.css') }}?v={{ filemtime(public_path('vendor/introjs/introjs.min.css')) }}">
         <link rel="stylesheet" type="text/css" href="{{ asset('css/tour.css') }}">
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -173,12 +174,12 @@
         <script src="{{ asset('js/pcoded.min.js') }}"></script>
         <script src="{{ asset('js/vertical/vertical-layout.min.js') }}"></script>
         <!--script type="text/javascript" src="{{ asset('pages/dashboard/custom-dashboard.min.js') }}"></script-->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert/dist/sweetalert.min.js"></script>
+        <script src="{{ asset('vendor/sweetalert/sweetalert.min.js') }}?v={{ filemtime(public_path('vendor/sweetalert/sweetalert.min.js')) }}"></script>
         <!-- Select2 JS -->
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-        <script type="text/javascript" src="{{ asset('js/script.min.js') }}"></script>
+        <script src="{{ asset('vendor/select2/select2.min.js') }}?v={{ filemtime(public_path('vendor/select2/select2.min.js')) }}"></script>
+        <script type="text/javascript" src="{{ asset('js/script.min.js') }}?v={{ filemtime(public_path('js/script.min.js')) }}"></script>
         <!-- Intro.js -->
-        <script src="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/intro.min.js"></script>
+        <script src="{{ asset('vendor/introjs/intro.min.js') }}?v={{ filemtime(public_path('vendor/introjs/intro.min.js')) }}"></script>
         <script src="{{ asset('js/tour.js') }}"></script>
         @yield('scripts')
         <script>

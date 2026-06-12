@@ -202,7 +202,9 @@ $(document).ready(function() {
     // setTimeout(function() {
     // while ($('.loader-bar').width() == $window.width()) {
     // $(window).on('load',function(){
-    $('.loader-bg').fadeOut();
+    // hide() en vez de fadeOut(): la animación depende de ticks de rAF/timers
+    // que Chrome congela en pestañas en segundo plano y deja el overlay pegado
+    $('.loader-bg').hide();
     // });
 
     // break;
